@@ -3,6 +3,8 @@
 // workflow). Product titles are catalog data, not UI copy, so they live
 // here rather than in messages/*.json.
 
+import { convertKhrToUsdCents, convertUsdCentsToKhr, type Currency } from "@khmer-micro-store/shared";
+
 export interface MockStore {
   slug: string;
   nameKm: string;
@@ -21,6 +23,7 @@ export interface MockStore {
   deliveryFeeUsdCents: number;
   deliveryEtaMinMinutes: number;
   deliveryEtaMaxMinutes: number;
+  allowCod: boolean;
 }
 
 export interface MockCategory {
@@ -79,6 +82,80 @@ export const mockPromoCodes: MockPromoCode[] = [
   { code: "WELCOME1", type: "fixed", value: 100 },
 ];
 
+export interface MockSangkat {
+  id: string;
+  nameKm: string;
+  nameEn: string;
+}
+
+export interface MockKhan {
+  id: string;
+  nameKm: string;
+  nameEn: string;
+  sangkats: MockSangkat[];
+}
+
+export interface MockProvince {
+  id: string;
+  nameKm: string;
+  nameEn: string;
+  khans: MockKhan[];
+}
+
+// MVP covers Phnom Penh only, per docs/blueprint.md's beta scope.
+export const mockProvinces: MockProvince[] = [
+  {
+    id: "phnom-penh",
+    nameKm: "ភ្នំពេញ",
+    nameEn: "Phnom Penh",
+    khans: [
+      {
+        id: "chamkarmon",
+        nameKm: "ចំការមន",
+        nameEn: "Chamkarmon",
+        sangkats: [
+          { id: "tonle-bassac", nameKm: "ទន្លេបាសាក់", nameEn: "Tonle Bassac" },
+          { id: "bkk1", nameKm: "បឹងកេងកង១", nameEn: "Boeng Keng Kang 1" },
+          { id: "phsar-daeum-thkov", nameKm: "ផ្សារដើមថ្កូវ", nameEn: "Phsar Daeum Thkov" },
+        ],
+      },
+      {
+        id: "daun-penh",
+        nameKm: "ដូនពេញ",
+        nameEn: "Daun Penh",
+        sangkats: [
+          { id: "phsar-thmei-1", nameKm: "ផ្សារថ្មីទី១", nameEn: "Phsar Thmei 1" },
+          { id: "chey-chumneas", nameKm: "ជ័យជំនះ", nameEn: "Chey Chumneas" },
+          { id: "wat-phnom", nameKm: "វត្តភ្នំ", nameEn: "Wat Phnom" },
+        ],
+      },
+      {
+        id: "toul-kork",
+        nameKm: "ទួលគោក",
+        nameEn: "Toul Kork",
+        sangkats: [
+          { id: "boeng-kak-1", nameKm: "បឹងកក់១", nameEn: "Boeng Kak 1" },
+          { id: "tuek-lak-1", nameKm: "ទឹកល្អក់១", nameEn: "Tuek L'ak 1" },
+        ],
+      },
+    ],
+  },
+];
+
+export type MockPaymentMethodCode = "khqr" | "aba_payway" | "cod";
+
+export interface MockPaymentMethod {
+  code: MockPaymentMethodCode;
+  labelKm: string;
+  labelEn: string;
+}
+
+export const mockPaymentMethods: MockPaymentMethod[] = [
+  { code: "khqr", labelKm: "KHQR", labelEn: "KHQR" },
+  { code: "aba_payway", labelKm: "ABA PayWay", labelEn: "ABA PayWay" },
+  { code: "cod", labelKm: "បង់ប្រាក់ពេលទទួលទំនិញ", labelEn: "Cash on delivery" },
+];
+
 /** Unit price after the product's master-data discount, for the product itself or one of its variants. */
 export function getUnitUsdCents(product: MockProduct, variant?: MockVariant): number | undefined {
   const base = variant ? variant.priceUsdCents : product.priceUsdCents;
@@ -107,6 +184,46 @@ export function getStartingVariant(product: MockProduct): MockVariant | undefine
 /** The rate actually used for KHR conversion, clamped to the seller's allowed band. */
 export function getEffectiveExchangeRate(store: MockStore): number {
   return Math.min(store.usdToKhrRateMax, Math.max(store.usdToKhrRateMin, store.usdToKhrRate));
+}
+
+/**
+ * Unit price in the buyer's chosen order currency (before the master-data
+ * discount). If the product has no native price in that currency, convert
+ * from whichever price it does have, using the store's checkout-time rate —
+ * see docs/blueprint.md "Multi-currency pricing and totals".
+ */
+export function getUnitAmount(
+  product: MockProduct,
+  currency: Currency,
+  rate: number,
+  variant?: MockVariant,
+): number | undefined {
+  const native =
+    currency === "USD"
+      ? (variant ? variant.priceUsdCents : product.priceUsdCents)
+      : (variant ? variant.priceKhr : product.priceKhr);
+  if (native != null) return native;
+
+  const other =
+    currency === "USD"
+      ? (variant ? variant.priceKhr : product.priceKhr)
+      : (variant ? variant.priceUsdCents : product.priceUsdCents);
+  if (other == null) return undefined;
+
+  return currency === "USD" ? convertKhrToUsdCents(other, rate) : convertUsdCentsToKhr(other, rate);
+}
+
+/** Unit price in the chosen currency, after the master-data discount. */
+export function getDiscountedUnitAmount(
+  product: MockProduct,
+  currency: Currency,
+  rate: number,
+  variant?: MockVariant,
+): number | undefined {
+  const base = getUnitAmount(product, currency, rate, variant);
+  if (base == null) return undefined;
+  if (!product.discountPercent) return base;
+  return Math.round(base * (1 - product.discountPercent / 100));
 }
 
 /** The biggest active discount in the catalog, for the storefront banner ribbon. */
@@ -156,6 +273,7 @@ export const mockStore: MockStore = {
   deliveryFeeUsdCents: 50,
   deliveryEtaMinMinutes: 15,
   deliveryEtaMaxMinutes: 30,
+  allowCod: true,
 };
 
 export const mockProducts: MockProduct[] = [

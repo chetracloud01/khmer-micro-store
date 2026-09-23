@@ -6,7 +6,7 @@ import { ArrowLeft, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { mockPromoCodes, mockStore, type MockPromoCode } from "@/mock/mock-data";
+import { mockPromoCodes, mockStore } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
 import { useCartSummary } from "../use-cart-summary";
 
@@ -14,12 +14,11 @@ export default function CartMockupPage() {
   const t = useTranslations("Cart");
   const tStore = useTranslations("Storefront");
   const locale = useLocale();
-  const { quantities, setQuantities } = useCart();
+  const { quantities, setQuantities, appliedPromo, setAppliedPromo } = useCart();
 
   const [showPromoInput, setShowPromoInput] = useState(false);
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [appliedPromo, setAppliedPromo] = useState<MockPromoCode | null>(null);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   const {
@@ -229,9 +228,11 @@ export default function CartMockupPage() {
 
       {cartCount > 0 && (
         <div className="fixed inset-x-0 bottom-0 mx-auto max-w-[480px] border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
-          <Button variant="primary" className="w-full">
-            {t("reviewPayment")}
-          </Button>
+          <Link href={`/${locale}/mockup/checkout`}>
+            <Button variant="primary" className="w-full">
+              {t("reviewPayment")}
+            </Button>
+          </Link>
         </div>
       )}
     </div>

@@ -2,10 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { MockPromoCode } from "@/mock/mock-data";
 
 interface CartContextValue {
   quantities: Record<string, number>;
   setQuantities: Dispatch<SetStateAction<Record<string, number>>>;
+  appliedPromo: MockPromoCode | null;
+  setAppliedPromo: Dispatch<SetStateAction<MockPromoCode | null>>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -16,10 +19,12 @@ const STORAGE_KEY = "khmer-micro-store:mockup-cart";
 
 interface PersistedCart {
   quantities: Record<string, number>;
+  appliedPromo: MockPromoCode | null;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [appliedPromo, setAppliedPromo] = useState<MockPromoCode | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   // Read persisted cart client-side only, after the initial (empty) render
@@ -30,6 +35,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PersistedCart>;
         if (parsed.quantities) setQuantities(parsed.quantities);
+        if (parsed.appliedPromo) setAppliedPromo(parsed.appliedPromo);
       }
     } catch {
       // Corrupt or inaccessible storage (e.g. private browsing) — start empty.
@@ -43,14 +49,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      const payload: PersistedCart = { quantities };
+      const payload: PersistedCart = { quantities, appliedPromo };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // Storage full or unavailable — cart just won't persist this time.
     }
-  }, [quantities, hydrated]);
+  }, [quantities, appliedPromo, hydrated]);
 
-  return <CartContext.Provider value={{ quantities, setQuantities }}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={{ quantities, setQuantities, appliedPromo, setAppliedPromo }}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart(): CartContextValue {

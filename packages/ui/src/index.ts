@@ -7,4 +7,5 @@ export * from "./DiscountBadge";
 export * from "./Input";
 export * from "./PriceTag";
 export * from "./SearchInput";
+export * from "./Select";
 export * from "./SegmentedControl";
