@@ -17,6 +17,15 @@ const config: Config = {
       borderRadius: {
         DEFAULT: "12px",
       },
+      colors: {
+        brand: "rgb(var(--color-brand) / <alpha-value>)",
+        success: "rgb(var(--color-success) / <alpha-value>)",
+        danger: "rgb(var(--color-danger) / <alpha-value>)",
+        bg: "rgb(var(--color-bg) / <alpha-value>)",
+        fg: "rgb(var(--color-fg) / <alpha-value>)",
+        muted: "rgb(var(--color-muted) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+      },
     },
   },
   plugins: [],

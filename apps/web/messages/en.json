@@ -2,5 +2,31 @@
   "Home": {
     "title": "Khmer Micro-Store",
     "subtitle": "Foundation is ready"
+  },
+  "Styleguide": {
+    "title": "Styleguide",
+    "colors": "Colors",
+    "colorBrand": "Brand",
+    "colorSuccess": "Success (paid)",
+    "colorDanger": "Danger",
+    "typography": "Typography",
+    "typographySample": "Small sellers take orders in chat, check payment screenshots by hand.",
+    "typographySampleKhmer": "អ្នកលក់តូចៗទទួលការបញ្ជាទិញតាមឆាត ពិនិត្យវិក័យប័ត្របង់ប្រាក់ដោយដៃ។",
+    "buttons": "Buttons",
+    "buttonPrimary": "Place order",
+    "buttonSecondary": "Cancel",
+    "buttonDanger": "Remove item",
+    "buttonLoading": "Placing order…",
+    "inputs": "Inputs",
+    "nameLabel": "Name",
+    "namePlaceholder": "Name for the delivery driver",
+    "phoneLabel": "Phone",
+    "phoneError": "Phone number needs 9-10 digits",
+    "cards": "Cards",
+    "cardDeliveryTitle": "Delivery",
+    "cardDeliveryFee": "Fee: $1.00",
+    "cardPickupTitle": "Pickup",
+    "cardPickupFee": "Free",
+    "prices": "Prices (USD / KHR)"
   }
 }

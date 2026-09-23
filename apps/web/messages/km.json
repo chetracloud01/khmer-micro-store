@@ -2,5 +2,31 @@
   "Home": {
     "title": "ហាងខ្មែរ Micro-Store",
     "subtitle": "គ្រឹះស្ថានត្រូវបានរៀបចំរួចរាល់"
+  },
+  "Styleguide": {
+    "title": "រចនាបថ",
+    "colors": "ពណ៌",
+    "colorBrand": "ពណ៌ម៉ាក",
+    "colorSuccess": "ជោគជ័យ (បង់រួច)",
+    "colorDanger": "គ្រោះថ្នាក់",
+    "typography": "អក្សរសាស្ត្រ",
+    "typographySample": "Small sellers take orders in chat, check payment screenshots by hand.",
+    "typographySampleKhmer": "អ្នកលក់តូចៗទទួលការបញ្ជាទិញតាមឆាត ពិនិត្យវិក័យប័ត្របង់ប្រាក់ដោយដៃ។",
+    "buttons": "ប៊ូតុង",
+    "buttonPrimary": "កម្មង់ទិញ",
+    "buttonSecondary": "បោះបង់",
+    "buttonDanger": "លុបទំនិញ",
+    "buttonLoading": "កំពុងកម្មង់ទិញ…",
+    "inputs": "ប្រអប់បញ្ចូល",
+    "nameLabel": "ឈ្មោះ",
+    "namePlaceholder": "ឈ្មោះសម្រាប់អ្នកបញ្ជូន",
+    "phoneLabel": "លេខទូរស័ព្ទ",
+    "phoneError": "លេខទូរស័ព្ទត្រូវការ 9-10 ខ្ទង់",
+    "cards": "កាត",
+    "cardDeliveryTitle": "ដឹកជញ្ជូន",
+    "cardDeliveryFee": "តម្លៃ៖ $1.00",
+    "cardPickupTitle": "មករើកយកដោយខ្លួនឯង",
+    "cardPickupFee": "ឥតគិតថ្លៃ",
+    "prices": "តម្លៃ (ដុល្លារ / រៀល)"
   }
 }
