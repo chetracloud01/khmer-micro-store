@@ -1,8 +1,10 @@
 "use client";
 
-import { Button, Input } from "@khmer-micro-store/ui";
-import { Check, PartyPopper, Send, Upload, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Button, Input, SegmentedControl } from "@khmer-micro-store/ui";
+import { Check, Download, PartyPopper, Send, Upload, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { mockTakenSlugs, slugify } from "@/mock/mock-data";
@@ -15,6 +17,8 @@ const TOTAL_STEPS = 4;
 
 export default function OnboardingMockupPage() {
   const t = useTranslations("Onboarding");
+  const locale = useLocale();
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
 
@@ -36,10 +40,21 @@ export default function OnboardingMockupPage() {
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatus>("idle");
 
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slugTouched) setSlug(slugify(shopName));
   }, [shopName, slugTouched]);
+
+  // Real QR code: it just encodes the shop's public link, so no backend is
+  // needed to generate it (unlike the KHQR payment code, which is mocked).
+  useEffect(() => {
+    if (!done || !slug) return;
+    const shopUrl = `${window.location.origin}/s/${slug}`;
+    QRCode.toDataURL(shopUrl, { width: 240, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [done, slug]);
 
   // Mocks a real uniqueness lookup against the DB with a short debounce.
   useEffect(() => {
@@ -114,9 +129,27 @@ export default function OnboardingMockupPage() {
     }
   }
 
+  function handleDownloadQr() {
+    if (!qrDataUrl) return;
+    const link = document.createElement("a");
+    link.href = qrDataUrl;
+    link.download = `${slug}-qr.png`;
+    link.click();
+  }
+
   if (done) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col items-center justify-center gap-4 bg-bg p-4 text-center text-fg">
+      <div className="relative mx-auto flex min-h-screen max-w-[480px] flex-col items-center justify-center gap-4 bg-bg p-4 text-center text-fg">
+        <div className="absolute right-4 top-4">
+          <SegmentedControl
+            value={locale}
+            onChange={(next) => router.push(`/${next}/mockup/onboarding`)}
+            options={[
+              { value: "km", label: "ខ្មែរ" },
+              { value: "en", label: "EN" },
+            ]}
+          />
+        </div>
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
           <PartyPopper className="h-8 w-8 text-success" aria-hidden="true" />
         </span>
@@ -135,6 +168,21 @@ export default function OnboardingMockupPage() {
             <p className="truncate font-semibold">{shopName}</p>
             <p className="truncate text-xs text-muted">/s/{slug}</p>
           </div>
+        </div>
+
+        <div className="flex w-full flex-col items-center gap-2 rounded-DEFAULT border border-border p-3">
+          <p className="text-sm font-medium text-fg">{t("showQrTitle")}</p>
+          {qrDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- locally generated data URL, not a remote image
+            <img src={qrDataUrl} alt="" className="h-40 w-40" />
+          ) : (
+            <div className="h-40 w-40 animate-pulse rounded-DEFAULT bg-border/30" />
+          )}
+          <p className="text-center text-xs text-muted">{t("qrScanHint")}</p>
+          <Button variant="secondary" onClick={handleDownloadQr} disabled={!qrDataUrl} className="w-full">
+            <Download className="h-4 w-4" aria-hidden="true" />
+            {t("downloadQr")}
+          </Button>
         </div>
 
         <div className="flex w-full gap-2">
@@ -163,18 +211,28 @@ export default function OnboardingMockupPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-6 bg-bg p-4 pb-24 text-fg">
-      <div className="flex flex-col gap-1">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-border/30">
-          <div
-            className="h-full rounded-full bg-brand transition-all"
-            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-          />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-border/30">
+            <div
+              className="h-full rounded-full bg-brand transition-all"
+              style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+            />
+          </div>
+          <span className="text-xs text-muted">{t("stepLabel", { current: step, total: TOTAL_STEPS })}</span>
         </div>
-        <span className="text-xs text-muted">{t("stepLabel", { current: step, total: TOTAL_STEPS })}</span>
+        <SegmentedControl
+          value={locale}
+          onChange={(next) => router.push(`/${next}/mockup/onboarding`)}
+          options={[
+            { value: "km", label: "ខ្មែរ" },
+            { value: "en", label: "EN" },
+          ]}
+        />
       </div>
 
       {step === 1 && (
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 rounded-DEFAULT border border-border bg-bg p-4 shadow-sm">
           <h1 className="text-lg font-semibold">{t("step1Title")}</h1>
           <Input
             label={t("shopNameLabel")}
@@ -203,7 +261,7 @@ export default function OnboardingMockupPage() {
       )}
 
       {step === 2 && (
-        <div className="flex flex-1 flex-col items-center gap-4 text-center">
+        <div className="flex flex-1 flex-col items-center gap-4 rounded-DEFAULT border border-border bg-bg p-4 text-center shadow-sm">
           <h1 className="text-lg font-semibold">{t("step2Title")}</h1>
           <p className="text-sm text-muted">{t("optionalNote")}</p>
 
@@ -235,7 +293,7 @@ export default function OnboardingMockupPage() {
       )}
 
       {step === 3 && (
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 rounded-DEFAULT border border-border bg-bg p-4 shadow-sm">
           <h1 className="text-lg font-semibold">{t("step3Title")}</h1>
           <Input
             label={t("bakongIdLabel")}
@@ -259,7 +317,7 @@ export default function OnboardingMockupPage() {
       )}
 
       {step === 4 && (
-        <div className="flex flex-1 flex-col items-center gap-4 text-center">
+        <div className="flex flex-1 flex-col items-center gap-4 rounded-DEFAULT border border-border bg-bg p-4 text-center shadow-sm">
           <h1 className="text-lg font-semibold">{t("step4Title")}</h1>
           <p className="text-sm text-muted">{t("optionalNote")}</p>
 
