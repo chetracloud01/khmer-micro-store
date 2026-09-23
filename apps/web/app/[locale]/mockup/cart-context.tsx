@@ -3,13 +3,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 
-export type DeliveryMethod = "delivery" | "pickup";
-
 interface CartContextValue {
   quantities: Record<string, number>;
   setQuantities: Dispatch<SetStateAction<Record<string, number>>>;
-  deliveryMethod: DeliveryMethod;
-  setDeliveryMethod: Dispatch<SetStateAction<DeliveryMethod>>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -20,12 +16,10 @@ const STORAGE_KEY = "khmer-micro-store:mockup-cart";
 
 interface PersistedCart {
   quantities: Record<string, number>;
-  deliveryMethod: DeliveryMethod;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [hydrated, setHydrated] = useState(false);
 
   // Read persisted cart client-side only, after the initial (empty) render
@@ -36,7 +30,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PersistedCart>;
         if (parsed.quantities) setQuantities(parsed.quantities);
-        if (parsed.deliveryMethod) setDeliveryMethod(parsed.deliveryMethod);
       }
     } catch {
       // Corrupt or inaccessible storage (e.g. private browsing) — start empty.
@@ -50,18 +43,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      const payload: PersistedCart = { quantities, deliveryMethod };
+      const payload: PersistedCart = { quantities };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // Storage full or unavailable — cart just won't persist this time.
     }
-  }, [quantities, deliveryMethod, hydrated]);
+  }, [quantities, hydrated]);
 
-  return (
-    <CartContext.Provider value={{ quantities, setQuantities, deliveryMethod, setDeliveryMethod }}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={{ quantities, setQuantities }}>{children}</CartContext.Provider>;
 }
 
 export function useCart(): CartContextValue {

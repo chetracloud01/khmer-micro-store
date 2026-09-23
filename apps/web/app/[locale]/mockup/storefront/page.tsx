@@ -2,7 +2,7 @@
 
 import { formatUsd } from "@khmer-micro-store/shared";
 import { Badge, BottomSheet, Button, SearchInput, SegmentedControl } from "@khmer-micro-store/ui";
-import { Bike, ChevronRight, Footprints } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ export default function StorefrontMockupPage() {
   const t = useTranslations("Storefront");
   const locale = useLocale();
   const router = useRouter();
-  const { quantities, setQuantities, deliveryMethod, setDeliveryMethod } = useCart();
+  const { quantities, setQuantities } = useCart();
   const storeName = locale === "km" ? mockStore.nameKm : mockStore.nameEn;
   const ratingCountLabel = locale === "km" ? mockStore.ratingCountLabelKm : mockStore.ratingCountLabelEn;
 
@@ -110,43 +110,6 @@ export default function StorefrontMockupPage() {
                 { value: "en", label: "EN" },
               ]}
             />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <SegmentedControl
-              value={deliveryMethod}
-              onChange={(next) => setDeliveryMethod(next as typeof deliveryMethod)}
-              className="self-start"
-              options={[
-                {
-                  value: "delivery",
-                  label: (
-                    <span className="flex items-center gap-1">
-                      <Bike className="h-4 w-4" aria-hidden="true" />
-                      {t("delivery")}
-                    </span>
-                  ),
-                },
-                {
-                  value: "pickup",
-                  label: (
-                    <span className="flex items-center gap-1">
-                      <Footprints className="h-4 w-4" aria-hidden="true" />
-                      {t("pickup")}
-                    </span>
-                  ),
-                },
-              ]}
-            />
-            {deliveryMethod === "delivery" && (
-              <p className="text-xs text-muted">
-                {t("deliveryTime", {
-                  min: mockStore.deliveryEtaMinMinutes,
-                  max: mockStore.deliveryEtaMaxMinutes,
-                })}{" "}
-                · {formatUsd(mockStore.deliveryFeeUsdCents)}
-              </p>
-            )}
           </div>
 
           <SearchInput

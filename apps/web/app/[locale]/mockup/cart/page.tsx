@@ -1,8 +1,8 @@
 "use client";
 
 import { formatKhr, formatUsd } from "@khmer-micro-store/shared";
-import { Button, cn, SegmentedControl } from "@khmer-micro-store/ui";
-import { ArrowLeft, Bike, ChevronDown, ChevronRight, Footprints, Trash2 } from "lucide-react";
+import { Button, cn } from "@khmer-micro-store/ui";
+import { ArrowLeft, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -14,7 +14,7 @@ export default function CartMockupPage() {
   const t = useTranslations("Cart");
   const tStore = useTranslations("Storefront");
   const locale = useLocale();
-  const { quantities, setQuantities, deliveryMethod, setDeliveryMethod } = useCart();
+  const { quantities, setQuantities } = useCart();
 
   const [showPromoInput, setShowPromoInput] = useState(false);
   const [promoInput, setPromoInput] = useState("");
@@ -83,39 +83,6 @@ export default function CartMockupPage() {
           <span className="text-muted">{t("stepCheckout")}</span>
         </div>
 
-        <SegmentedControl
-          value={deliveryMethod}
-          onChange={(next) => setDeliveryMethod(next as typeof deliveryMethod)}
-          className="self-start"
-          options={[
-            {
-              value: "delivery",
-              label: (
-                <span className="flex items-center gap-1">
-                  <Bike className="h-4 w-4" aria-hidden="true" />
-                  {tStore("delivery")}
-                </span>
-              ),
-            },
-            {
-              value: "pickup",
-              label: (
-                <span className="flex items-center gap-1">
-                  <Footprints className="h-4 w-4" aria-hidden="true" />
-                  {tStore("pickup")}
-                </span>
-              ),
-            },
-          ]}
-        />
-        {deliveryMethod === "delivery" && (
-          <p className="text-xs text-muted">
-            {tStore("deliveryTime", {
-              min: mockStore.deliveryEtaMinMinutes,
-              max: mockStore.deliveryEtaMaxMinutes,
-            })}
-          </p>
-        )}
       </header>
 
       <main className="flex flex-col gap-4 p-4">
