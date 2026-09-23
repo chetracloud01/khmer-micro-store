@@ -435,7 +435,7 @@ export default function StorefrontMockupPage() {
         </BottomSheet>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] flex-col gap-2 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
+      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-[480px] flex-col gap-2 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
         {cartCount === 0 ? (
           <span className="text-sm text-muted">{t("itemCount", { count: 0 })}</span>
         ) : (
@@ -444,7 +444,7 @@ export default function StorefrontMockupPage() {
               type="button"
               onClick={() => setSummaryExpanded((v) => !v)}
               aria-expanded={summaryExpanded}
-              className="flex min-h-touch items-center justify-between gap-3"
+              className="flex min-h-touch shrink-0 items-center justify-between gap-3"
             >
               <span className="flex flex-col items-start">
                 <span className="text-xs text-muted">{t("itemCount", { count: cartCount })}</span>
@@ -460,12 +460,12 @@ export default function StorefrontMockupPage() {
             </button>
 
             {summaryExpanded && (
-              <div className="flex flex-col gap-2 border-t border-border pt-2">
+              <div className="flex flex-1 flex-col gap-2 overflow-y-auto border-t border-border pt-2">
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                     {t("yourItems")}
                   </span>
-                  <div className="flex max-h-[30vh] flex-col gap-1 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
                     {cartLines.map((line) => (
                       <div key={line.key} className="flex items-center justify-between gap-2 py-1">
                         <div className="min-w-0 flex-1">
@@ -554,7 +554,7 @@ export default function StorefrontMockupPage() {
               </div>
             )}
 
-            <Button variant="primary" className="w-full">
+            <Button variant="primary" className="w-full shrink-0">
               {t("viewCart")}
             </Button>
           </>
