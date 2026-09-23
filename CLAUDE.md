@@ -22,7 +22,13 @@ pnpm dev | pnpm lint | pnpm typecheck | pnpm test | pnpm db:migrate
 
 ## Rules
 - Prices are integers: price_usd_cents, price_khr (riel). A product may have
-  one or both. Buyer picks USD or KHR at checkout.
+  one or both. Buyer picks ONE currency for the whole order at checkout, not
+  per item. Missing-currency lines convert via the store's usd_to_khr_rate
+  (clamped to a platform-allowed band) at checkout time; round each line
+  first, then sum — never convert-then-round the total. Freeze
+  exchange_rate_used onto the order. Payment verification never re-converts:
+  accept only an exact integer match on currency + total_minor. Full
+  rationale: docs/blueprint.md "Multi-currency pricing and totals".
 - Phone: accept 012 345 678 and 097 123 4567, +855 or 855 prefix; strip spaces,
   prefix and leading 0; 8-9 digits remain; save as 855XXXXXXXX(X).
 - Every merchant query filters by store_id. No `any`. Zod on every input.
