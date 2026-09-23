@@ -14,6 +14,13 @@ export interface MockStore {
   usdToKhrRateMin: number;
   usdToKhrRateMax: number;
   vatPercent: number;
+  bannerColor: string;
+  ratingValue: number;
+  ratingCountLabelKm: string;
+  ratingCountLabelEn: string;
+  deliveryFeeUsdCents: number;
+  deliveryEtaMinMinutes: number;
+  deliveryEtaMaxMinutes: number;
 }
 
 export interface MockCategory {
@@ -102,6 +109,36 @@ export function getEffectiveExchangeRate(store: MockStore): number {
   return Math.min(store.usdToKhrRateMax, Math.max(store.usdToKhrRateMin, store.usdToKhrRate));
 }
 
+/** The biggest active discount in the catalog, for the storefront banner ribbon. */
+export function getStoreMaxDiscountPercent(products: MockProduct[]): number {
+  return products.reduce((max, product) => Math.max(max, product.discountPercent ?? 0), 0);
+}
+
+/** `${productId}::${variantId}`, or `${productId}::_base` for a product with no variants. */
+export function lineKey(productId: string, variantId?: string): string {
+  return `${productId}::${variantId ?? "_base"}`;
+}
+
+/** Every priceable line in the catalog: a variant, or the product itself if it has none. */
+export function getAllLineContexts(products: MockProduct[]) {
+  return products.flatMap((product) => {
+    if (product.variants?.length) {
+      return product.variants.map((variant) => ({
+        key: lineKey(product.id, variant.id),
+        baseUsdCents: variant.priceUsdCents,
+        unitUsdCents: getUnitUsdCents(product, variant),
+      }));
+    }
+    return [
+      {
+        key: lineKey(product.id),
+        baseUsdCents: product.priceUsdCents,
+        unitUsdCents: getUnitUsdCents(product),
+      },
+    ];
+  });
+}
+
 export const mockStore: MockStore = {
   slug: "sokha-coffee",
   nameKm: "កាហ្វេសុខា",
@@ -112,6 +149,13 @@ export const mockStore: MockStore = {
   usdToKhrRateMin: 3900,
   usdToKhrRateMax: 4300,
   vatPercent: 10,
+  bannerColor: "bg-gradient-to-br from-amber-300 to-orange-400",
+  ratingValue: 4.9,
+  ratingCountLabelKm: "ការវាយតម្លៃ ១k+",
+  ratingCountLabelEn: "1k+ ratings",
+  deliveryFeeUsdCents: 50,
+  deliveryEtaMinMinutes: 15,
+  deliveryEtaMaxMinutes: 30,
 };
 
 export const mockProducts: MockProduct[] = [

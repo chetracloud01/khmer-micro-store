@@ -56,6 +56,24 @@
     "close": "បិទ",
     "done": "រួចរាល់",
     "yourItems": "ទំនិញរបស់អ្នក",
-    "details": "លម្អិត"
+    "details": "លម្អិត",
+    "delivery": "ដឹកជញ្ជូន",
+    "pickup": "មករើកយកដោយខ្លួនឯង",
+    "deliveryTime": "{min}-{max} នាទី",
+    "upTo": "បញ្ចុះតម្លៃរហូតដល់ {percent}%",
+    "specialOffers": "ការផ្តល់ជូនពិសេសសម្រាប់អ្នក",
+    "rating": "★ {value} ({count})"
+  },
+  "Cart": {
+    "title": "កន្ត្រក",
+    "stepMenu": "ម៉ឺនុយ",
+    "stepCart": "កន្ត្រក",
+    "stepCheckout": "ការទូទាត់",
+    "empty": "កន្ត្រករបស់អ្នកទទេ",
+    "browseMenu": "រកមើលម៉ឺនុយ",
+    "addMoreItems": "បន្ថែមទំនិញបន្ថែម",
+    "seeSummary": "មើលសេចក្តីសង្ខេប",
+    "hideSummary": "លាក់សេចក្តីសង្ខេប",
+    "reviewPayment": "ពិនិត្យការទូទាត់និងអាសយដ្ឋាន"
   }
 }

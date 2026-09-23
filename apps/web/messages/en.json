@@ -56,6 +56,24 @@
     "close": "Close",
     "done": "Done",
     "yourItems": "Your items",
-    "details": "Details"
+    "details": "Details",
+    "delivery": "Delivery",
+    "pickup": "Pickup",
+    "deliveryTime": "{min}-{max} min",
+    "upTo": "Up to {percent}% off",
+    "specialOffers": "Special offers for you",
+    "rating": "★ {value} ({count})"
+  },
+  "Cart": {
+    "title": "Cart",
+    "stepMenu": "Menu",
+    "stepCart": "Cart",
+    "stepCheckout": "Checkout",
+    "empty": "Your cart is empty",
+    "browseMenu": "Browse menu",
+    "addMoreItems": "Add more items",
+    "seeSummary": "See summary",
+    "hideSummary": "Hide summary",
+    "reviewPayment": "Review payment and address"
   }
 }
