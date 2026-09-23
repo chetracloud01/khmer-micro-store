@@ -187,6 +187,18 @@ export function generateOrderNumber(store: MockStore): string {
   return `${prefix}-${suffix}`;
 }
 
+export function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Slugs already in use by other stores, for the onboarding screen's live
+// availability check (mocks a real uniqueness lookup against the DB).
+export const mockTakenSlugs = ["sokha-coffee", "queen-bee", "phnom-penh-mart"];
+
 /** Every priceable line in the catalog: a variant, or the product itself if it has none. */
 export function getAllLineContexts(products: MockProduct[]) {
   return products.flatMap((product) => {
