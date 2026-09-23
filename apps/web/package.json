@@ -13,6 +13,7 @@
   "dependencies": {
     "@khmer-micro-store/shared": "workspace:*",
     "@khmer-micro-store/ui": "workspace:*",
+    "lucide-react": "^0.462.0",
     "next": "^14.2.15",
     "next-intl": "^3.25.0",
     "react": "^18.3.1",
