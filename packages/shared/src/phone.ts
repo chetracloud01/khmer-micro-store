@@ -1,0 +1,41 @@
+import { z } from "zod";
+
+/**
+ * Normalizes a Cambodian phone number to `855XXXXXXXX(X)`.
+ * Accepts input like "012 345 678", "097 123 4567", "+855 97 123 4567",
+ * "855971234567". Strips spaces/dashes, the +855 or 855 prefix, and a
+ * leading 0, then requires 8-9 remaining digits.
+ */
+export function normalizeKhmerPhone(input: string): string | null {
+  let digits = input.replace(/[\s-]/g, "");
+
+  if (digits.startsWith("+855")) {
+    digits = digits.slice(4);
+  } else if (digits.startsWith("855")) {
+    digits = digits.slice(3);
+  }
+
+  if (digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+
+  if (!/^\d{8,9}$/.test(digits)) {
+    return null;
+  }
+
+  return `855${digits}`;
+}
+
+export const khmerPhoneSchema = z
+  .string()
+  .transform((val, ctx) => {
+    const normalized = normalizeKhmerPhone(val);
+    if (!normalized) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "phone_invalid",
+      });
+      return z.NEVER;
+    }
+    return normalized;
+  });

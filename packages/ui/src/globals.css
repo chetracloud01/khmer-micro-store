@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Kantumruy Pro for Khmer script; falls back to system sans for Latin. */
+:root {
+  --font-khmer: "Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif;
+}
+
+html {
+  font-family: var(--font-khmer);
+  line-height: 1.6;
+}

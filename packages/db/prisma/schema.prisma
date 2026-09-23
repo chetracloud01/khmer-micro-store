@@ -1,0 +1,12 @@
+// Real schema (merchants, stores, products, orders, payments, ...) lands in
+// Stage C per docs/blueprint.md. This placeholder only wires up the
+// generator/datasource so `pnpm db:migrate` and `prisma generate` run.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
