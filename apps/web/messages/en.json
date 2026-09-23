@@ -95,6 +95,7 @@
     "locationPlaceholder": "Pin your delivery location",
     "locationSet": "Pin set ({lat}, {lng})",
     "locationError": "Couldn't get your location. Pick your area below instead.",
+    "phnomPenhOnlyNote": "We currently deliver within Phnom Penh only. If you're elsewhere, describe your location in the note below.",
     "landmark": "Landmark / note",
     "landmarkPlaceholder": "Example: Opposite Wat Phnom, blue gate",
     "payIn": "Pay in",

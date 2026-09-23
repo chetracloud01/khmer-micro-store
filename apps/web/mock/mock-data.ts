@@ -273,7 +273,9 @@ export const mockStore: MockStore = {
   deliveryFeeUsdCents: 50,
   deliveryEtaMinMinutes: 15,
   deliveryEtaMaxMinutes: 30,
-  allowCod: true,
+  // Seller has not enabled Cash on delivery for this store (blocks the COD
+  // card from the payment method list on checkout).
+  allowCod: false,
 };
 
 export const mockProducts: MockProduct[] = [

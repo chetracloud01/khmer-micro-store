@@ -9,7 +9,7 @@ import {
   type Currency,
 } from "@khmer-micro-store/shared";
 import { Button, cn, Input, Select } from "@khmer-micro-store/ui";
-import { Bike, Check, Footprints, MapPin } from "lucide-react";
+import { ArrowLeft, Bike, Check, Footprints, MapPin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -181,7 +181,16 @@ export default function CheckoutMockupPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-4 bg-bg p-4 pb-28 text-fg">
-      <h1 className="text-lg font-semibold">{t("title")}</h1>
+      <div className="flex items-center gap-3">
+        <Link
+          href={`/${locale}/mockup/cart`}
+          aria-label={t("backToCart")}
+          className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-border/30"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+        </Link>
+        <h1 className="text-lg font-semibold">{t("title")}</h1>
+      </div>
 
       <Input
         ref={nameRef}
@@ -204,30 +213,34 @@ export default function CheckoutMockupPage() {
         error={phoneError ?? undefined}
       />
 
+      {/*
+       * No fee/"Free" label shown here: delivery fee and whether pickup is
+       * free are seller-configured (merchant Settings/admin panel, not yet
+       * built). The fee still applies to the total below via
+       * mockStore.deliveryFeeUsdCents once that's wired to real settings.
+       */}
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
           onClick={() => setFulfillment("delivery")}
           className={cn(
-            "rounded-DEFAULT border-2 p-4 text-left transition-colors",
+            "flex min-h-touch items-center gap-2 rounded-DEFAULT border-2 p-4 text-left transition-colors",
             fulfillment === "delivery" ? "border-brand bg-brand/5" : "border-border",
           )}
         >
           <Bike className="h-5 w-5 text-brand" aria-hidden="true" />
-          <p className="mt-2 font-medium">{tStore("delivery")}</p>
-          <p className="text-xs text-muted">{formatUsd(mockStore.deliveryFeeUsdCents)}</p>
+          <p className="font-medium">{tStore("delivery")}</p>
         </button>
         <button
           type="button"
           onClick={() => setFulfillment("pickup")}
           className={cn(
-            "rounded-DEFAULT border-2 p-4 text-left transition-colors",
+            "flex min-h-touch items-center gap-2 rounded-DEFAULT border-2 p-4 text-left transition-colors",
             fulfillment === "pickup" ? "border-brand bg-brand/5" : "border-border",
           )}
         >
           <Footprints className="h-5 w-5 text-brand" aria-hidden="true" />
-          <p className="mt-2 font-medium">{tStore("pickup")}</p>
-          <p className="text-xs text-muted">{t("free")}</p>
+          <p className="font-medium">{tStore("pickup")}</p>
         </button>
       </div>
 
@@ -248,6 +261,7 @@ export default function CheckoutMockupPage() {
             {t("useMyLocation")}
           </Button>
           {locationStatus === "error" && <p className="text-sm text-danger">{t("locationError")}</p>}
+          <p className="text-xs text-muted">{t("phnomPenhOnlyNote")}</p>
 
           <Select
             ref={provinceRef}
