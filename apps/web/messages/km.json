@@ -28,5 +28,10 @@
     "cardPickupTitle": "មករើកយកដោយខ្លួនឯង",
     "cardPickupFee": "ឥតគិតថ្លៃ",
     "prices": "តម្លៃ (ដុល្លារ / រៀល)"
+  },
+  "Storefront": {
+    "verified": "ហាងបានផ្ទៀងផ្ទាត់",
+    "viewCart": "មើលកន្ត្រក",
+    "itemCount": "{count, plural, =0 {មិនទាន់មានទំនិញ} other {# ទំនិញ}}"
   }
 }
