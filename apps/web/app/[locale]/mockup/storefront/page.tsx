@@ -26,7 +26,6 @@ import {
   mockProducts,
   mockStore,
   type MockProduct,
-  type MockVariant,
 } from "@/mock/mock-data";
 
 /** `${productId}::${variantId}`, or `${productId}::_base` for a product with no variants. */
@@ -95,6 +94,60 @@ function Stepper({
   );
 }
 
+function VariantRow({
+  label,
+  usdCents,
+  khr,
+  originalUsdCents,
+  originalKhr,
+  qty,
+  onDecrease,
+  onIncrease,
+  addLabel,
+  decreaseLabel,
+  increaseLabel,
+}: {
+  label: string;
+  usdCents?: number;
+  khr?: number;
+  originalUsdCents?: number;
+  originalKhr?: number;
+  qty: number;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  addLabel: string;
+  decreaseLabel: string;
+  increaseLabel: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0">
+      <div className="flex flex-col">
+        <span className="text-sm font-medium">{label}</span>
+        <PriceTag usdCents={usdCents} khr={khr} originalUsdCents={originalUsdCents} originalKhr={originalKhr} className="text-sm" />
+      </div>
+      {qty === 0 ? (
+        <button
+          type="button"
+          aria-label={addLabel}
+          onClick={onIncrease}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-2xl font-bold text-white"
+        >
+          +
+        </button>
+      ) : (
+        <Stepper
+          qty={qty}
+          onDecrease={onDecrease}
+          onIncrease={onIncrease}
+          decreaseLabel={decreaseLabel}
+          increaseLabel={increaseLabel}
+          className="shrink-0"
+        />
+      )}
+    </div>
+  );
+}
+
 // Every priceable line in the catalog: a variant, or the product itself if it has none.
 function getAllLineContexts() {
   return mockProducts.flatMap((product) => {
@@ -130,8 +183,6 @@ export default function StorefrontMockupPage() {
   const [appliedPromo, setAppliedPromo] = useState<(typeof mockPromoCodes)[number] | null>(null);
 
   const [pickerProductId, setPickerProductId] = useState<string | null>(null);
-  const [pickerVariantId, setPickerVariantId] = useState<string | null>(null);
-  const [pickerQty, setPickerQty] = useState(1);
 
   const visibleProducts = useMemo(() => {
     return mockProducts.filter((product) => {
@@ -183,23 +234,33 @@ export default function StorefrontMockupPage() {
 
   function openPicker(product: MockProduct) {
     setPickerProductId(product.id);
-    setPickerVariantId(product.variants?.[0]?.id ?? null);
-    setPickerQty(1);
   }
 
   function closePicker() {
     setPickerProductId(null);
-    setPickerVariantId(null);
   }
 
   const pickerProduct = pickerProductId ? (mockProducts.find((p) => p.id === pickerProductId) ?? null) : null;
-  const pickerVariant: MockVariant | undefined = pickerProduct?.variants?.find((v) => v.id === pickerVariantId);
 
-  function confirmPicker() {
-    if (!pickerProduct || !pickerVariant) return;
-    adjustQuantity(lineKey(pickerProduct.id, pickerVariant.id), pickerQty);
-    closePicker();
-  }
+  // Every distinct product+variant line currently in the cart, for the itemized list in the payment summary.
+  const cartLines = mockProducts.flatMap((product) => {
+    const title = locale === "km" ? product.titleKm : product.titleEn;
+    if (product.variants?.length) {
+      return product.variants.flatMap((variant) => {
+        const key = lineKey(product.id, variant.id);
+        const qty = quantities[key] ?? 0;
+        if (qty === 0) return [];
+        const unitUsdCents = getUnitUsdCents(product, variant) ?? 0;
+        const variantLabel = locale === "km" ? variant.labelKm : variant.labelEn;
+        return [{ key, label: `${title} – ${variantLabel}`, qty, lineTotalUsdCents: unitUsdCents * qty }];
+      });
+    }
+    const key = lineKey(product.id);
+    const qty = quantities[key] ?? 0;
+    if (qty === 0) return [];
+    const unitUsdCents = getUnitUsdCents(product) ?? 0;
+    return [{ key, label: title, qty, lineTotalUsdCents: unitUsdCents * qty }];
+  });
 
   function handleApplyPromo() {
     const match = mockPromoCodes.find(
@@ -339,41 +400,34 @@ export default function StorefrontMockupPage() {
           closeLabel={t("close")}
           title={locale === "km" ? pickerProduct.titleKm : pickerProduct.titleEn}
         >
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <div className={`aspect-video w-full rounded-DEFAULT ${pickerProduct.photoColor}`} />
+            <p className="text-sm font-medium text-muted">{t("chooseOption")}</p>
             <div>
-              <p className="mb-2 text-sm font-medium text-muted">{t("chooseOption")}</p>
-              <div className="flex flex-wrap gap-2">
-                {pickerProduct.variants!.map((variant) => (
-                  <CategoryChip
+              {pickerProduct.variants!.map((variant) => {
+                const key = lineKey(pickerProduct.id, variant.id);
+                const qty = quantities[key] ?? 0;
+                const label = locale === "km" ? variant.labelKm : variant.labelEn;
+                return (
+                  <VariantRow
                     key={variant.id}
-                    active={pickerVariantId === variant.id}
-                    onClick={() => setPickerVariantId(variant.id)}
-                  >
-                    {locale === "km" ? variant.labelKm : variant.labelEn}
-                  </CategoryChip>
-                ))}
-              </div>
+                    label={label}
+                    usdCents={getUnitUsdCents(pickerProduct, variant)}
+                    khr={getUnitKhr(pickerProduct, variant)}
+                    originalUsdCents={pickerProduct.discountPercent ? variant.priceUsdCents : undefined}
+                    originalKhr={pickerProduct.discountPercent ? variant.priceKhr : undefined}
+                    qty={qty}
+                    onDecrease={() => adjustQuantity(key, -1)}
+                    onIncrease={() => adjustQuantity(key, 1)}
+                    addLabel={t("add")}
+                    decreaseLabel={t("decrease", { title: label })}
+                    increaseLabel={t("increase", { title: label })}
+                  />
+                );
+              })}
             </div>
-            {pickerVariant && (
-              <PriceTag
-                usdCents={getUnitUsdCents(pickerProduct, pickerVariant)}
-                khr={getUnitKhr(pickerProduct, pickerVariant)}
-                originalUsdCents={pickerProduct.discountPercent ? pickerVariant.priceUsdCents : undefined}
-                originalKhr={pickerProduct.discountPercent ? pickerVariant.priceKhr : undefined}
-                className="text-lg"
-              />
-            )}
-            <Stepper
-              qty={pickerQty}
-              onDecrease={() => setPickerQty((q) => Math.max(1, q - 1))}
-              onIncrease={() => setPickerQty((q) => q + 1)}
-              decreaseLabel={t("decrease", { title: pickerProduct.titleEn })}
-              increaseLabel={t("increase", { title: pickerProduct.titleEn })}
-              className="w-32"
-            />
-            <Button variant="primary" onClick={confirmPicker} className="w-full">
-              {t("addToCart")}
+            <Button variant="primary" onClick={closePicker} className="w-full">
+              {t("done")}
             </Button>
           </div>
         </BottomSheet>
@@ -384,6 +438,30 @@ export default function StorefrontMockupPage() {
           <span className="text-sm text-muted">{t("itemCount", { count: 0 })}</span>
         ) : (
           <>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {t("yourItems")}
+              </span>
+              <div className="flex max-h-[30vh] flex-col gap-1 overflow-y-auto">
+                {cartLines.map((line) => (
+                  <div key={line.key} className="flex items-center justify-between gap-2 py-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-fg">{line.label}</p>
+                      <p className="text-xs text-muted">{formatUsd(line.lineTotalUsdCents)}</p>
+                    </div>
+                    <Stepper
+                      qty={line.qty}
+                      onDecrease={() => adjustQuantity(line.key, -1)}
+                      onIncrease={() => adjustQuantity(line.key, 1)}
+                      decreaseLabel={t("decrease", { title: line.label })}
+                      increaseLabel={t("increase", { title: line.label })}
+                      className="shrink-0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {!appliedPromo && !showPromoInput && (
               <button
                 type="button"

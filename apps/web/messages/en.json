@@ -53,6 +53,8 @@
     "startingFrom": "From",
     "chooseOption": "Choose an option",
     "addToCart": "Add to cart",
-    "close": "Close"
+    "close": "Close",
+    "done": "Done",
+    "yourItems": "Your items"
   }
 }
