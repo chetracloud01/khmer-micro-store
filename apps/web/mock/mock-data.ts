@@ -25,12 +25,40 @@ export interface MockProduct {
   photoColor: string;
   priceUsdCents?: number;
   priceKhr?: number;
+  /** Merchant-set discount from master data; applied automatically, no promo code needed. */
+  discountPercent?: number;
+}
+
+export type MockPromoType = "percent" | "fixed";
+
+export interface MockPromoCode {
+  code: string;
+  type: MockPromoType;
+  /** Percent (0-100) if type is "percent", or USD cents off if type is "fixed". */
+  value: number;
 }
 
 export const mockCategories: MockCategory[] = [
   { id: "drinks", labelKm: "ភេសជ្ជៈ", labelEn: "Drinks" },
   { id: "bakery", labelKm: "នំបុ័ង", labelEn: "Bakery" },
 ];
+
+export const mockPromoCodes: MockPromoCode[] = [
+  { code: "SAVE10", type: "percent", value: 10 },
+  { code: "WELCOME1", type: "fixed", value: 100 },
+];
+
+export function getDiscountedUsdCents(product: MockProduct): number | undefined {
+  if (product.priceUsdCents == null) return undefined;
+  if (!product.discountPercent) return product.priceUsdCents;
+  return Math.round(product.priceUsdCents * (1 - product.discountPercent / 100));
+}
+
+export function getDiscountedKhr(product: MockProduct): number | undefined {
+  if (product.priceKhr == null) return undefined;
+  if (!product.discountPercent) return product.priceKhr;
+  return Math.round(product.priceKhr * (1 - product.discountPercent / 100));
+}
 
 export const mockStore: MockStore = {
   slug: "sokha-coffee",
@@ -49,6 +77,7 @@ export const mockProducts: MockProduct[] = [
     photoColor: "bg-amber-200",
     priceUsdCents: 150,
     priceKhr: 6150,
+    discountPercent: 15,
   },
   {
     id: "p2",
@@ -84,6 +113,7 @@ export const mockProducts: MockProduct[] = [
     photoColor: "bg-yellow-200",
     priceUsdCents: 125,
     priceKhr: 5150,
+    discountPercent: 10,
   },
   {
     id: "p6",

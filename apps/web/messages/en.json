@@ -34,7 +34,16 @@
     "viewCart": "View cart",
     "itemCount": "{count, plural, =0 {No items yet} other {# items}}",
     "categoryAll": "All",
-    "quickAdd": "Add {title} to cart",
-    "noProducts": "No products in this category"
+    "noProducts": "No products in this category",
+    "searchPlaceholder": "Search menu",
+    "add": "Add",
+    "decrease": "Decrease {title} quantity",
+    "increase": "Increase {title} quantity",
+    "havePromoCode": "Have a promo code?",
+    "promoPlaceholder": "Enter code",
+    "apply": "Apply",
+    "promoApplied": "Code {code} applied",
+    "promoInvalid": "Invalid promo code",
+    "remove": "Remove"
   }
 }

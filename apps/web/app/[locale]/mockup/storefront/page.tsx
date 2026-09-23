@@ -1,15 +1,29 @@
 "use client";
 
-import { Badge, Button, Card, cn, PriceTag, SegmentedControl } from "@khmer-micro-store/ui";
+import { formatUsd } from "@khmer-micro-store/shared";
+import {
+  Badge,
+  Button,
+  Card,
+  cn,
+  DiscountBadge,
+  PriceTag,
+  SearchInput,
+  SegmentedControl,
+} from "@khmer-micro-store/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { mockCategories, mockProducts, mockStore, type MockProduct } from "@/mock/mock-data";
-
-// Mock cart state; the real cart wires up once this screen is approved.
-const INITIAL_CART_ITEM_COUNT = 2;
-const INITIAL_CART_SUBTOTAL_USD_CENTS = 350;
+import {
+  getDiscountedKhr,
+  getDiscountedUsdCents,
+  mockCategories,
+  mockPromoCodes,
+  mockProducts,
+  mockStore,
+  type MockProduct,
+} from "@/mock/mock-data";
 
 function CategoryChip({
   active,
@@ -41,19 +55,59 @@ export default function StorefrontMockupPage() {
   const storeName = locale === "km" ? mockStore.nameKm : mockStore.nameEn;
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [cartCount, setCartCount] = useState(INITIAL_CART_ITEM_COUNT);
-  const [cartUsdCents, setCartUsdCents] = useState(INITIAL_CART_SUBTOTAL_USD_CENTS);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<(typeof mockPromoCodes)[number] | null>(null);
 
-  const filteredProducts =
-    selectedCategory === "all"
-      ? mockProducts
-      : mockProducts.filter((product) => product.categoryId === selectedCategory);
+  const visibleProducts = useMemo(() => {
+    return mockProducts.filter((product) => {
+      const inCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
+      const title = locale === "km" ? product.titleKm : product.titleEn;
+      const matchesSearch = title.toLowerCase().includes(searchQuery.trim().toLowerCase());
+      return inCategory && matchesSearch;
+    });
+  }, [selectedCategory, searchQuery, locale]);
 
-  function handleQuickAdd(product: MockProduct) {
-    setCartCount((count) => count + 1);
-    if (product.priceUsdCents != null) {
-      setCartUsdCents((cents) => cents + product.priceUsdCents!);
+  const cartCount = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  const subtotalUsdCents = mockProducts.reduce((sum, product) => {
+    const qty = quantities[product.id] ?? 0;
+    const unitPrice = getDiscountedUsdCents(product);
+    return unitPrice != null ? sum + unitPrice * qty : sum;
+  }, 0);
+
+  const promoDiscountUsdCents = !appliedPromo
+    ? 0
+    : appliedPromo.type === "percent"
+      ? Math.round(subtotalUsdCents * (appliedPromo.value / 100))
+      : Math.min(appliedPromo.value, subtotalUsdCents);
+  const finalTotalUsdCents = subtotalUsdCents - promoDiscountUsdCents;
+
+  function handleQuantityChange(product: MockProduct, delta: number) {
+    setQuantities((prev) => {
+      const next = Math.max(0, (prev[product.id] ?? 0) + delta);
+      return { ...prev, [product.id]: next };
+    });
+  }
+
+  function handleApplyPromo() {
+    const match = mockPromoCodes.find(
+      (promo) => promo.code.toLowerCase() === promoInput.trim().toLowerCase(),
+    );
+    if (!match) {
+      setPromoError(t("promoInvalid"));
+      return;
     }
+    setAppliedPromo(match);
+    setPromoError(null);
+    setShowPromoInput(false);
+  }
+
+  function handleRemovePromo() {
+    setAppliedPromo(null);
+    setPromoInput("");
   }
 
   return (
@@ -77,6 +131,13 @@ export default function StorefrontMockupPage() {
           />
         </div>
 
+        <SearchInput
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchPlaceholder")}
+        />
+
         <div className="flex gap-2 overflow-x-auto pb-1">
           <CategoryChip active={selectedCategory === "all"} onClick={() => setSelectedCategory("all")}>
             {t("categoryAll")}
@@ -93,40 +154,116 @@ export default function StorefrontMockupPage() {
         </div>
       </header>
 
-      <main className="grid flex-1 auto-rows-min grid-cols-2 gap-3 p-4 pb-28">
-        {filteredProducts.map((product) => {
+      <main className="grid flex-1 auto-rows-min grid-cols-2 gap-3 p-4 pb-40">
+        {visibleProducts.map((product) => {
           const title = locale === "km" ? product.titleKm : product.titleEn;
+          const qty = quantities[product.id] ?? 0;
+          const unitUsdCents = getDiscountedUsdCents(product);
+          const unitKhr = getDiscountedKhr(product);
+
           return (
             <Card key={product.id} className="flex flex-col gap-2 p-2">
               <div className="relative">
                 <div className={`aspect-square w-full rounded-DEFAULT ${product.photoColor}`} />
-                <button
-                  type="button"
-                  onClick={() => handleQuickAdd(product)}
-                  aria-label={t("quickAdd", { title })}
-                  className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full bg-brand text-xl font-bold text-white shadow-md transition-transform active:scale-95"
-                >
-                  +
-                </button>
+                {product.discountPercent && (
+                  <DiscountBadge percent={product.discountPercent} className="absolute left-1 top-1" />
+                )}
               </div>
               <span className="line-clamp-2 text-sm font-medium leading-snug">{title}</span>
-              <PriceTag usdCents={product.priceUsdCents} khr={product.priceKhr} className="text-sm" />
+              <PriceTag
+                usdCents={unitUsdCents}
+                khr={unitKhr}
+                originalUsdCents={product.discountPercent ? product.priceUsdCents : undefined}
+                originalKhr={product.discountPercent ? product.priceKhr : undefined}
+                className="text-sm"
+              />
+              {qty === 0 ? (
+                <Button
+                  variant="secondary"
+                  className="min-h-touch w-full text-sm"
+                  onClick={() => handleQuantityChange(product, 1)}
+                >
+                  {t("add")}
+                </Button>
+              ) : (
+                <div className="flex items-center justify-between gap-2 rounded-full border border-brand bg-brand/5 p-1">
+                  <button
+                    type="button"
+                    aria-label={t("decrease", { title })}
+                    onClick={() => handleQuantityChange(product, -1)}
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
+                  >
+                    −
+                  </button>
+                  <span className="text-sm font-semibold">{qty}</span>
+                  <button
+                    type="button"
+                    aria-label={t("increase", { title })}
+                    onClick={() => handleQuantityChange(product, 1)}
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
             </Card>
           );
         })}
-        {filteredProducts.length === 0 && (
+        {visibleProducts.length === 0 && (
           <p className="col-span-2 py-8 text-center text-sm text-muted">{t("noProducts")}</p>
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] items-center justify-between gap-3 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
-        <div className="flex flex-col">
-          <span className="text-xs text-muted">{t("itemCount", { count: cartCount })}</span>
-          <PriceTag usdCents={cartUsdCents} className="text-base" />
+      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] flex-col gap-2 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
+        {!appliedPromo && !showPromoInput && (
+          <button
+            type="button"
+            onClick={() => setShowPromoInput(true)}
+            className="min-h-touch text-left text-sm font-medium text-brand"
+          >
+            {t("havePromoCode")}
+          </button>
+        )}
+        {!appliedPromo && showPromoInput && (
+          <div className="flex items-center gap-2">
+            <input
+              value={promoInput}
+              onChange={(e) => {
+                setPromoInput(e.target.value);
+                setPromoError(null);
+              }}
+              placeholder={t("promoPlaceholder")}
+              className="min-h-touch flex-1 rounded-DEFAULT border border-border bg-bg px-3 text-sm uppercase text-fg placeholder:normal-case placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+            />
+            <Button variant="secondary" onClick={handleApplyPromo} className="px-4 text-sm">
+              {t("apply")}
+            </Button>
+          </div>
+        )}
+        {promoError && <p className="text-xs text-danger">{promoError}</p>}
+        {appliedPromo && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-success">{t("promoApplied", { code: appliedPromo.code })}</span>
+            <button type="button" onClick={handleRemovePromo} className="text-xs text-muted underline">
+              {t("remove")}
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted">{t("itemCount", { count: cartCount })}</span>
+            <div className="flex items-baseline gap-2">
+              {promoDiscountUsdCents > 0 && (
+                <span className="text-xs text-muted line-through">{formatUsd(subtotalUsdCents)}</span>
+              )}
+              <PriceTag usdCents={finalTotalUsdCents} className="text-base" />
+            </div>
+          </div>
+          <Button variant="primary" className="min-w-[140px]">
+            {t("viewCart")}
+          </Button>
         </div>
-        <Button variant="primary" className="min-w-[140px]">
-          {t("viewCart")}
-        </Button>
       </div>
     </div>
   );

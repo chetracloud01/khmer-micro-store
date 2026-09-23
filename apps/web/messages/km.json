@@ -34,7 +34,16 @@
     "viewCart": "មើលកន្ត្រក",
     "itemCount": "{count, plural, =0 {មិនទាន់មានទំនិញ} other {# ទំនិញ}}",
     "categoryAll": "ទាំងអស់",
-    "quickAdd": "បន្ថែម {title} ទៅកន្ត្រក",
-    "noProducts": "គ្មានទំនិញនៅក្នុងប្រភេទនេះទេ"
+    "noProducts": "គ្មានទំនិញនៅក្នុងប្រភេទនេះទេ",
+    "searchPlaceholder": "ស្វែងរកម្ហូប",
+    "add": "បន្ថែម",
+    "decrease": "កាត់បន្ថយបរិមាណ {title}",
+    "increase": "បង្កើនបរិមាណ {title}",
+    "havePromoCode": "មានកូដបញ្ចុះតម្លៃ?",
+    "promoPlaceholder": "បញ្ចូលកូដ",
+    "apply": "អនុវត្ត",
+    "promoApplied": "កូដ {code} បានអនុវត្ត",
+    "promoInvalid": "កូដមិនត្រឹមត្រូវទេ",
+    "remove": "លុប"
   }
 }
