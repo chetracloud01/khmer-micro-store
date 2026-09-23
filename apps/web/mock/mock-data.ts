@@ -11,14 +11,26 @@ export interface MockStore {
   defaultCurrency: "USD" | "KHR";
 }
 
+export interface MockCategory {
+  id: string;
+  labelKm: string;
+  labelEn: string;
+}
+
 export interface MockProduct {
   id: string;
+  categoryId: string;
   titleKm: string;
   titleEn: string;
   photoColor: string;
   priceUsdCents?: number;
   priceKhr?: number;
 }
+
+export const mockCategories: MockCategory[] = [
+  { id: "drinks", labelKm: "ភេសជ្ជៈ", labelEn: "Drinks" },
+  { id: "bakery", labelKm: "នំបុ័ង", labelEn: "Bakery" },
+];
 
 export const mockStore: MockStore = {
   slug: "sokha-coffee",
@@ -31,6 +43,7 @@ export const mockStore: MockStore = {
 export const mockProducts: MockProduct[] = [
   {
     id: "p1",
+    categoryId: "drinks",
     titleKm: "កាហ្វេទឹកកក",
     titleEn: "Iced Coffee",
     photoColor: "bg-amber-200",
@@ -39,6 +52,7 @@ export const mockProducts: MockProduct[] = [
   },
   {
     id: "p2",
+    categoryId: "drinks",
     titleKm: "កាហ្វេទឹកដោះគោ",
     titleEn: "Iced Latte",
     photoColor: "bg-amber-300",
@@ -47,6 +61,7 @@ export const mockProducts: MockProduct[] = [
   },
   {
     id: "p3",
+    categoryId: "drinks",
     titleKm: "តែទឹកដោះគោ",
     titleEn: "Milk Tea",
     photoColor: "bg-orange-200",
@@ -55,6 +70,7 @@ export const mockProducts: MockProduct[] = [
   },
   {
     id: "p4",
+    categoryId: "bakery",
     titleKm: "ខូគីសូកូឡា",
     titleEn: "Chocolate Cookie",
     photoColor: "bg-yellow-800/30",
@@ -62,6 +78,7 @@ export const mockProducts: MockProduct[] = [
   },
   {
     id: "p5",
+    categoryId: "bakery",
     titleKm: "ក្រូឆ្សង់",
     titleEn: "Croissant",
     photoColor: "bg-yellow-200",
@@ -70,6 +87,7 @@ export const mockProducts: MockProduct[] = [
   },
   {
     id: "p6",
+    categoryId: "drinks",
     titleKm: "ទឹកម្សៅម្រះ",
     titleEn: "Lemonade",
     photoColor: "bg-lime-200",

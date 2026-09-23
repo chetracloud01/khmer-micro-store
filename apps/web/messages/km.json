@@ -32,6 +32,9 @@
   "Storefront": {
     "verified": "ហាងបានផ្ទៀងផ្ទាត់",
     "viewCart": "មើលកន្ត្រក",
-    "itemCount": "{count, plural, =0 {មិនទាន់មានទំនិញ} other {# ទំនិញ}}"
+    "itemCount": "{count, plural, =0 {មិនទាន់មានទំនិញ} other {# ទំនិញ}}",
+    "categoryAll": "ទាំងអស់",
+    "quickAdd": "បន្ថែម {title} ទៅកន្ត្រក",
+    "noProducts": "គ្មានទំនិញនៅក្នុងប្រភេទនេះទេ"
   }
 }
