@@ -207,6 +207,20 @@ export function getAllLineContexts(products: MockProduct[]) {
   });
 }
 
+export interface MockMerchant {
+  firstName: string;
+  lastName: string;
+  telegramUsername: string;
+}
+
+// The person who owns the store below — separate from mockStore, matching
+// the merchants/stores split in docs/blueprint.md's schema.
+export const mockMerchant: MockMerchant = {
+  firstName: "Sokha",
+  lastName: "Chan",
+  telegramUsername: "sokha_coffee_owner",
+};
+
 export const mockStore: MockStore = {
   slug: "sokha-coffee",
   nameKm: "កាហ្វេសុខា",

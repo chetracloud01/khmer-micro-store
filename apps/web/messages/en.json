@@ -117,5 +117,14 @@
     "deliveryInfo": "Delivery info",
     "getUpdatesOnTelegram": "Get updates on Telegram",
     "noRecentOrder": "No recent order"
+  },
+  "MerchantLogin": {
+    "title": "Merchant login",
+    "subtitle": "Log in with your Telegram account — no password needed.",
+    "loginButton": "Log in with Telegram",
+    "verifying": "Verifying with Telegram…",
+    "loggedInAs": "Logged in as {name}",
+    "onboardingNotBuilt": "The onboarding screen isn't built yet.",
+    "mockNote": "Mock login — connects to the real Telegram Login Widget once the merchant backend exists"
   }
 }

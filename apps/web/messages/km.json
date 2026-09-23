@@ -117,5 +117,14 @@
     "deliveryInfo": "ព័ត៌មានដឹកជញ្ជូន",
     "getUpdatesOnTelegram": "ទទួលបានព័ត៌មានថ្មីនៅលើ Telegram",
     "noRecentOrder": "គ្មានការបញ្ជាទិញថ្មីៗទេ"
+  },
+  "MerchantLogin": {
+    "title": "ចូលគណនីអ្នកលក់",
+    "subtitle": "ចូលគណនីជាមួយ Telegram របស់អ្នក — មិនចាំបាច់ពាក្យសម្ងាត់ទេ។",
+    "loginButton": "ចូលគណនីជាមួយ Telegram",
+    "verifying": "កំពុងផ្ទៀងផ្ទាត់ជាមួយ Telegram…",
+    "loggedInAs": "បានចូលគណនីជា {name}",
+    "onboardingNotBuilt": "អេក្រង់ចុះឈ្មោះមិនទាន់ត្រូវបានស្ថាបនានៅឡើយទេ។",
+    "mockNote": "ការចូលគណនីសាកល្បង — នឹងភ្ជាប់ទៅ Telegram Login Widget ពិតនៅពេលមានផ្នែកខាងក្រោយសម្រាប់អ្នកលក់"
   }
 }
