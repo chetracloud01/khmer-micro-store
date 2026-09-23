@@ -9,7 +9,7 @@ import {
   type Currency,
 } from "@khmer-micro-store/shared";
 import { Button, cn, Input } from "@khmer-micro-store/ui";
-import { ArrowLeft, Bike, Check, Footprints } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +26,6 @@ import {
 } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
 
-type Fulfillment = "delivery" | "pickup";
 type Area = "phnom_penh" | "province";
 
 export default function CheckoutMockupPage() {
@@ -40,7 +39,6 @@ export default function CheckoutMockupPage() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery");
   const [area, setArea] = useState<Area>("phnom_penh");
   const [landmark, setLandmark] = useState("");
   const [currency, setCurrency] = useState<Currency>(mockStore.defaultCurrency);
@@ -55,7 +53,7 @@ export default function CheckoutMockupPage() {
   // orders to other provinces go through a transport company and must be
   // prepaid. Toggling area away from Phnom Penh (or the merchant disabling
   // COD outright) drops it from the payment method list below.
-  const codAvailable = mockStore.allowCod && (fulfillment === "pickup" || area === "phnom_penh");
+  const codAvailable = mockStore.allowCod && area === "phnom_penh";
 
   useEffect(() => {
     if (paymentMethod === "cod" && !codAvailable) {
@@ -101,11 +99,9 @@ export default function CheckoutMockupPage() {
   const goodsAfterDiscount = afterItemDiscount - promoDiscount;
   const vat = Math.round(goodsAfterDiscount * (mockStore.vatPercent / 100));
   const deliveryFee =
-    fulfillment === "delivery"
-      ? currency === "USD"
-        ? mockStore.deliveryFeeUsdCents
-        : convertUsdCentsToKhr(mockStore.deliveryFeeUsdCents, rate)
-      : 0;
+    currency === "USD"
+      ? mockStore.deliveryFeeUsdCents
+      : convertUsdCentsToKhr(mockStore.deliveryFeeUsdCents, rate);
   const total = goodsAfterDiscount + vat + deliveryFee;
   const secondaryTotal = currency === "USD" ? convertUsdCentsToKhr(total, rate) : convertKhrToUsdCents(total, rate);
   const format = (amount: number, cur: Currency) => (cur === "USD" ? formatUsd(amount) : formatKhr(amount));
@@ -196,75 +192,49 @@ export default function CheckoutMockupPage() {
       />
 
       {/*
-       * No fee/"Free" label shown here: delivery fee and whether pickup is
-       * free are seller-configured (merchant Settings/admin panel, not yet
-       * built). The fee still applies to the total below via
-       * mockStore.deliveryFeeUsdCents once that's wired to real settings.
+       * No fee label shown here: the delivery fee is seller-configured
+       * (merchant Settings/admin panel, not yet built). It still applies to
+       * the total below via mockStore.deliveryFeeUsdCents once that's wired
+       * to real settings. Pickup was removed — delivery is the only
+       * fulfillment method for now.
        */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setFulfillment("delivery")}
-          className={cn(
-            "flex min-h-touch items-center gap-2 rounded-DEFAULT border-2 p-4 text-left transition-colors",
-            fulfillment === "delivery" ? "border-brand bg-brand/5" : "border-border",
-          )}
-        >
-          <Bike className="h-5 w-5 text-brand" aria-hidden="true" />
-          <p className="font-medium">{tStore("delivery")}</p>
-        </button>
-        <button
-          type="button"
-          onClick={() => setFulfillment("pickup")}
-          className={cn(
-            "flex min-h-touch items-center gap-2 rounded-DEFAULT border-2 p-4 text-left transition-colors",
-            fulfillment === "pickup" ? "border-brand bg-brand/5" : "border-border",
-          )}
-        >
-          <Footprints className="h-5 w-5 text-brand" aria-hidden="true" />
-          <p className="font-medium">{tStore("pickup")}</p>
-        </button>
-      </div>
-
-      {fulfillment === "delivery" && (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-fg">{t("area")}</span>
-            <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-border/10 p-1">
-              <button
-                type="button"
-                onClick={() => setArea("phnom_penh")}
-                className={cn(
-                  "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
-                  area === "phnom_penh" ? "bg-brand text-white" : "text-muted hover:text-fg",
-                )}
-              >
-                {t("phnomPenh")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setArea("province")}
-                className={cn(
-                  "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
-                  area === "province" ? "bg-brand text-white" : "text-muted hover:text-fg",
-                )}
-              >
-                {t("otherProvince")}
-              </button>
-            </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-fg">{t("area")}</span>
+          <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-border/10 p-1">
+            <button
+              type="button"
+              onClick={() => setArea("phnom_penh")}
+              className={cn(
+                "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
+                area === "phnom_penh" ? "bg-brand text-white" : "text-muted hover:text-fg",
+              )}
+            >
+              {t("phnomPenh")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setArea("province")}
+              className={cn(
+                "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
+                area === "province" ? "bg-brand text-white" : "text-muted hover:text-fg",
+              )}
+            >
+              {t("otherProvince")}
+            </button>
           </div>
-
-          <Input
-            label={t("landmark")}
-            placeholder={t("landmarkPlaceholder")}
-            maxLength={200}
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-          />
-
-          {area === "province" && <p className="text-xs text-muted">{t("provinceCodNote")}</p>}
         </div>
-      )}
+
+        <Input
+          label={t("landmark")}
+          placeholder={t("landmarkPlaceholder")}
+          maxLength={200}
+          value={landmark}
+          onChange={(e) => setLandmark(e.target.value)}
+        />
+
+        {area === "province" && <p className="text-xs text-muted">{t("provinceCodNote")}</p>}
+      </div>
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-fg">{t("payIn")}</span>
@@ -337,12 +307,10 @@ export default function CheckoutMockupPage() {
             <span>-{format(promoDiscount, currency)}</span>
           </div>
         )}
-        {fulfillment === "delivery" && (
-          <div className="flex items-center justify-between text-muted">
-            <span>{t("deliveryFee")}</span>
-            <span>{format(deliveryFee, currency)}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-muted">
+          <span>{t("deliveryFee")}</span>
+          <span>{format(deliveryFee, currency)}</span>
+        </div>
         <div className="flex items-center justify-between text-muted">
           <span>{tStore("vat", { percent: mockStore.vatPercent })}</span>
           <span>{format(vat, currency)}</span>
