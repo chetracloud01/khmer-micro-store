@@ -1,30 +1,16 @@
 "use client";
 
-import {
-  convertKhrToUsdCents,
-  convertUsdCentsToKhr,
-  formatKhr,
-  formatUsd,
-  normalizeKhmerPhone,
-  type Currency,
-} from "@khmer-micro-store/shared";
+import { formatKhr, formatUsd, normalizeKhmerPhone, type Currency } from "@khmer-micro-store/shared";
 import { Button, cn, Input } from "@khmer-micro-store/ui";
 import { ArrowLeft, Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
-import {
-  getDiscountedUnitAmount,
-  getEffectiveExchangeRate,
-  getUnitAmount,
-  lineKey,
-  mockPaymentMethods,
-  mockProducts,
-  mockStore,
-  type MockPaymentMethodCode,
-} from "@/mock/mock-data";
+import { mockPaymentMethods, mockStore, type MockPaymentMethodCode } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
+import { useCheckoutTotal } from "../use-checkout-total";
 
 type Area = "phnom_penh" | "province";
 
@@ -33,7 +19,8 @@ export default function CheckoutMockupPage() {
   const tStore = useTranslations("Storefront");
   const tCart = useTranslations("Cart");
   const locale = useLocale();
-  const { quantities, appliedPromo, setAppliedPromo } = useCart();
+  const router = useRouter();
+  const { quantities, appliedPromo, setAppliedPromo, currency, setCurrency } = useCart();
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
@@ -41,14 +28,12 @@ export default function CheckoutMockupPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [area, setArea] = useState<Area>("phnom_penh");
   const [landmark, setLandmark] = useState("");
-  const [currency, setCurrency] = useState<Currency>(mockStore.defaultCurrency);
   const [paymentMethod, setPaymentMethod] = useState<MockPaymentMethodCode>(mockPaymentMethods[0]!.code);
   const [submitted, setSubmitted] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
 
-  const rate = getEffectiveExchangeRate(mockStore);
   // Cash on delivery only works where the merchant's own driver collects it;
   // orders to other provinces go through a transport company and must be
   // prepaid. Toggling area away from Phnom Penh (or the merchant disabling
@@ -61,49 +46,8 @@ export default function CheckoutMockupPage() {
     }
   }, [codAvailable, paymentMethod]);
 
-  const lines = mockProducts.flatMap((product) => {
-    const title = locale === "km" ? product.titleKm : product.titleEn;
-    if (product.variants?.length) {
-      return product.variants.flatMap((variant) => {
-        const key = lineKey(product.id, variant.id);
-        const qty = quantities[key] ?? 0;
-        if (qty === 0) return [];
-        const base = getUnitAmount(product, currency, rate, variant) ?? 0;
-        const discounted = getDiscountedUnitAmount(product, currency, rate, variant) ?? 0;
-        const variantLabel = locale === "km" ? variant.labelKm : variant.labelEn;
-        return [{ key, title: `${title} – ${variantLabel}`, qty, base, discounted }];
-      });
-    }
-    const key = lineKey(product.id);
-    const qty = quantities[key] ?? 0;
-    if (qty === 0) return [];
-    const base = getUnitAmount(product, currency, rate) ?? 0;
-    const discounted = getDiscountedUnitAmount(product, currency, rate) ?? 0;
-    return [{ key, title, qty, base, discounted }];
-  });
-
-  const itemCount = lines.reduce((sum, line) => sum + line.qty, 0);
-  const subtotal = lines.reduce((sum, line) => sum + line.base * line.qty, 0);
-  const afterItemDiscount = lines.reduce((sum, line) => sum + line.discounted * line.qty, 0);
-  const itemDiscount = subtotal - afterItemDiscount;
-
-  const promoDiscount = !appliedPromo
-    ? 0
-    : appliedPromo.type === "percent"
-      ? Math.round(afterItemDiscount * (appliedPromo.value / 100))
-      : Math.min(
-          currency === "USD" ? appliedPromo.value : convertUsdCentsToKhr(appliedPromo.value, rate),
-          afterItemDiscount,
-        );
-
-  const goodsAfterDiscount = afterItemDiscount - promoDiscount;
-  const vat = Math.round(goodsAfterDiscount * (mockStore.vatPercent / 100));
-  const deliveryFee =
-    currency === "USD"
-      ? mockStore.deliveryFeeUsdCents
-      : convertUsdCentsToKhr(mockStore.deliveryFeeUsdCents, rate);
-  const total = goodsAfterDiscount + vat + deliveryFee;
-  const secondaryTotal = currency === "USD" ? convertUsdCentsToKhr(total, rate) : convertKhrToUsdCents(total, rate);
+  const { itemCount, subtotal, itemDiscount, promoDiscount, deliveryFee, vat, total, secondaryTotal } =
+    useCheckoutTotal(quantities, locale, appliedPromo, currency);
   const format = (amount: number, cur: Currency) => (cur === "USD" ? formatUsd(amount) : formatKhr(amount));
 
   function validateName(value: string): string | null {
@@ -127,6 +71,11 @@ export default function CheckoutMockupPage() {
       const first = failures[0]!.ref.current;
       first?.focus();
       first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (paymentMethod === "khqr") {
+      router.push(`/${locale}/mockup/khqr`);
       return;
     }
 

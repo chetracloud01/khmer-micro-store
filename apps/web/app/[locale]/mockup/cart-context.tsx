@@ -1,14 +1,18 @@
 "use client";
 
+import type { Currency } from "@khmer-micro-store/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import type { MockPromoCode } from "@/mock/mock-data";
+import { mockStore, type MockPromoCode } from "@/mock/mock-data";
 
 interface CartContextValue {
   quantities: Record<string, number>;
   setQuantities: Dispatch<SetStateAction<Record<string, number>>>;
   appliedPromo: MockPromoCode | null;
   setAppliedPromo: Dispatch<SetStateAction<MockPromoCode | null>>;
+  /** The currency chosen at checkout; carried through to the KHQR payment screen so both agree on the same amount. */
+  currency: Currency;
+  setCurrency: Dispatch<SetStateAction<Currency>>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -20,11 +24,13 @@ const STORAGE_KEY = "khmer-micro-store:mockup-cart";
 interface PersistedCart {
   quantities: Record<string, number>;
   appliedPromo: MockPromoCode | null;
+  currency: Currency;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [appliedPromo, setAppliedPromo] = useState<MockPromoCode | null>(null);
+  const [currency, setCurrency] = useState<Currency>(mockStore.defaultCurrency);
   const [hydrated, setHydrated] = useState(false);
 
   // Read persisted cart client-side only, after the initial (empty) render
@@ -36,6 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(raw) as Partial<PersistedCart>;
         if (parsed.quantities) setQuantities(parsed.quantities);
         if (parsed.appliedPromo) setAppliedPromo(parsed.appliedPromo);
+        if (parsed.currency) setCurrency(parsed.currency);
       }
     } catch {
       // Corrupt or inaccessible storage (e.g. private browsing) — start empty.
@@ -49,15 +56,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      const payload: PersistedCart = { quantities, appliedPromo };
+      const payload: PersistedCart = { quantities, appliedPromo, currency };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // Storage full or unavailable — cart just won't persist this time.
     }
-  }, [quantities, appliedPromo, hydrated]);
+  }, [quantities, appliedPromo, currency, hydrated]);
 
   return (
-    <CartContext.Provider value={{ quantities, setQuantities, appliedPromo, setAppliedPromo }}>
+    <CartContext.Provider
+      value={{ quantities, setQuantities, appliedPromo, setAppliedPromo, currency, setCurrency }}
+    >
       {children}
     </CartContext.Provider>
   );

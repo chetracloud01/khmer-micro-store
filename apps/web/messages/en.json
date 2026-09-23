@@ -94,7 +94,22 @@
     "paymentMethod": "Payment method",
     "placeOrder": "Place order",
     "submittedTitle": "Order details look good!",
-    "submittedBody": "The next step (KHQR payment) isn't built yet.",
+    "submittedBody": "The screen for this payment method isn't built yet.",
     "backToCart": "Back to cart"
+  },
+  "Khqr": {
+    "title": "Scan to pay",
+    "cancel": "Cancel",
+    "expiresIn": "Expires in",
+    "mockQrNote": "Mock QR — connects to real Bakong KHQR once payments are wired up",
+    "saveQr": "Save QR",
+    "openBankApp": "Open bank app",
+    "expiredTitle": "QR code expired",
+    "expiredBody": "This payment window closed. Generate a new code to try again.",
+    "tryAgain": "Try again",
+    "simulatePayment": "Simulate payment received (dev only)",
+    "paidTitle": "Payment received!",
+    "paidBody": "The Order success screen isn't built yet.",
+    "backToStorefront": "Back to storefront"
   }
 }
