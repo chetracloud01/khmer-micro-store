@@ -176,6 +176,17 @@ export function lineKey(productId: string, variantId?: string): string {
   return `${productId}::${variantId ?? "_base"}`;
 }
 
+/** A mock order number, e.g. "SC-482913" for "sokha-coffee". Real orders get a sequential/DB-generated one. */
+export function generateOrderNumber(store: MockStore): string {
+  const prefix = store.slug
+    .split("-")
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase();
+  const suffix = Math.floor(100000 + Math.random() * 900000);
+  return `${prefix}-${suffix}`;
+}
+
 /** Every priceable line in the catalog: a variant, or the product itself if it has none. */
 export function getAllLineContexts(products: MockProduct[]) {
   return products.flatMap((product) => {

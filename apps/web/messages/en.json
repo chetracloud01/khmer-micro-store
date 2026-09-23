@@ -108,8 +108,14 @@
     "expiredBody": "This payment window closed. Generate a new code to try again.",
     "tryAgain": "Try again",
     "simulatePayment": "Simulate payment received (dev only)",
-    "paidTitle": "Payment received!",
-    "paidBody": "The Order success screen isn't built yet.",
     "backToStorefront": "Back to storefront"
+  },
+  "OrderSuccess": {
+    "title": "Order placed!",
+    "orderNumber": "Order number",
+    "items": "Items",
+    "deliveryInfo": "Delivery info",
+    "getUpdatesOnTelegram": "Get updates on Telegram",
+    "noRecentOrder": "No recent order"
   }
 }

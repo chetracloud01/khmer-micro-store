@@ -2,17 +2,18 @@
 
 import { formatKhr, formatUsd, type Currency } from "@khmer-micro-store/shared";
 import { Button } from "@khmer-micro-store/ui";
-import { Check, Download, QrCode, Smartphone } from "lucide-react";
+import { Download, QrCode, Smartphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { mockStore } from "@/mock/mock-data";
+import { generateOrderNumber, mockStore } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
 import { useCheckoutTotal } from "../use-checkout-total";
 
 const QR_LIFETIME_SECONDS = 600; // 10 minutes, NBC's maximum for a KHQR code.
 
-type PaymentStatus = "pending" | "expired" | "paid";
+type PaymentStatus = "pending" | "expired";
 
 function formatCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
@@ -24,8 +25,9 @@ export default function KhqrMockupPage() {
   const t = useTranslations("Khqr");
   const tCart = useTranslations("Cart");
   const locale = useLocale();
-  const { quantities, appliedPromo, currency } = useCart();
-  const { itemCount, total } = useCheckoutTotal(quantities, locale, appliedPromo, currency);
+  const router = useRouter();
+  const { quantities, appliedPromo, currency, name, phone, area, landmark, setLastOrder, clearCart } = useCart();
+  const { itemCount, total, lines } = useCheckoutTotal(quantities, locale, appliedPromo, currency);
 
   const [status, setStatus] = useState<PaymentStatus>("pending");
   const [secondsLeft, setSecondsLeft] = useState(QR_LIFETIME_SECONDS);
@@ -45,6 +47,31 @@ export default function KhqrMockupPage() {
     setStatus("pending");
   }
 
+  // Dev-only: stands in for the worker polling Bakong every few seconds and
+  // confirming payment (see docs/blueprint.md "Flow A: Bakong KHQR"). Once
+  // that's wired up, this becomes the callback that fires on a real "paid"
+  // poll result instead of a button click.
+  function handleSimulatePayment() {
+    setLastOrder({
+      orderNumber: generateOrderNumber(mockStore),
+      currency,
+      total,
+      lines: lines.map((line) => ({
+        key: line.key,
+        label: line.title,
+        qty: line.qty,
+        lineTotal: line.discounted * line.qty,
+      })),
+      name,
+      phone,
+      area,
+      landmark,
+      placedAtIso: new Date().toISOString(),
+    });
+    clearCart();
+    router.push(`/${locale}/mockup/order-success`);
+  }
+
   const storeName = locale === "km" ? mockStore.nameKm : mockStore.nameEn;
   const format = (amount: number, cur: Currency) => (cur === "USD" ? formatUsd(amount) : formatKhr(amount));
 
@@ -54,19 +81,6 @@ export default function KhqrMockupPage() {
         <p className="text-sm text-muted">{tCart("empty")}</p>
         <Link href={`/${locale}/mockup/storefront`}>
           <Button variant="primary">{tCart("browseMenu")}</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  if (status === "paid") {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col items-center justify-center gap-3 bg-bg p-4 text-center text-fg">
-        <Check className="h-10 w-10 text-success" aria-hidden="true" />
-        <p className="text-lg font-semibold">{t("paidTitle")}</p>
-        <p className="text-sm text-muted">{t("paidBody")}</p>
-        <Link href={`/${locale}/mockup/storefront`}>
-          <Button variant="secondary">{t("backToStorefront")}</Button>
         </Link>
       </div>
     );
@@ -120,12 +134,9 @@ export default function KhqrMockupPage() {
               </Button>
             </div>
 
-            {/* Dev-only: stands in for the worker polling Bakong every few
-             * seconds and confirming payment (see docs/blueprint.md "Flow A:
-             * Bakong KHQR"). Remove once that's wired up. */}
             <button
               type="button"
-              onClick={() => setStatus("paid")}
+              onClick={handleSimulatePayment}
               className="min-h-touch rounded-DEFAULT border border-dashed border-border px-4 text-xs text-muted"
             >
               {t("simulatePayment")}

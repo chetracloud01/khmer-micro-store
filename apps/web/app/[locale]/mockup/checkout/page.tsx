@@ -12,22 +12,30 @@ import { mockPaymentMethods, mockStore, type MockPaymentMethodCode } from "@/moc
 import { useCart } from "../cart-context";
 import { useCheckoutTotal } from "../use-checkout-total";
 
-type Area = "phnom_penh" | "province";
-
 export default function CheckoutMockupPage() {
   const t = useTranslations("Checkout");
   const tStore = useTranslations("Storefront");
   const tCart = useTranslations("Cart");
   const locale = useLocale();
   const router = useRouter();
-  const { quantities, appliedPromo, setAppliedPromo, currency, setCurrency } = useCart();
+  const {
+    quantities,
+    appliedPromo,
+    setAppliedPromo,
+    currency,
+    setCurrency,
+    name,
+    setName,
+    phone,
+    setPhone,
+    area,
+    setArea,
+    landmark,
+    setLandmark,
+  } = useCart();
 
-  const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
-  const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [area, setArea] = useState<Area>("phnom_penh");
-  const [landmark, setLandmark] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<MockPaymentMethodCode>(mockPaymentMethods[0]!.code);
   const [submitted, setSubmitted] = useState(false);
 
