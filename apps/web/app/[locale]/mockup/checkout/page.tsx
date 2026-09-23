@@ -8,11 +8,11 @@ import {
   normalizeKhmerPhone,
   type Currency,
 } from "@khmer-micro-store/shared";
-import { Button, cn, Input, Select } from "@khmer-micro-store/ui";
-import { ArrowLeft, Bike, Check, Footprints, MapPin } from "lucide-react";
+import { Button, cn, Input } from "@khmer-micro-store/ui";
+import { ArrowLeft, Bike, Check, Footprints } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import {
   getDiscountedUnitAmount,
@@ -21,14 +21,13 @@ import {
   lineKey,
   mockPaymentMethods,
   mockProducts,
-  mockProvinces,
   mockStore,
   type MockPaymentMethodCode,
 } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
 
 type Fulfillment = "delivery" | "pickup";
-type LocationStatus = "idle" | "loading" | "done" | "error";
+type Area = "phnom_penh" | "province";
 
 export default function CheckoutMockupPage() {
   const t = useTranslations("Checkout");
@@ -42,24 +41,27 @@ export default function CheckoutMockupPage() {
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery");
-  const [provinceId, setProvinceId] = useState("");
-  const [provinceError, setProvinceError] = useState<string | null>(null);
-  const [khanId, setKhanId] = useState("");
-  const [sangkatId, setSangkatId] = useState("");
+  const [area, setArea] = useState<Area>("phnom_penh");
   const [landmark, setLandmark] = useState("");
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [currency, setCurrency] = useState<Currency>(mockStore.defaultCurrency);
   const [paymentMethod, setPaymentMethod] = useState<MockPaymentMethodCode>(mockPaymentMethods[0]!.code);
   const [submitted, setSubmitted] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const provinceRef = useRef<HTMLSelectElement>(null);
 
   const rate = getEffectiveExchangeRate(mockStore);
-  const province = mockProvinces.find((p) => p.id === provinceId);
-  const khan = province?.khans.find((k) => k.id === khanId);
+  // Cash on delivery only works where the merchant's own driver collects it;
+  // orders to other provinces go through a transport company and must be
+  // prepaid. Toggling area away from Phnom Penh (or the merchant disabling
+  // COD outright) drops it from the payment method list below.
+  const codAvailable = mockStore.allowCod && (fulfillment === "pickup" || area === "phnom_penh");
+
+  useEffect(() => {
+    if (paymentMethod === "cod" && !codAvailable) {
+      setPaymentMethod(mockPaymentMethods[0]!.code);
+    }
+  }, [codAvailable, paymentMethod]);
 
   const lines = mockProducts.flatMap((product) => {
     const title = locale === "km" ? product.titleKm : product.titleEn;
@@ -113,22 +115,6 @@ export default function CheckoutMockupPage() {
     return trimmed.length >= 2 && trimmed.length <= 60 ? null : t("nameError");
   }
 
-  function handleUseLocation() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setLocationStatus("error");
-      return;
-    }
-    setLocationStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-        setLocationStatus("done");
-      },
-      () => setLocationStatus("error"),
-      { timeout: 10_000 },
-    );
-  }
-
   function handleSubmit() {
     const failures: { ref: RefObject<HTMLElement>; }[] = [];
 
@@ -140,10 +126,6 @@ export default function CheckoutMockupPage() {
     const phoneMsg = normalizedPhone ? null : t("phoneError");
     setPhoneError(phoneMsg);
     if (phoneMsg) failures.push({ ref: phoneRef as RefObject<HTMLElement> });
-
-    const provinceMsg = fulfillment === "delivery" && !provinceId ? t("provinceError") : null;
-    setProvinceError(provinceMsg);
-    if (provinceMsg) failures.push({ ref: provinceRef as RefObject<HTMLElement> });
 
     if (failures.length > 0) {
       const first = failures[0]!.ref.current;
@@ -246,69 +228,31 @@ export default function CheckoutMockupPage() {
 
       {fulfillment === "delivery" && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-DEFAULT border border-dashed border-border bg-border/10 p-4 text-center text-sm text-muted">
-            {locationStatus === "done" && coords
-              ? t("locationSet", { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
-              : t("locationPlaceholder")}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-fg">{t("area")}</span>
+            <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-border/10 p-1">
+              <button
+                type="button"
+                onClick={() => setArea("phnom_penh")}
+                className={cn(
+                  "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
+                  area === "phnom_penh" ? "bg-brand text-white" : "text-muted hover:text-fg",
+                )}
+              >
+                {t("phnomPenh")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setArea("province")}
+                className={cn(
+                  "min-h-touch rounded-full px-4 text-sm font-medium transition-colors",
+                  area === "province" ? "bg-brand text-white" : "text-muted hover:text-fg",
+                )}
+              >
+                {t("otherProvince")}
+              </button>
+            </div>
           </div>
-          <Button
-            variant="secondary"
-            onClick={handleUseLocation}
-            loading={locationStatus === "loading"}
-            className="w-full"
-          >
-            <MapPin className="h-4 w-4" aria-hidden="true" />
-            {t("useMyLocation")}
-          </Button>
-          {locationStatus === "error" && <p className="text-sm text-danger">{t("locationError")}</p>}
-          <p className="text-xs text-muted">{t("phnomPenhOnlyNote")}</p>
-
-          <Select
-            ref={provinceRef}
-            label={t("province")}
-            placeholder={t("provincePlaceholder")}
-            value={provinceId}
-            onChange={(e) => {
-              setProvinceId(e.target.value);
-              setKhanId("");
-              setSangkatId("");
-              setProvinceError(null);
-            }}
-            options={mockProvinces.map((p) => ({
-              value: p.id,
-              label: locale === "km" ? p.nameKm : p.nameEn,
-            }))}
-            error={provinceError ?? undefined}
-          />
-
-          {province && (
-            <Select
-              label={t("khan")}
-              placeholder={t("khanPlaceholder")}
-              value={khanId}
-              onChange={(e) => {
-                setKhanId(e.target.value);
-                setSangkatId("");
-              }}
-              options={province.khans.map((k) => ({
-                value: k.id,
-                label: locale === "km" ? k.nameKm : k.nameEn,
-              }))}
-            />
-          )}
-
-          {khan && (
-            <Select
-              label={t("sangkat")}
-              placeholder={t("sangkatPlaceholder")}
-              value={sangkatId}
-              onChange={(e) => setSangkatId(e.target.value)}
-              options={khan.sangkats.map((s) => ({
-                value: s.id,
-                label: locale === "km" ? s.nameKm : s.nameEn,
-              }))}
-            />
-          )}
 
           <Input
             label={t("landmark")}
@@ -317,6 +261,8 @@ export default function CheckoutMockupPage() {
             value={landmark}
             onChange={(e) => setLandmark(e.target.value)}
           />
+
+          {area === "province" && <p className="text-xs text-muted">{t("provinceCodNote")}</p>}
         </div>
       )}
 
@@ -342,7 +288,7 @@ export default function CheckoutMockupPage() {
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-fg">{t("paymentMethod")}</span>
         {mockPaymentMethods
-          .filter((method) => method.code !== "cod" || mockStore.allowCod)
+          .filter((method) => method.code !== "cod" || codAvailable)
           .map((method) => (
             <button
               key={method.code}

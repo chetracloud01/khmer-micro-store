@@ -82,66 +82,6 @@ export const mockPromoCodes: MockPromoCode[] = [
   { code: "WELCOME1", type: "fixed", value: 100 },
 ];
 
-export interface MockSangkat {
-  id: string;
-  nameKm: string;
-  nameEn: string;
-}
-
-export interface MockKhan {
-  id: string;
-  nameKm: string;
-  nameEn: string;
-  sangkats: MockSangkat[];
-}
-
-export interface MockProvince {
-  id: string;
-  nameKm: string;
-  nameEn: string;
-  khans: MockKhan[];
-}
-
-// MVP covers Phnom Penh only, per docs/blueprint.md's beta scope.
-export const mockProvinces: MockProvince[] = [
-  {
-    id: "phnom-penh",
-    nameKm: "ភ្នំពេញ",
-    nameEn: "Phnom Penh",
-    khans: [
-      {
-        id: "chamkarmon",
-        nameKm: "ចំការមន",
-        nameEn: "Chamkarmon",
-        sangkats: [
-          { id: "tonle-bassac", nameKm: "ទន្លេបាសាក់", nameEn: "Tonle Bassac" },
-          { id: "bkk1", nameKm: "បឹងកេងកង១", nameEn: "Boeng Keng Kang 1" },
-          { id: "phsar-daeum-thkov", nameKm: "ផ្សារដើមថ្កូវ", nameEn: "Phsar Daeum Thkov" },
-        ],
-      },
-      {
-        id: "daun-penh",
-        nameKm: "ដូនពេញ",
-        nameEn: "Daun Penh",
-        sangkats: [
-          { id: "phsar-thmei-1", nameKm: "ផ្សារថ្មីទី១", nameEn: "Phsar Thmei 1" },
-          { id: "chey-chumneas", nameKm: "ជ័យជំនះ", nameEn: "Chey Chumneas" },
-          { id: "wat-phnom", nameKm: "វត្តភ្នំ", nameEn: "Wat Phnom" },
-        ],
-      },
-      {
-        id: "toul-kork",
-        nameKm: "ទួលគោក",
-        nameEn: "Toul Kork",
-        sangkats: [
-          { id: "boeng-kak-1", nameKm: "បឹងកក់១", nameEn: "Boeng Kak 1" },
-          { id: "tuek-lak-1", nameKm: "ទឹកល្អក់១", nameEn: "Tuek L'ak 1" },
-        ],
-      },
-    ],
-  },
-];
-
 export type MockPaymentMethodCode = "khqr" | "aba_payway" | "cod";
 
 export interface MockPaymentMethod {
@@ -273,9 +213,10 @@ export const mockStore: MockStore = {
   deliveryFeeUsdCents: 50,
   deliveryEtaMinMinutes: 15,
   deliveryEtaMaxMinutes: 30,
-  // Seller has not enabled Cash on delivery for this store (blocks the COD
-  // card from the payment method list on checkout).
-  allowCod: false,
+  // Whether the seller accepts Cash on delivery at all. Even when true, the
+  // checkout screen only offers it for Phnom Penh orders (or any pickup) —
+  // province deliveries go through a transport company and must be prepaid.
+  allowCod: true,
 };
 
 export const mockProducts: MockProduct[] = [
