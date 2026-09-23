@@ -22,16 +22,35 @@ export interface MockCategory {
   labelEn: string;
 }
 
+/**
+ * A sellable variant (SKU) of a product — e.g. Size S/M/L, a colour, or any
+ * other seller-defined option. The label is free text set by the seller, so
+ * this works the same way for a coffee shop's cup sizes as it would for a
+ * clothing seller's sizes/colours or any other merchant's option list.
+ */
+export interface MockVariant {
+  id: string;
+  sku: string;
+  labelKm: string;
+  labelEn: string;
+  priceUsdCents?: number;
+  priceKhr?: number;
+  stockQuantity: number;
+}
+
 export interface MockProduct {
   id: string;
   categoryId: string;
   titleKm: string;
   titleEn: string;
   photoColor: string;
+  /** Used only when the product has no variants. */
   priceUsdCents?: number;
   priceKhr?: number;
   /** Merchant-set discount from master data; applied automatically, no promo code needed. */
   discountPercent?: number;
+  /** When set, the buyer must pick one before adding to cart; each variant has its own price/SKU. */
+  variants?: MockVariant[];
 }
 
 export type MockPromoType = "percent" | "fixed";
@@ -53,16 +72,29 @@ export const mockPromoCodes: MockPromoCode[] = [
   { code: "WELCOME1", type: "fixed", value: 100 },
 ];
 
-export function getDiscountedUsdCents(product: MockProduct): number | undefined {
-  if (product.priceUsdCents == null) return undefined;
-  if (!product.discountPercent) return product.priceUsdCents;
-  return Math.round(product.priceUsdCents * (1 - product.discountPercent / 100));
+/** Unit price after the product's master-data discount, for the product itself or one of its variants. */
+export function getUnitUsdCents(product: MockProduct, variant?: MockVariant): number | undefined {
+  const base = variant ? variant.priceUsdCents : product.priceUsdCents;
+  if (base == null) return undefined;
+  if (!product.discountPercent) return base;
+  return Math.round(base * (1 - product.discountPercent / 100));
 }
 
-export function getDiscountedKhr(product: MockProduct): number | undefined {
-  if (product.priceKhr == null) return undefined;
-  if (!product.discountPercent) return product.priceKhr;
-  return Math.round(product.priceKhr * (1 - product.discountPercent / 100));
+export function getUnitKhr(product: MockProduct, variant?: MockVariant): number | undefined {
+  const base = variant ? variant.priceKhr : product.priceKhr;
+  if (base == null) return undefined;
+  if (!product.discountPercent) return base;
+  return Math.round(base * (1 - product.discountPercent / 100));
+}
+
+/** The cheapest variant, for the grid card's "From $X" price. Real code would
+ * pick the cheapest in the buyer's selected currency; this mock assumes every
+ * variant has a USD price. */
+export function getStartingVariant(product: MockProduct): MockVariant | undefined {
+  if (!product.variants?.length) return undefined;
+  return product.variants.reduce((cheapest, variant) =>
+    (variant.priceUsdCents ?? Infinity) < (cheapest.priceUsdCents ?? Infinity) ? variant : cheapest,
+  );
 }
 
 /** The rate actually used for KHR conversion, clamped to the seller's allowed band. */
@@ -89,9 +121,12 @@ export const mockProducts: MockProduct[] = [
     titleKm: "កាហ្វេទឹកកក",
     titleEn: "Iced Coffee",
     photoColor: "bg-amber-200",
-    priceUsdCents: 150,
-    priceKhr: 6150,
     discountPercent: 15,
+    variants: [
+      { id: "p1-s", sku: "ICE-COF-S", labelKm: "តូច", labelEn: "Small", priceUsdCents: 125, priceKhr: 5125, stockQuantity: 20 },
+      { id: "p1-m", sku: "ICE-COF-M", labelKm: "មធ្យម", labelEn: "Medium", priceUsdCents: 150, priceKhr: 6150, stockQuantity: 20 },
+      { id: "p1-l", sku: "ICE-COF-L", labelKm: "ធំ", labelEn: "Large", priceUsdCents: 175, priceKhr: 7150, stockQuantity: 15 },
+    ],
   },
   {
     id: "p2",

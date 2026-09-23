@@ -35,7 +35,7 @@
     "itemCount": "{count, plural, =0 {No items yet} other {# items}}",
     "categoryAll": "All",
     "noProducts": "No products in this category",
-    "searchPlaceholder": "Search menu",
+    "searchPlaceholder": "Search products",
     "add": "Add",
     "decrease": "Decrease {title} quantity",
     "increase": "Increase {title} quantity",
@@ -49,6 +49,10 @@
     "itemDiscount": "Item discount",
     "promoDiscount": "Promo discount",
     "vat": "VAT ({percent}%)",
-    "totalToPay": "Total to pay"
+    "totalToPay": "Total to pay",
+    "startingFrom": "From",
+    "chooseOption": "Choose an option",
+    "addToCart": "Add to cart",
+    "close": "Close"
   }
 }

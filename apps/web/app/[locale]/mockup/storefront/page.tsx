@@ -3,6 +3,7 @@
 import { convertUsdCentsToKhr, formatKhr, formatUsd } from "@khmer-micro-store/shared";
 import {
   Badge,
+  BottomSheet,
   Button,
   Card,
   cn,
@@ -16,15 +17,22 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  getDiscountedKhr,
-  getDiscountedUsdCents,
+  getStartingVariant,
+  getUnitKhr,
+  getUnitUsdCents,
   getEffectiveExchangeRate,
   mockCategories,
   mockPromoCodes,
   mockProducts,
   mockStore,
   type MockProduct,
+  type MockVariant,
 } from "@/mock/mock-data";
+
+/** `${productId}::${variantId}`, or `${productId}::_base` for a product with no variants. */
+function lineKey(productId: string, variantId?: string) {
+  return `${productId}::${variantId ?? "_base"}`;
+}
 
 function CategoryChip({
   active,
@@ -49,6 +57,64 @@ function CategoryChip({
   );
 }
 
+function Stepper({
+  qty,
+  onDecrease,
+  onIncrease,
+  decreaseLabel,
+  increaseLabel,
+  className,
+}: {
+  qty: number;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  decreaseLabel: string;
+  increaseLabel: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center justify-between gap-2 rounded-full border border-brand bg-brand/5 p-1", className)}>
+      <button
+        type="button"
+        aria-label={decreaseLabel}
+        onClick={onDecrease}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
+      >
+        −
+      </button>
+      <span className="text-sm font-semibold">{qty}</span>
+      <button
+        type="button"
+        aria-label={increaseLabel}
+        onClick={onIncrease}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+// Every priceable line in the catalog: a variant, or the product itself if it has none.
+function getAllLineContexts() {
+  return mockProducts.flatMap((product) => {
+    if (product.variants?.length) {
+      return product.variants.map((variant) => ({
+        key: lineKey(product.id, variant.id),
+        baseUsdCents: variant.priceUsdCents,
+        unitUsdCents: getUnitUsdCents(product, variant),
+      }));
+    }
+    return [
+      {
+        key: lineKey(product.id),
+        baseUsdCents: product.priceUsdCents,
+        unitUsdCents: getUnitUsdCents(product),
+      },
+    ];
+  });
+}
+
 export default function StorefrontMockupPage() {
   const t = useTranslations("Storefront");
   const locale = useLocale();
@@ -63,6 +129,10 @@ export default function StorefrontMockupPage() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [appliedPromo, setAppliedPromo] = useState<(typeof mockPromoCodes)[number] | null>(null);
 
+  const [pickerProductId, setPickerProductId] = useState<string | null>(null);
+  const [pickerVariantId, setPickerVariantId] = useState<string | null>(null);
+  const [pickerQty, setPickerQty] = useState(1);
+
   const visibleProducts = useMemo(() => {
     return mockProducts.filter((product) => {
       const inCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
@@ -74,16 +144,14 @@ export default function StorefrontMockupPage() {
 
   const cartCount = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
-  // Subtotal at full (pre-discount) price, and how much the per-item master-data
-  // discounts take off it — kept separate so the cart summary can show both lines.
-  const originalSubtotalUsdCents = mockProducts.reduce((sum, product) => {
-    const qty = quantities[product.id] ?? 0;
-    return product.priceUsdCents != null ? sum + product.priceUsdCents * qty : sum;
+  const lineContexts = getAllLineContexts();
+  const originalSubtotalUsdCents = lineContexts.reduce((sum, ctx) => {
+    const qty = quantities[ctx.key] ?? 0;
+    return ctx.baseUsdCents != null ? sum + ctx.baseUsdCents * qty : sum;
   }, 0);
-  const subtotalAfterItemDiscountUsdCents = mockProducts.reduce((sum, product) => {
-    const qty = quantities[product.id] ?? 0;
-    const unitPrice = getDiscountedUsdCents(product);
-    return unitPrice != null ? sum + unitPrice * qty : sum;
+  const subtotalAfterItemDiscountUsdCents = lineContexts.reduce((sum, ctx) => {
+    const qty = quantities[ctx.key] ?? 0;
+    return ctx.unitUsdCents != null ? sum + ctx.unitUsdCents * qty : sum;
   }, 0);
   const itemDiscountUsdCents = originalSubtotalUsdCents - subtotalAfterItemDiscountUsdCents;
 
@@ -99,11 +167,38 @@ export default function StorefrontMockupPage() {
   const exchangeRate = getEffectiveExchangeRate(mockStore);
   const totalKhr = convertUsdCentsToKhr(totalUsdCents, exchangeRate);
 
-  function handleQuantityChange(product: MockProduct, delta: number) {
+  function getProductCartCount(product: MockProduct): number {
+    if (product.variants?.length) {
+      return product.variants.reduce((sum, variant) => sum + (quantities[lineKey(product.id, variant.id)] ?? 0), 0);
+    }
+    return quantities[lineKey(product.id)] ?? 0;
+  }
+
+  function adjustQuantity(key: string, delta: number) {
     setQuantities((prev) => {
-      const next = Math.max(0, (prev[product.id] ?? 0) + delta);
-      return { ...prev, [product.id]: next };
+      const next = Math.max(0, (prev[key] ?? 0) + delta);
+      return { ...prev, [key]: next };
     });
+  }
+
+  function openPicker(product: MockProduct) {
+    setPickerProductId(product.id);
+    setPickerVariantId(product.variants?.[0]?.id ?? null);
+    setPickerQty(1);
+  }
+
+  function closePicker() {
+    setPickerProductId(null);
+    setPickerVariantId(null);
+  }
+
+  const pickerProduct = pickerProductId ? (mockProducts.find((p) => p.id === pickerProductId) ?? null) : null;
+  const pickerVariant: MockVariant | undefined = pickerProduct?.variants?.find((v) => v.id === pickerVariantId);
+
+  function confirmPicker() {
+    if (!pickerProduct || !pickerVariant) return;
+    adjustQuantity(lineKey(pickerProduct.id, pickerVariant.id), pickerQty);
+    closePicker();
   }
 
   function handleApplyPromo() {
@@ -171,9 +266,20 @@ export default function StorefrontMockupPage() {
       <main className="grid flex-1 auto-rows-min grid-cols-2 gap-3 p-4 pb-40">
         {visibleProducts.map((product) => {
           const title = locale === "km" ? product.titleKm : product.titleEn;
-          const qty = quantities[product.id] ?? 0;
-          const unitUsdCents = getDiscountedUsdCents(product);
-          const unitKhr = getDiscountedKhr(product);
+          const hasVariants = !!product.variants?.length;
+          const startingVariant = getStartingVariant(product);
+          const displayUnitUsd = hasVariants ? getUnitUsdCents(product, startingVariant) : getUnitUsdCents(product);
+          const displayUnitKhr = hasVariants ? getUnitKhr(product, startingVariant) : getUnitKhr(product);
+          const displayOriginalUsd = product.discountPercent
+            ? (hasVariants ? startingVariant?.priceUsdCents : product.priceUsdCents)
+            : undefined;
+          const displayOriginalKhr = product.discountPercent
+            ? (hasVariants ? startingVariant?.priceKhr : product.priceKhr)
+            : undefined;
+
+          const productCartCount = getProductCartCount(product);
+          const baseKey = lineKey(product.id);
+          const baseQty = hasVariants ? 0 : (quantities[baseKey] ?? 0);
 
           return (
             <Card key={product.id} className="flex flex-col gap-2 p-2">
@@ -182,11 +288,16 @@ export default function StorefrontMockupPage() {
                 {product.discountPercent && (
                   <DiscountBadge percent={product.discountPercent} className="absolute left-1 top-1" />
                 )}
-                {qty === 0 && (
+                {hasVariants && productCartCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-white">
+                    {productCartCount}
+                  </span>
+                )}
+                {(hasVariants || baseQty === 0) && (
                   <button
                     type="button"
                     aria-label={t("add")}
-                    onClick={() => handleQuantityChange(product, 1)}
+                    onClick={() => (hasVariants ? openPicker(product) : adjustQuantity(baseKey, 1))}
                     className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full bg-brand text-2xl font-bold text-white shadow-md transition-transform active:scale-95"
                   >
                     +
@@ -194,33 +305,24 @@ export default function StorefrontMockupPage() {
                 )}
               </div>
               <span className="line-clamp-2 text-sm font-medium leading-snug">{title}</span>
-              <PriceTag
-                usdCents={unitUsdCents}
-                khr={unitKhr}
-                originalUsdCents={product.discountPercent ? product.priceUsdCents : undefined}
-                originalKhr={product.discountPercent ? product.priceKhr : undefined}
-                className="text-sm"
-              />
-              {qty > 0 && (
-                <div className="flex items-center justify-between gap-2 rounded-full border border-brand bg-brand/5 p-1">
-                  <button
-                    type="button"
-                    aria-label={t("decrease", { title })}
-                    onClick={() => handleQuantityChange(product, -1)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
-                  >
-                    −
-                  </button>
-                  <span className="text-sm font-semibold">{qty}</span>
-                  <button
-                    type="button"
-                    aria-label={t("increase", { title })}
-                    onClick={() => handleQuantityChange(product, 1)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-white"
-                  >
-                    +
-                  </button>
-                </div>
+              <div className="flex items-center gap-1">
+                {hasVariants && <span className="text-xs text-muted">{t("startingFrom")}</span>}
+                <PriceTag
+                  usdCents={displayUnitUsd}
+                  khr={displayUnitKhr}
+                  originalUsdCents={displayOriginalUsd}
+                  originalKhr={displayOriginalKhr}
+                  className="text-sm"
+                />
+              </div>
+              {!hasVariants && baseQty > 0 && (
+                <Stepper
+                  qty={baseQty}
+                  onDecrease={() => adjustQuantity(baseKey, -1)}
+                  onIncrease={() => adjustQuantity(baseKey, 1)}
+                  decreaseLabel={t("decrease", { title })}
+                  increaseLabel={t("increase", { title })}
+                />
               )}
             </Card>
           );
@@ -229,6 +331,53 @@ export default function StorefrontMockupPage() {
           <p className="col-span-2 py-8 text-center text-sm text-muted">{t("noProducts")}</p>
         )}
       </main>
+
+      {pickerProduct && (
+        <BottomSheet
+          open
+          onClose={closePicker}
+          closeLabel={t("close")}
+          title={locale === "km" ? pickerProduct.titleKm : pickerProduct.titleEn}
+        >
+          <div className="flex flex-col gap-4">
+            <div className={`aspect-video w-full rounded-DEFAULT ${pickerProduct.photoColor}`} />
+            <div>
+              <p className="mb-2 text-sm font-medium text-muted">{t("chooseOption")}</p>
+              <div className="flex flex-wrap gap-2">
+                {pickerProduct.variants!.map((variant) => (
+                  <CategoryChip
+                    key={variant.id}
+                    active={pickerVariantId === variant.id}
+                    onClick={() => setPickerVariantId(variant.id)}
+                  >
+                    {locale === "km" ? variant.labelKm : variant.labelEn}
+                  </CategoryChip>
+                ))}
+              </div>
+            </div>
+            {pickerVariant && (
+              <PriceTag
+                usdCents={getUnitUsdCents(pickerProduct, pickerVariant)}
+                khr={getUnitKhr(pickerProduct, pickerVariant)}
+                originalUsdCents={pickerProduct.discountPercent ? pickerVariant.priceUsdCents : undefined}
+                originalKhr={pickerProduct.discountPercent ? pickerVariant.priceKhr : undefined}
+                className="text-lg"
+              />
+            )}
+            <Stepper
+              qty={pickerQty}
+              onDecrease={() => setPickerQty((q) => Math.max(1, q - 1))}
+              onIncrease={() => setPickerQty((q) => q + 1)}
+              decreaseLabel={t("decrease", { title: pickerProduct.titleEn })}
+              increaseLabel={t("increase", { title: pickerProduct.titleEn })}
+              className="w-32"
+            />
+            <Button variant="primary" onClick={confirmPicker} className="w-full">
+              {t("addToCart")}
+            </Button>
+          </div>
+        </BottomSheet>
+      )}
 
       <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] flex-col gap-2 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
         {cartCount === 0 ? (

@@ -5,7 +5,8 @@
     "outDir": "dist",
     "jsx": "react-jsx",
     "module": "ESNext",
-    "moduleResolution": "Bundler"
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["src"]
 }
