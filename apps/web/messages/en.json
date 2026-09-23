@@ -44,6 +44,11 @@
     "apply": "Apply",
     "promoApplied": "Code {code} applied",
     "promoInvalid": "Invalid promo code",
-    "remove": "Remove"
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "itemDiscount": "Item discount",
+    "promoDiscount": "Promo discount",
+    "vat": "VAT ({percent}%)",
+    "totalToPay": "Total to pay"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { formatUsd } from "@khmer-micro-store/shared";
+import { convertUsdCentsToKhr, formatKhr, formatUsd } from "@khmer-micro-store/shared";
 import {
   Badge,
   Button,
@@ -18,6 +18,7 @@ import type { ReactNode } from "react";
 import {
   getDiscountedKhr,
   getDiscountedUsdCents,
+  getEffectiveExchangeRate,
   mockCategories,
   mockPromoCodes,
   mockProducts,
@@ -72,18 +73,31 @@ export default function StorefrontMockupPage() {
   }, [selectedCategory, searchQuery, locale]);
 
   const cartCount = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-  const subtotalUsdCents = mockProducts.reduce((sum, product) => {
+
+  // Subtotal at full (pre-discount) price, and how much the per-item master-data
+  // discounts take off it — kept separate so the cart summary can show both lines.
+  const originalSubtotalUsdCents = mockProducts.reduce((sum, product) => {
+    const qty = quantities[product.id] ?? 0;
+    return product.priceUsdCents != null ? sum + product.priceUsdCents * qty : sum;
+  }, 0);
+  const subtotalAfterItemDiscountUsdCents = mockProducts.reduce((sum, product) => {
     const qty = quantities[product.id] ?? 0;
     const unitPrice = getDiscountedUsdCents(product);
     return unitPrice != null ? sum + unitPrice * qty : sum;
   }, 0);
+  const itemDiscountUsdCents = originalSubtotalUsdCents - subtotalAfterItemDiscountUsdCents;
 
   const promoDiscountUsdCents = !appliedPromo
     ? 0
     : appliedPromo.type === "percent"
-      ? Math.round(subtotalUsdCents * (appliedPromo.value / 100))
-      : Math.min(appliedPromo.value, subtotalUsdCents);
-  const finalTotalUsdCents = subtotalUsdCents - promoDiscountUsdCents;
+      ? Math.round(subtotalAfterItemDiscountUsdCents * (appliedPromo.value / 100))
+      : Math.min(appliedPromo.value, subtotalAfterItemDiscountUsdCents);
+
+  const amountBeforeVatUsdCents = subtotalAfterItemDiscountUsdCents - promoDiscountUsdCents;
+  const vatUsdCents = Math.round(amountBeforeVatUsdCents * (mockStore.vatPercent / 100));
+  const totalUsdCents = amountBeforeVatUsdCents + vatUsdCents;
+  const exchangeRate = getEffectiveExchangeRate(mockStore);
+  const totalKhr = convertUsdCentsToKhr(totalUsdCents, exchangeRate);
 
   function handleQuantityChange(product: MockProduct, delta: number) {
     setQuantities((prev) => {
@@ -168,6 +182,16 @@ export default function StorefrontMockupPage() {
                 {product.discountPercent && (
                   <DiscountBadge percent={product.discountPercent} className="absolute left-1 top-1" />
                 )}
+                {qty === 0 && (
+                  <button
+                    type="button"
+                    aria-label={t("add")}
+                    onClick={() => handleQuantityChange(product, 1)}
+                    className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full bg-brand text-2xl font-bold text-white shadow-md transition-transform active:scale-95"
+                  >
+                    +
+                  </button>
+                )}
               </div>
               <span className="line-clamp-2 text-sm font-medium leading-snug">{title}</span>
               <PriceTag
@@ -177,15 +201,7 @@ export default function StorefrontMockupPage() {
                 originalKhr={product.discountPercent ? product.priceKhr : undefined}
                 className="text-sm"
               />
-              {qty === 0 ? (
-                <Button
-                  variant="secondary"
-                  className="min-h-touch w-full text-sm"
-                  onClick={() => handleQuantityChange(product, 1)}
-                >
-                  {t("add")}
-                </Button>
-              ) : (
+              {qty > 0 && (
                 <div className="flex items-center justify-between gap-2 rounded-full border border-brand bg-brand/5 p-1">
                   <button
                     type="button"
@@ -215,55 +231,85 @@ export default function StorefrontMockupPage() {
       </main>
 
       <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] flex-col gap-2 border-t border-border bg-bg p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
-        {!appliedPromo && !showPromoInput && (
-          <button
-            type="button"
-            onClick={() => setShowPromoInput(true)}
-            className="min-h-touch text-left text-sm font-medium text-brand"
-          >
-            {t("havePromoCode")}
-          </button>
-        )}
-        {!appliedPromo && showPromoInput && (
-          <div className="flex items-center gap-2">
-            <input
-              value={promoInput}
-              onChange={(e) => {
-                setPromoInput(e.target.value);
-                setPromoError(null);
-              }}
-              placeholder={t("promoPlaceholder")}
-              className="min-h-touch flex-1 rounded-DEFAULT border border-border bg-bg px-3 text-sm uppercase text-fg placeholder:normal-case placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-            <Button variant="secondary" onClick={handleApplyPromo} className="px-4 text-sm">
-              {t("apply")}
-            </Button>
-          </div>
-        )}
-        {promoError && <p className="text-xs text-danger">{promoError}</p>}
-        {appliedPromo && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-success">{t("promoApplied", { code: appliedPromo.code })}</span>
-            <button type="button" onClick={handleRemovePromo} className="text-xs text-muted underline">
-              {t("remove")}
-            </button>
-          </div>
-        )}
+        {cartCount === 0 ? (
+          <span className="text-sm text-muted">{t("itemCount", { count: 0 })}</span>
+        ) : (
+          <>
+            {!appliedPromo && !showPromoInput && (
+              <button
+                type="button"
+                onClick={() => setShowPromoInput(true)}
+                className="min-h-touch text-left text-sm font-medium text-brand"
+              >
+                {t("havePromoCode")}
+              </button>
+            )}
+            {!appliedPromo && showPromoInput && (
+              <div className="flex items-center gap-2">
+                <input
+                  value={promoInput}
+                  onChange={(e) => {
+                    setPromoInput(e.target.value);
+                    setPromoError(null);
+                  }}
+                  placeholder={t("promoPlaceholder")}
+                  className="min-h-touch flex-1 rounded-DEFAULT border border-border bg-bg px-3 text-sm uppercase text-fg placeholder:normal-case placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+                <Button variant="secondary" onClick={handleApplyPromo} className="px-4 text-sm">
+                  {t("apply")}
+                </Button>
+              </div>
+            )}
+            {promoError && <p className="text-xs text-danger">{promoError}</p>}
+            {appliedPromo && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-success">
+                  {t("promoApplied", { code: appliedPromo.code })}
+                </span>
+                <button type="button" onClick={handleRemovePromo} className="text-xs text-muted underline">
+                  {t("remove")}
+                </button>
+              </div>
+            )}
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-xs text-muted">{t("itemCount", { count: cartCount })}</span>
-            <div className="flex items-baseline gap-2">
-              {promoDiscountUsdCents > 0 && (
-                <span className="text-xs text-muted line-through">{formatUsd(subtotalUsdCents)}</span>
+            <div className="flex flex-col gap-1 border-t border-border pt-2 text-sm">
+              <div className="flex items-center justify-between text-muted">
+                <span>{t("subtotal")}</span>
+                <span>{formatUsd(originalSubtotalUsdCents)}</span>
+              </div>
+              {itemDiscountUsdCents > 0 && (
+                <div className="flex items-center justify-between text-success">
+                  <span>{t("itemDiscount")}</span>
+                  <span>-{formatUsd(itemDiscountUsdCents)}</span>
+                </div>
               )}
-              <PriceTag usdCents={finalTotalUsdCents} className="text-base" />
+              {promoDiscountUsdCents > 0 && (
+                <div className="flex items-center justify-between text-success">
+                  <span>{t("promoDiscount")}</span>
+                  <span>-{formatUsd(promoDiscountUsdCents)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-muted">
+                <span>{t("vat", { percent: mockStore.vatPercent })}</span>
+                <span>{formatUsd(vatUsdCents)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-1">
+                <span className="font-semibold text-fg">{t("totalToPay")}</span>
+                <span className="text-right">
+                  <span className="block font-semibold text-fg">{formatUsd(totalUsdCents)}</span>
+                  <span className="block text-xs text-muted">{formatKhr(totalKhr)}</span>
+                </span>
+              </div>
             </div>
-          </div>
-          <Button variant="primary" className="min-w-[140px]">
-            {t("viewCart")}
-          </Button>
-        </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs text-muted">{t("itemCount", { count: cartCount })}</span>
+              <Button variant="primary" className="min-w-[140px]">
+                {t("viewCart")}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

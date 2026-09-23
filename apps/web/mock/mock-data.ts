@@ -9,6 +9,11 @@ export interface MockStore {
   nameEn: string;
   verified: boolean;
   defaultCurrency: "USD" | "KHR";
+  /** Seller-configured USD->KHR rate, clamped to [usdToKhrRateMin, usdToKhrRateMax]. */
+  usdToKhrRate: number;
+  usdToKhrRateMin: number;
+  usdToKhrRateMax: number;
+  vatPercent: number;
 }
 
 export interface MockCategory {
@@ -60,12 +65,21 @@ export function getDiscountedKhr(product: MockProduct): number | undefined {
   return Math.round(product.priceKhr * (1 - product.discountPercent / 100));
 }
 
+/** The rate actually used for KHR conversion, clamped to the seller's allowed band. */
+export function getEffectiveExchangeRate(store: MockStore): number {
+  return Math.min(store.usdToKhrRateMax, Math.max(store.usdToKhrRateMin, store.usdToKhrRate));
+}
+
 export const mockStore: MockStore = {
   slug: "sokha-coffee",
   nameKm: "កាហ្វេសុខា",
   nameEn: "Sokha Coffee",
   verified: true,
   defaultCurrency: "USD",
+  usdToKhrRate: 4100,
+  usdToKhrRateMin: 3900,
+  usdToKhrRateMax: 4300,
+  vatPercent: 10,
 };
 
 export const mockProducts: MockProduct[] = [

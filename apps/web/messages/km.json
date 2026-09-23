@@ -44,6 +44,11 @@
     "apply": "អនុវត្ត",
     "promoApplied": "កូដ {code} បានអនុវត្ត",
     "promoInvalid": "កូដមិនត្រឹមត្រូវទេ",
-    "remove": "លុប"
+    "remove": "លុប",
+    "subtotal": "សរុបរង",
+    "itemDiscount": "បញ្ចុះតម្លៃទំនិញ",
+    "promoDiscount": "បញ្ចុះតម្លៃតាមកូដ",
+    "vat": "ពន្ធអតិរេក ({percent}%)",
+    "totalToPay": "សរុបត្រូវបង់"
   }
 }
