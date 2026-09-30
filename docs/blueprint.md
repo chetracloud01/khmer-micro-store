@@ -25,6 +25,64 @@ Khmer Micro-Store lets a Telegram or Facebook seller open a mobile shop in under
 
 **Not in the MVP:** native iOS/Android apps, delivery-company APIs, marketplace search across stores, loyalty points.
 
+## Subscription tiers
+
+The platform earns from subscriptions (see Overview above), and four tiers gate which merchant features a store can use. A store's tier lives on `subscriptions.plan` and nowhere else (see Database schema). This project builds every merchant screen at full (Advance) capability first — locking/hiding features per plan and upgrade prompts are a separate pass, added once all tiers' features exist in the UI.
+
+| Tier | Business use | Products & pricing | Stock | Wholesale price | Warehouse / branch |
+| --- | --- | --- | --- | --- | --- |
+| Free | Trial/evaluation | Limited product count, single price | No | No | No |
+| Basic | Any business — shop, restaurant, other | Full catalog, single price | No | No | No |
+| Pro | Same, ready to scale | Full catalog | Single stock number per product/variant | Yes | No |
+| Advance | Multi-location | Full catalog | Location-tracked, per branch/warehouse | Yes | Yes — plus purchase (stock in) and sale (stock out) transactions |
+
+- **Free and Basic never show a stock number.** The buyer-facing storefront always allows ordering — there is no "sold out" state at these tiers. The buyer reaches the storefront via the seller's own shop link.
+- **Pro and Advance storefronts follow stock** (`getBuyerStockState` in `packages/shared/stock.ts`): "Sold out" at 0, "Only N left" at 5 or fewer, and the buyer can't put more in the cart than is on hand. A cart that no longer fits (stock ran out meanwhile) is reduced with a notice. Online orders take stock from one location: the main branch on Pro, or the location chosen in Store settings on Advance. A paid order writes a `sale` movement there, in the same transaction that marks it paid.
+- **Wholesale pricing** (a second price alongside retail, on the product form) is a **Pro+** feature.
+- **Warehouse/branch stock tracking and the purchase/sale transaction ledger** are **Advance-only**.
+
+### Plan rules live in one place
+
+Every plan's limits and features are defined once, in `packages/shared/plans.ts`, and nothing else decides what a plan allows:
+
+- The **merchant dashboard** reads it to hide or lock features and show an upgrade prompt.
+- The **API** enforces the same rule on every request — a locked feature is rejected server-side even if someone calls the API directly. The screen is never the only check.
+- The **buyer storefront** reads the store's plan to decide what buyers see (for example, "Sold out" appears only on Pro and Advance stores).
+- The **admin panel** changes a store's plan; all three sides pick it up immediately.
+
+Adding a plan or changing a limit means editing that one file (plus a migration only if a new plan name is added).
+
+### Prices (proposed — adjust before launch)
+
+Prices are set by the platform in **both currencies as fixed integers** (not converted at runtime), so an invoice never has rounding surprises. The seller pays in whichever one they choose.
+
+| Plan | Monthly USD | Monthly KHR | Product limit | Length |
+| --- | --- | --- | --- | --- |
+| Free | $0 | 0៛ | 10 products | 14-day trial, once per store |
+| Basic | $5 | 20,000៛ | Unlimited | Monthly |
+| Pro | $12 | 48,000៛ | Unlimited | Monthly |
+| Advance | $29 | 116,000៛ | Unlimited | Monthly |
+
+### Subscription life cycle
+
+```
+New store → Free trial (14 days) → Active (paid plan) → Payment due → Grace (7 days) → Paused
+```
+
+- **New store:** starts on Free — up to 10 products, 14 days. It can upgrade to any paid plan at any time.
+- **Trial ends without a paid plan:** the store is **paused**. Buyers opening the shop link see "This shop is temporarily closed"; the merchant can still log in, see all their data, and upgrade. Free cannot be restarted.
+- **Billing:** monthly. The platform creates an invoice 7 days before the period ends and sends it to the merchant's Telegram. The merchant pays by **KHQR** into the platform's own Bakong account, confirmed the same way as buyer payments (worker checks the MD5, exact amount and currency — see Payments). No card billing at launch.
+- **Payment due, not paid:** a **7-day grace period** — everything keeps working, with a dashboard banner and a daily Telegram reminder. After 7 days unpaid, the store is paused exactly like an expired trial. Paying the invoice reactivates it immediately.
+- **Leaving the Free trial:** the first payment is the full monthly price of the chosen plan (there's no paid period to prorate against); the plan and a new 30-day period start once it's paid.
+- **Upgrade:** takes effect immediately. The merchant pays the difference for the days left in the current period (`(new price − old price) × days left ÷ 30`, rounded to a whole cent or riel).
+- **Downgrade:** takes effect at the end of the current paid period, never mid-period. Paid stores can't downgrade to Free; Basic is the lowest paid plan.
+- **Never delete on downgrade or pause — lock instead.** Warehouses, branches, stock history and wholesale prices stay in the database, hidden and read-only. Upgrading again brings them all back exactly as they were.
+- **Admin override:** the super admin can change any store's plan or extend its period (for example, a free month for beta merchants). No invoice is created, and every change is written to `audit_logs`. Changing plan: paid plans only; a trialing or paused store starts a fresh 30-day period on the new plan, while an active or overdue store keeps its current period and status. Extending: adds 1–365 days; a paused or overdue store reopens for exactly the added days.
+
+### Business types
+
+The platform serves any business with **one** product model (categories, variants, unit of measure, brand) — there is no separate code path for a café, a shop or a restaurant. During onboarding the merchant picks a business type (`shop`, `restaurant`, `service`, `other`), stored on `stores.business_type`. It only pre-fills starting defaults — for example, the default unit of measure (Piece for a shop, Cup/Plate for a restaurant) and suggested first categories. The merchant can change any of these afterwards, and every feature works the same way for every business type.
+
 ## System architecture
 
 One web app, one API, one background worker, one database. This is a modular monolith: simple to run alone, and each module can be split out later if it needs to scale.
@@ -121,6 +179,20 @@ Design for a cheap Android phone, one thumb, inside the Telegram or Facebook in-
 
 **Design system:** one brand colour, one accent for success (paid), one for danger; 8 px spacing grid; 12 px rounded corners; built from shadcn/ui so every screen looks consistent. Support dark mode from the start using colour tokens.
 
+### Admin area standards
+
+The super-admin area (laptop-first, still usable on a phone) grows by adding pages, so every page follows the same frame:
+
+- **Menu:** defined once in `admin/admin-nav.ts` — grouped sections, each item a label, icon, route and optional badge count. Adding a page = one entry there plus the page folder. Unbuilt entries set `comingSoon` and show a standard placeholder until built. Laptop: a sidebar that collapses to icons; phone/tablet: the same menu in a drawer (a bottom tab bar can't hold 10+ items). Groups fold open/closed (remembered per viewer; the group holding the current page always opens), one highlight slides to the current page, only the menu scrolls (logo and collapse button stay put) and keeps the current page in view, and pages fade in on change. All motion is off for viewers who ask for reduced motion.
+- **Every page** starts with a page header (title, one-line description, actions) and uses the shared blocks in `admin/admin-ui.tsx`: stat cards, status pills, data toolbar (search + filter chips), table on laptop / cards below, empty state, pagination, side detail panel, and a confirm dialog for risky actions.
+- **Every form** — admin, merchant and buyer — follows one standard (`mockup/form-ui.tsx`): form sections (title and help beside the fields on laptop, above them on narrow merchant forms), edits kept in a draft until Save, a sticky Save/Cancel bar that's only active once something changed, and a Zod schema from `packages/shared` (`product.ts`, `store.ts`, `checkout.ts`, `stock.ts`, `admin-settings.ts`) — the same schema the API validates with. Schemas report problems as error codes (`form-errors.ts`), never English text; the screen shows each code in the viewer's language from the `FormErrors` messages, and the API returns the same codes per field. Price and quantity boxes are read with `parseUsdInput` / `parseKhrInput` / `parseQuantityInput`, so a typo is rejected, never silently rounded. Values owned by code (like plan rules) are shown read-only, never edited in the UI.
+- **Every admin change** is written to the audit log.
+
+### Theme and lists (all screens)
+
+- **Colours only through tokens** (`brand`, `on-brand`, `success`, `warning`, `info`, `danger`, `bg`, `canvas`, `fg`, `muted`, `border`, `nav-*` in `packages/ui/src/globals.css`) — never raw Tailwind colours like `amber-500` or `text-white` on a brand background. That's what lets every viewer switch Light / Dark / Device mode and one of 5 accent colours (the palette button on every screen), saved per viewer and applied before first paint.
+- **Every list uses the shared data grid** (`mockup/data-grid.tsx`): search, quick-filter chips with counts, a filter panel, sortable columns, row selection with bulk actions, CSV export (UTF-8 with BOM so Excel reads Khmer), show/hide columns, row density and page size remembered per viewer. Laptop shows a table; phones and tablets show cards with a sort menu. Risky bulk actions go through the shared confirm dialog.
+
 ## User-friendly data input
 
 Ask for the fewest fields possible, fill in everything you can guess, and check each field the moment the user leaves it. The same Zod schema checks the field in the browser and again on the server.
@@ -139,15 +211,31 @@ Ask for the fewest fields possible, fill in everything you can guess, and check 
 
 After the first order, save name, phone and address on the device (with the buyer's consent) so the next checkout is one tap. Buyers who open the shop from the Telegram bot can share their contact with one button, which fills the phone number for them.
 
-### Merchant onboarding (5 short steps, progress bar)
+### Merchant sign-up and login (one screen, no password)
 
-1. **Log in with Telegram** — no password to forget.
-2. **Shop name and link** — type the name; the link slug is suggested automatically (`sokha-coffee`) and checked live for availability.
-3. **Logo** — optional; if skipped, show a coloured circle with the first letter.
-4. **Get paid** — enter Bakong account ID (for example `name@aclb`); the app checks it exists with Bakong's account-check API and shows a green tick. ABA PayWay is added later in Settings once the merchant has PayWay keys.
-5. **Connect Telegram group** — "Add the bot to your group" button with a 3-screenshot guide; the app detects the group automatically.
+Sign-up and login are the same flow: the first verified login creates the account; returning merchants go to the dashboard, new ones to onboarding. Rules live in `packages/shared/auth.ts`.
 
-The merchant can skip steps 3 and 5 and finish later; a checklist on the dashboard reminds them.
+| Method | Status | Notes |
+| --- | --- | --- |
+| **Continue with Telegram** (main button) | Launch | One tap via the Telegram Login Widget (hash checked with the bot token, rejected if older than 24 hours). Also turns on order alerts in the merchant's private chat with the bot — no setup. |
+| **Continue with phone** (SMS code) | Launch | For sellers without Telegram. 6-digit code, valid 5 minutes, 5 wrong tries then a new code is needed, resend after 60 seconds, limits per phone and per device, bot check (Turnstile) before any SMS is sent to stop SMS-pumping fraud. One code box with `autocomplete="one-time-code"` so phones fill it from the SMS. |
+| Continue with Google | Later | Free; handy on laptops. Add to `ENABLED_LOGIN_METHODS` when it ships. |
+| Facebook, email + password | Not planned | Facebook Login needs Meta business verification and app review; passwords mean forgotten passwords and reset emails. |
+
+- **One account, several ways in** (`merchant_identities`: `merchant_id`, `method`, `provider_account_id`, `verified_at`). A merchant can link Telegram and phone in Profile → Login methods; the last method can't be removed, and adding a phone needs its SMS code, exactly like logging in.
+- **Staff** are invited by phone number and log in with an SMS code.
+- Sessions as in Security below: stay signed in for 30 days on that device; logging out ends it.
+
+### Merchant onboarding (2 quick questions, then the shop is live)
+
+1. **Business type** — only pre-fills defaults (units, starting categories).
+2. **Shop name and link**, with an optional logo on the same screen — the link slug is suggested automatically (`sokha-coffee`) and checked live for availability.
+
+Then the "Your shop is ready" screen: shop QR code, copy/share link, and a reminder to add the Bakong ID. Nothing else blocks a new seller:
+
+- **Getting paid** (Bakong account ID, checked with Bakong's account-check API) is added from the dashboard. Until then the dashboard shows a banner, and checkout offers only the payment methods the shop has set up (`getAvailablePaymentMethods`): no KHQR without a Bakong ID, no ABA PayWay without PayWay keys; if cash on delivery isn't possible either, buyers see "This shop isn't taking orders online yet".
+- **Order alerts** already work for Telegram sign-ins (private chat). Adding the bot to a staff group is optional, from Profile.
+- A **setup checklist** on the dashboard home tracks: Bakong ID (first, highlighted), first product, order alerts, logo, identity verification — and disappears when all are done.
 
 ### Adding a product (target: under 60 seconds)
 
@@ -237,22 +325,95 @@ sequenceDiagram
 
 ## Database schema
 
-Keep your original tables, with these fixes: money as integers, a payments table that supports several providers, staff roles, audit logs, and a store-level exchange rate.
+The tables below are what the approved mockups need (design/screens.md). Value lists in brackets — statuses, reasons, roles — are defined once in `packages/shared` and the database uses the same names. Every table has `id`, `created_at` and `updated_at`; they're left out of the lists. Money columns are whole numbers: `_usd_cents`, `_khr`, or `_minor` next to a `currency` column.
 
-| Table | Purpose | Key changes from the first draft |
+**People and login**
+
+| Table | Purpose | Columns |
 | --- | --- | --- |
-| merchants | Person who owns stores | Add `telegram_username`, `kyc_status` |
-| store_members | Who can manage a store | New: `store_id`, `merchant_id`, `role` (owner, staff) |
-| stores | A shop | Add `usd_to_khr_rate`, `default_currency`, `allow_cod`, `languages`; move payment settings out |
-| store_payment_configs | Provider settings per store | New: `provider`, `bakong_account_id`, encrypted PayWay keys, `enabled` |
-| products / product_variants | Catalog | `price_usd_cents` and `price_khr` (either can be empty, not both); `stock_reserved` next to `stock_quantity`; soft delete |
-| customers | Buyer per store | New: phone, name, Telegram ID, saved address |
-| orders | An order | `currency` (USD or KHR) chosen by buyer, `total_minor` in that currency, `exchange_rate_used`, `payment_method`, `delivery_fee_minor`, address fields, `idempotency_key` |
-| order_items | Lines | Snapshot of title and price at time of order |
-| payment_attempts | Every try to pay | Replaces payments: `provider`, `provider_ref` (MD5 or tran_id), `amount_minor`, `currency`, `status`, `expires_at`, `raw_response` |
-| delivery_dispatches | Delivery | Unchanged, plus `driver_name`, `driver_phone` |
-| audit_logs | Who changed what | New: actor, action, entity, before/after JSON, time |
-| outbox_events | Reliable messages | New: events written in the same transaction, sent by the worker |
+| merchants | A person who owns or works in stores | `first_name`, `last_name`, `kyc_status` (not_submitted, pending, approved, rejected) |
+| merchant_identities | How a merchant logs in — one row per method | `merchant_id`, `method` (telegram, phone; google later), `provider_user_id` (Telegram ID or 855… phone), `telegram_username`, `verified_at`. Unique on `method` + `provider_user_id`. A merchant always keeps at least one |
+| store_members | Who can manage a store | `store_id`, `merchant_id`, `role` (owner, staff) |
+| kyc_submissions | An identity check, one row per attempt | `merchant_id`, `id_type` (national_id, passport), `full_name`, `id_number`, `front_photo_key`, `back_photo_key` (ID card only), `status` (pending, approved, rejected), `reject_reason` (photo_unclear, name_mismatch, document_expired, wrong_document, other), `reject_note`, `reviewed_by` (admin user), `reviewed_at` |
+
+KYC belongs to the person, not the shop: the ID is the owner's. A shop shows "Verified" when its owner's `kyc_status` is approved. Photos are stored in private file storage; the table holds only their keys.
+
+**Shop**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| stores | A shop | `slug` (unique), `name`, `business_type` (shop, restaurant, service, other), `phone`, `area` (phnom_penh, province), `description`, `logo_key`, `languages`, `default_currency`, `usd_to_khr_rate`, `allow_cod`, `vat_percent` (0–20), `online_stock_location_id` (Advance; empty = main branch), `pickup_enabled`, `pickup_address`, `pickup_hours`, `province_delivery_enabled`, `province_fee_usd_cents`, `province_fee_khr`, `province_note`, `delivery_configured_at`, `link_shared_at` |
+| store_payment_configs | Provider settings per store | `store_id`, `provider` (bakong_khqr, aba_payway), `bakong_account_id`, encrypted PayWay keys, `enabled` |
+
+`delivery_configured_at` and `link_shared_at` exist for the setup checklist ("Set your delivery", "Share your shop link"). The plan is **not** on `stores` — see the next table.
+
+**Plan and billing**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| subscriptions | A store's current plan and period — the only place the plan is stored | `store_id` (unique), `plan` (free, basic, pro, advance), `status` (trialing, active, grace, paused), `current_period_start`, `current_period_end`, `trial_ends_at`, `pending_plan` (downgrade waiting for period end), `billing_currency` |
+| subscription_invoices | What a store owes the platform | `store_id`, `number` (INV-1058, unique), `plan`, `reason` (new, renewal, upgrade), `period_start`, `period_end`, `currency`, `amount_minor`, `status` (open, paid, void), `due_at`, `paid_at`, `payment_ref` (KHQR MD5), `manual_bank_reference`, `manual_note`, `marked_paid_by` (admin user), `void_reason`, `voided_by` |
+
+"Overdue" is never stored: it is an open invoice whose `due_at` has passed. An invoice is paid either by KHQR (`payment_ref`) or by hand (`manual_bank_reference`), never both.
+
+**Catalog**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| categories | A store's product groups | `store_id`, `name_km`, `name_en`, `sort_order` |
+| brands | A store's brands | `store_id`, `name_km`, `name_en` |
+| units | Units of measure (piece, cup, kg) | `store_id`, `name_km`, `name_en` |
+| products | What the shop sells | `store_id`, `category_id`, `brand_id`, `unit_id`, `title_km`, `title_en`, `description_km`, `description_en` (up to 1,000 characters each), `discount_percent` (0–90), `is_visible`, `deleted_at` (soft delete) |
+| product_variants | The thing that is priced, stocked and ordered | `store_id`, `product_id`, `sku` (unique per store), `label_km`, `label_en`, `is_default`, `price_usd_cents`, `price_khr` (either can be empty, never both), `wholesale_price_usd_cents`, `wholesale_price_khr` (Pro and Advance), `sort_order`, `deleted_at` |
+| product_photos | Up to 6 per product | `store_id`, `product_id`, `file_key`, `sort_order` |
+
+**Every product has at least one variant.** A product with no options gets one default variant (`is_default`, blank label) that the seller never sees. Prices, stock and order lines then always point at a variant — there is no "product or variant" special case anywhere in the code. A hidden product (`is_visible` false) stays in the dashboard, leaves the shop, and is dropped from carts; nothing is deleted.
+
+Promo codes are sample data in the mockups. Their table comes with the Discounts screen (phase 3).
+
+**Stock (Pro and Advance)**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| stock_locations | A warehouse or a branch | `store_id`, `type` (warehouse, branch), `name_km`, `name_en`, `supplied_by_location_id` (a branch's warehouse), `is_main` |
+| stock_levels | How many are there now — one row per variant and location | `store_id`, `variant_id`, `location_id`, `on_hand`, `reserved`. Unique on `variant_id` + `location_id` |
+| stock_movements | The history: every change, never edited | `store_id`, `variant_id`, `location_id`, `type` (purchase, sale, transfer_out, transfer_in, adjust_in, adjust_out), `quantity` (always positive), `reason` (count_correction, damaged, lost, returned, other — adjustments only), `transfer_id` (links the out and in halves), `order_id` (sales and returns), `note`, `actor_merchant_id` |
+
+`stock_levels` is the fast number checkout reads; `stock_movements` is the record of why it is what it is. Both are written in the same transaction, so they can't drift apart. A transfer is always two movements with one `transfer_id`, so moving stock never changes the store's total. Pro has one location (the main branch); Advance has several and chooses which one the online shop sells from. Free and Basic don't track stock: no rows, and the shop never shows "Sold out".
+
+**Delivery**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| delivery_zones | A group of Phnom Penh districts with one fee | `store_id`, `name` (the seller's own label), `fee_usd_cents`, `fee_khr` (both empty = free) |
+| delivery_zone_districts | Which districts a zone covers | `zone_id`, `store_id`, `district_id`. Unique on `store_id` + `district_id`, so a district is in one zone only |
+| store_drivers | Drivers an order can be handed to | `store_id`, `name`, `phone`, `kind` (own, partner) |
+| delivery_dispatches | How one order was sent | `store_id`, `order_id`, `route` (driver, bus, pickup), `driver_id`, `driver_name`, `driver_phone` (copied, so the order keeps them if the driver is removed), `bus_company`, `ticket_number`, `dispatched_at`, `picked_up_at`, `delivered_at`, `failed_at` |
+
+Districts and provinces are fixed lists in `packages/shared/src/locations.ts`, not tables. A district in no zone isn't delivered to. Pickup and province delivery are columns on `stores`.
+
+**Orders and payments**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| customers | A buyer, per store | `store_id`, `phone` (855…), `name`, `telegram_id`, last delivery choice (`area`, `district_id`, `province_id`, `landmark`) |
+| orders | An order | `store_id`, `customer_id`, `order_number` (unique per store), `status` (awaiting_payment, paid, cod_pending, confirmed, packing, waiting_for_driver, out_for_delivery, delivered, completed, cancelled, failed_delivery), `payment_method` (khqr, aba_payway, cod), `currency` chosen by the buyer, `subtotal_minor`, `discount_minor`, `delivery_fee_minor`, `vat_percent`, `vat_minor`, `total_minor`, `exchange_rate_used`, `fulfilment` (delivery, pickup), `area`, `district_id`, `province_id`, `landmark`, `pickup_address`, `pickup_hours` (copied at order time), buyer `name` and `phone` (copied), `cancel_reason` (payment_timeout, buyer_cancelled, out_of_stock, cannot_deliver, other), `cancel_note`, `stock_taken`, `idempotency_key` |
+| order_items | Lines | `store_id`, `order_id`, `variant_id`, `title_km`, `title_en`, `variant_label_km`, `variant_label_en`, `unit_price_minor`, `quantity`, `line_total_minor` — a snapshot, so a later rename or price change never alters an old order |
+| order_status_events | The order's history | `store_id`, `order_id`, `status`, `actor` (buyer, merchant, system), `actor_merchant_id`, `at` |
+| payment_attempts | Every try to pay | `order_id`, `store_id`, `provider`, `provider_ref` (MD5 or tran_id), `amount_minor`, `currency`, `status` (pending, paid, expired, failed), `expires_at`, `check_count`, `raw_response`, `issue` (provider_unreachable, amount_mismatch, currency_mismatch, paid_after_expiry), `issue_status` (open, confirmed, closed), `issue_note`, `issue_closed_by` (admin user) |
+
+Which status may follow which is decided by `applyOrderAction` in `packages/shared/src/orders.ts`; the API runs every change through it. A failed check is a state of a payment attempt, not a table of its own: an attempt with an open `issue` is what the admin's "Failed checks" screen lists. An admin can ask the provider again or close the issue with a note — there is no column an admin can set to make an attempt `paid`.
+
+**Platform**
+
+| Table | Purpose | Columns |
+| --- | --- | --- |
+| admin_users | Who can use the admin area | `name`, `telegram_id`, `telegram_username` (unique), `role` (owner, support, finance), `disabled_at`, `last_active_at`, `invited_by` |
+| platform_settings | One row of platform-wide settings | `platform_name`, `support_telegram`, `usd_to_khr_min`, `usd_to_khr_max` (the band a store's rate must sit in), `alert_chat_id` |
+| audit_logs | Who changed what | `actor_type` (admin, merchant, system), `actor_id`, `store_id` (when it concerns one), `action`, `entity`, `entity_id`, `before`, `after` (JSON), `at` |
+| outbox_events | Reliable messages | Events written in the same transaction, sent by the worker |
+
+What each admin role may do is in `packages/shared/src/admin-roles.ts` and is enforced by the API on every admin request. Admins are disabled, never deleted, and there is always at least one active owner.
 
 **Money:** save prices as whole numbers so sums are always exact (computers make small mistakes with decimals, like 0.1 + 0.2 = 0.30000000000000004). USD is saved in cents (`$8.50` → `850`), KHR in riel (`៛34,850` → `34850`). The screen still shows $8.50 and 34,850៛. An order uses one currency, picked by the buyer; KHQR and PayWay both accept USD and KHR.
 
@@ -265,16 +426,16 @@ Keep your original tables, with these fixes: money as integers, a payments table
 - The merchant sets `usd_to_khr_rate` in Settings; the platform clamps it to a sane band around the market rate (for example ±5%, exact band TBD) so a mistyped rate can't badly misprice an order. Reject or clamp on save, not silently at checkout.
 - **Payment verification never re-converts currency.** The order is created with one fixed `currency` and `total_minor`; the provider (Bakong or PayWay) is asked for exactly that currency and amount; a callback or poll result is accepted only when the provider's reported currency *and* amount are an exact integer match to the order's stored total. Cross-currency comparison must never happen at this layer — a rate change or rounding difference must never be able to mark the wrong amount as paid. (This sharpens the existing "Rules for every provider" rule below — it's the same rule, stated precisely for the multi-currency case.)
 
-**Stock without overselling:** at checkout, one statement reserves stock only if enough is free:
+**Stock without overselling (Pro and Advance):** at checkout, one statement reserves stock at the shop's online location only if enough is free:
 
 ```sql
-UPDATE product_variants
-SET stock_reserved = stock_reserved + $1
-WHERE id = $2 AND stock_quantity - stock_reserved >= $1;
+UPDATE stock_levels
+SET reserved = reserved + $1
+WHERE variant_id = $2 AND location_id = $3 AND on_hand - reserved >= $1;
 -- 0 rows updated = sold out, tell the buyer
 ```
 
-On payment, move the reserved amount out of stock; on expiry, release it.
+On payment (or when a cash order is placed), take the reserved amount out of `on_hand` and write a `sale` movement; on expiry, release the reservation; on cancel after payment, put it back with an `adjust_in` movement, reason `returned`.
 
 **Multi-tenant safety:** every tenant table carries `store_id`, and PostgreSQL Row-Level Security allows a query only for stores the logged-in merchant belongs to. A test in CI proves merchant A cannot read merchant B's orders.
 
@@ -300,7 +461,7 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 
 ## Deployment
 
-Recommended: Next.js on Vercel Pro, and the API, worker, PostgreSQL and Redis on Railway. Both deploy automatically on every `git push`. Decide this finally after the week-1 Bakong test: if Bakong blocks your server's location, use Option B.
+Recommended: Next.js on Vercel Pro, and the API, worker, PostgreSQL and Redis on Railway. Both deploy automatically on every `git push`. Decide this finally after the Bakong test in roadmap gate G3: if Bakong blocks your server's location, use Option B.
 
 Vercel alone cannot run the whole system. Its functions start per request and stop, so it cannot keep a BullMQ worker running to poll Bakong every few seconds. The worker needs an always-on host.
 
@@ -390,22 +551,52 @@ Prices checked on 2026-09-23: [Vercel Hobby plan](https://vercel.com/docs/plans/
 
 ## Roadmap: zero to live
 
-About 16 weeks working solo with Claude Code. Do not start a phase until the previous one's "Done when" is true.
+One list, in order. Do not start a step until the one before it is "Done when" true. There are no week numbers: a solo build slips, and a date that is already wrong helps nobody — the checks are what matter.
 
-| Phase | Weeks | Build | Done when |
-| --- | --- | --- | --- |
-| 0. Validate and prepare | 1–2 | Interview 15–20 sellers; register Bakong Open API token and PayWay sandbox; create Telegram bots (test + live); buy domain, set up Cloudflare; check company and e-commerce permit needs | 5 merchants agree to beta; one real KHQR payment verified by MD5 from your chosen host |
-| 1. Foundations | 3–4 | Monorepo, Docker Compose, CI, Vercel + Railway projects, staging environment, CLAUDE.md, Figma screens for checkout and product entry | A pull request shows a working preview link and CI is green |
-| 2. Data and login | 5–6 | Prisma schema and migrations, RLS, Telegram login, roles, merchant onboarding flow | Merchant can sign up in 5 steps; test proves stores are isolated |
-| 3. Catalog and checkout | 7–8 | Product entry, storefront, cart, one-page checkout, stock reservation, Khmer/English | 50 simulated buyers on 10 items never oversell |
-| 4. KHQR payments | 9–10 | Provider adapter, Bakong KHQR, worker polling, token renewal, expiry job | Real USD and KHR payments auto-confirm; expired orders free stock |
-| 5. ABA PayWay | 11 | PayWay adapter, per-store encrypted keys, callback signature check, status check job | Sandbox card and ABA Pay payments confirm; a fake callback is rejected |
-| 6. Telegram and dashboard | 12–13 | Order alerts with buttons, order queue, simple stats, manual delivery with tracking link | A merchant runs a full day of orders from their phone |
-| 7. Security and ops | 14 | WAF, Turnstile, headers, Sentry, backups, restore test, admin 2FA | Backup restored successfully; OWASP Top 10 checklist done |
-| 8. Beta | 15–16 | 5–10 real merchants, Khmer video tutorials, daily fixes | Two weeks of real orders; merchants say they would pay |
-| 9. Public launch | 17+ | Subscription plans, KYC review in admin, terms and privacy policy, status page | First paying merchants |
+The screens are designed first as working mockups (design/screens.md). That part is finished for every release below, so each backend step replaces a mockup's sample data with the real thing; it does not design anything new.
 
-**After launch, scale only when numbers say so:** add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb; delivery-company APIs when a partner gives you access.
+### Before any backend: three gates
+
+These cost days, not weeks, and each one can change what gets built.
+
+| Gate | Do | Done when |
+| --- | --- | --- |
+| G1. Save the work | Commit the mockups; from here on, one branch per step, merged when its check passes | Nothing uncommitted on `main` at the end of any day |
+| G2. Sellers try the mockups | Sit with 3–5 real sellers. On their own phone, each one: sets up a shop, adds a product, places an order as a buyer, then handles it as the seller. Watch; don't help | Every one finishes without getting stuck. Anything that stopped two or more of them is fixed in the mockup first |
+| G3. Bakong from the real host | Register the Bakong Open API token. From the server you plan to host on, create one KHQR and check it by MD5 after paying 100៛ | The check returns "paid" from that host. If Bakong refuses the host, choose Deployment Option B (or the small Cambodian checker) **now**, before payment code exists |
+
+### Release 1 — First orders (free beta, 5–10 sellers)
+
+A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets a Telegram alert and moves the order to delivered. Every shop has the same features (the Basic plan's) and nobody is charged yet.
+
+| Step | Build | Done when |
+| --- | --- | --- |
+| 1. Foundations | CI (lint, types, tests, build) on every pull request; staging environment; error tracking | A pull request shows a preview link and CI is green |
+| 2. Data and login | Prisma schema and first migration from "Database schema" (Release 1 tables only), Row-Level Security, Telegram login, 2-question onboarding | A test proves merchant A cannot read merchant B's data; you can sign up and reach the dashboard |
+| 3. Catalog | Categories, products with options, photos, description, show/hide; the setup checklist | On a phone, a product with 3 photos is added in under a minute and appears in the shop |
+| 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order |
+| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted |
+| 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page |
+| 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database |
+| 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test, deploy | The launch checklist below is ticked; a real KHQR order completes on the live site |
+| 9. Beta | 5–10 sellers you onboard yourself; a Telegram group; fix the top three complaints each week | Two weeks of real orders, and sellers say they would pay |
+
+Left out of Release 1 on purpose, although their screens exist: subscription billing, plan limits, KYC, stock, wholesale prices, ABA PayWay, phone-number login, admin roles.
+
+### Release 2 — Getting paid (public launch)
+
+| Step | Build | Done when |
+| --- | --- | --- |
+| 10. Plans and billing | Subscriptions, invoices paid by KHQR to the platform's account, grace and pause, plan limits enforced in the API | A shop pays, its period moves 30 days; an unpaid shop pauses after grace and reopens the moment it pays |
+| 11. Admin for money | Subscriptions, invoices (mark paid by hand, void), buyer payments, failed checks | Every screen in the admin "Revenue" and "Payments" groups runs on real data |
+| 12. Trust | KYC submission and review, the Verified badge; phone-number login by SMS code | A seller is verified end to end; a seller without Telegram can log in |
+| 13. Launch | Terms and privacy in Khmer and English, status page, Khmer video tutorials | First paying merchants |
+
+### Release 3 — Bigger shops
+
+Build in the order sellers ask for them, one at a time: stock with "Sold out" (Pro); wholesale prices; warehouses and branches (Advance); ABA PayWay; admin users and roles with 2FA; customers, discounts, staff and reports (screens S14–S17); link previews for Facebook and TikTok; CSV product import; cash owed per driver; delivery-company APIs; the AI product writer.
+
+**After launch, scale only when numbers say so:** add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb.
 
 ## Working with Claude Code
 
@@ -421,18 +612,13 @@ One small feature per session, on its own branch, reviewed by you before merge. 
 4. Review the diff in VS Code's Source Control tab.
 5. "Commit with message `feat: …`, push the branch, open a pull request."
 
-**Example prompts per phase:**
-
-- Phase 2: "Create the Prisma schema for stores, store_members and products following CLAUDE.md money rules, add RLS policies, and a test that merchant A cannot read merchant B's products."
-- Phase 3: "Build the checkout page with React Hook Form and the shared Zod schema. Phone field: fixed +855 prefix, auto-format `012 345 678` and `097 123 4567`, store as `855…`."
-- Phase 4: "Implement `BakongKhqrProvider` for the PaymentProvider interface, plus a BullMQ job that checks pending MD5s with backoff and stops at `expires_at`."
-- Phase 5: "Implement `AbaPaywayProvider`: purchase request, HMAC-SHA512 callback verification, Check Transaction confirmation. Write tests for a valid callback, a tampered callback, and a wrong amount."
+The first prompt for each roadmap step is in "Build guide", Part 7.
 
 **Review extra carefully:** anything in auth, payments, RLS policies and migrations. Ask Claude Code to explain those diffs line by line before you merge.
 
 ## Build guide: zero to live with Claude Code in VS Code
 
-Follow these parts in order. Everything up to Part 7 runs on your own PC for free; you buy a domain and hosting only in Stage I.
+Follow these parts in order. Everything up to Part 7 runs on your own PC for free; you buy a domain and hosting only at roadmap step 8 (gate G3 needs a server for one afternoon).
 
 ### Part 1: Install once (Day 1)
 
@@ -446,7 +632,7 @@ Follow these parts in order. Everything up to Part 7 runs on your own PC for fre
 | 6 | VS Code | Install on Windows, plus extensions: WSL, ESLint, Prettier, Prisma, Tailwind CSS IntelliSense, Docker | From Ubuntu, `code .` opens VS Code |
 | 7 | Claude Code | Follow the current official install guide at docs.claude.com | `claude` starts and asks you to log in |
 | 8 | GitHub CLI | `sudo apt install gh`, then `gh auth login` | `gh auth status` |
-| 9 | cloudflared (later, Stage F) | Install from Cloudflare's docs | `cloudflared --version` |
+| 9 | cloudflared (later, for ABA PayWay callbacks) | Install from Cloudflare's docs | `cloudflared --version` |
 
 Work inside the Ubuntu (WSL) file system, for example `~/projects/`, not in `C:\Users`. It is much faster and avoids file-permission errors.
 
@@ -472,7 +658,8 @@ Claude Code does not remember past sessions. **Files in the project are its memo
 | --- | --- |
 | `CLAUDE.md` | Your workflow, stack, commands, rules. Read automatically every session |
 | `docs/blueprint.md` | This whole blueprint |
-| `design/screens.md` | Text spec for all 12 screens |
+| `design/screens.md` | Text spec for every screen, with what is built |
+| `design/design-standard.md` | Layout, look and form rules every screen follows |
 | `.claude/settings.json` | Stops Claude reading secret files (`.env`) |
 | `.claude/commands/screen.md` | Saved prompt you run as `/screen <name>` |
 
@@ -543,19 +730,20 @@ claude
 
 One branch = one feature = one day or less. Small tasks are where Claude works best.
 
-### Part 7: Stages A–I with the first prompt for each
+### Part 7: The first prompt for each roadmap step
 
-| Stage | Weeks | First prompt to Claude | Done when |
-| --- | --- | --- | --- |
-| A. Foundation | 1 | "Create the monorepo from CLAUDE.md: empty apps that each start, docker-compose with Postgres and Redis, .env.example, .gitignore, GitHub Actions CI. `pnpm dev` must start everything." | `pnpm dev` works; CI green |
-| B. Design in code | 2–3 | "Build /styleguide: colours, Kantumruy Pro, buttons, inputs, cards, USD/KHR price display." Then `/screen` for each of the 12 screens, then "Link all mockups into clickable buyer and merchant journeys." | 3–5 sellers click through on their phones without getting stuck |
-| C. Data and login | 4–5 | "From docs/blueprint.md Database section, create the Prisma schema and migration with RLS, plus a test proving merchant A can't read merchant B's orders. Then add Telegram Login with server-side hash check." | Isolation test passes; you can log in |
-| D. Catalog and checkout | 6–7 | "Connect /mockup/product-form and /mockup/checkout to the real API. Checkout reserves stock in a transaction with an idempotency key. Add a test with 50 parallel buyers on 10 items." | No overselling |
-| E. KHQR | 8–9 | "Implement BakongKhqrProvider in packages/payments and a worker job that checks pending MD5s with backoff, confirms amount and currency, and expires orders after 10 minutes." | Real $0.01 USD and 100៛ KHR payments auto-confirm |
-| F. ABA PayWay | 10 | "Implement AbaPaywayProvider: purchase, HMAC-SHA512 callback check, Check Transaction confirmation. Tests for valid, tampered and wrong-amount callbacks." | Sandbox payments confirm; fake callback rejected |
-| G. Telegram + dashboard | 11–12 | "Telegram bot in long-polling mode for development: order alerts with Preparing and Dispatched buttons, checked against store membership. Connect the merchant order screens." | A full day of test orders run from your phone |
-| H. Security | 13 | "Review the codebase against docs/blueprint.md Security section and OWASP Top 10. List problems first, then fix them one at a time." | Checklist done; backup restore tested |
-| I. Go live | 14+ | "Prepare deployment for [Option A or B] from the blueprint: environment variables list, build settings, migration step, health checks." | Staging works; launch checklist complete |
+The steps and their "Done when" checks are in "Roadmap: zero to live" above — this is only how to start each one. Every prompt begins with "Read CLAUDE.md and the blueprint section about X. Propose a plan; don't write code yet."
+
+| Roadmap step | First prompt to Claude |
+| --- | --- |
+| 1. Foundations | "Add a GitHub Actions workflow that runs lint, typecheck, tests and build on every pull request, and set up the staging environment from the Deployment section." |
+| 2. Data and login | "From the blueprint's Database schema, create the Prisma schema and first migration for the Release 1 tables, with RLS and a test proving merchant A can't read merchant B's orders. Then add Telegram Login with a server-side hash check." |
+| 3. Catalog | "Connect the product form and products list mockups to the real API, using productInputSchema from packages/shared. Photos upload to file storage; the database keeps only their keys." |
+| 4. Shop and checkout | "Connect the shop page, cart and checkout mockups to the real API. The order is created in one transaction with an idempotency key, with totals rounded per line and the rate frozen on the order." |
+| 5. KHQR | "Implement BakongKhqrProvider in packages/payments and a worker job that checks pending MD5s every 5 seconds, accepts only an exact amount and currency, and expires the order after 10 minutes." |
+| 6. Orders and Telegram | "Connect the seller order screens and the buyer order page. Every status change goes through applyOrderAction. Telegram bot in long-polling mode for development: order alerts with Confirm and Open buttons, checked against store membership." |
+| 7. Admin, the minimum | "Connect the admin merchants list, the extend-period action and the audit log to real data." |
+| 8. Security and go live | "Review the codebase against the blueprint's Security section and OWASP Top 10. List problems first, then fix them one at a time. Then prepare deployment for the chosen option." |
 
 **Testing on your PC without a domain**
 
@@ -574,19 +762,18 @@ One branch = one feature = one day or less. Small tasks are where Claude works b
 | Claude forgets a rule | Add it to CLAUDE.md so every future session knows it |
 | You repeat the same instruction | Save it as a command in `.claude/commands/` |
 | Session feels slow or confused | `/compact`, or `/clear` and start the task again |
-| Docker database acting strange | `docker compose down` then `docker compose up -d`; reset data with `pnpm db:reset` (local only; created in Stage A) |
+| Docker database acting strange | `docker compose down` then `docker compose up -d`; reset data with `pnpm db:reset` (local only; created in roadmap step 2) |
 | Not sure a change is safe | "Explain this diff line by line and list the risks" before merging |
 
 **Three rules keep this safe:** plan before coding, keep every task small, and review every diff yourself before committing, especially anything touching payments, login or migrations.
 
 ## Launch checklist and open questions
 
-**Before going live**
+**Before going live (Release 1)** — ABA PayWay's own checks (production keys, fake and replayed callbacks rejected) join this list when PayWay is built in Release 3.
 
 - [ ] Live Bakong token works from the production host, and renewal job has run once
-- [ ] PayWay production keys for at least one merchant; callback domain whitelisted
-- [ ] A real $0.10 payment tested end to end with KHQR and with PayWay
-- [ ] Fake PayWay callback and replayed callback both rejected
+- [ ] A real 100៛ and a real $0.10 payment tested end to end with KHQR
+- [ ] A payment for the wrong amount, and the same result delivered twice, both change nothing
 - [ ] Store isolation test passing in CI
 - [ ] Backup restored into a fresh database
 - [ ] Sentry alerts reach your Telegram
@@ -596,10 +783,10 @@ One branch = one feature = one day or less. Small tasks are where Claude works b
 
 **Open questions**
 
-- [ ] Does Bakong's API accept calls from Railway/Vercel regions, or do we need a Cambodian host?
+- [ ] Does Bakong's API accept calls from Railway/Vercel regions, or do we need a Cambodian host? — answered by gate G3, before any payment code
 - [ ] How will merchants get PayWay accounts: each applies to ABA directly, or can ABA offer a platform/partner arrangement?
-- [ ] Subscription price: flat monthly fee, or tiers by number of orders?
-- [ ] Cash on delivery at launch, or later?
+- [x] Subscription price: flat monthly fee per plan — proposed prices in "Subscription tiers"; confirm the numbers with beta merchants before launch
+- [x] Cash on delivery at launch, or later? — At launch, for pickup and Phnom Penh delivery; provinces prepay (see `isCodAvailable` in packages/shared)
 - [ ] Which delivery partner will talk to us first about API access?
 
 ## Sources

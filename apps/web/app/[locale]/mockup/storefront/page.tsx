@@ -1,75 +1,198 @@
 "use client";
 
-import { formatUsd } from "@khmer-micro-store/shared";
-import { Badge, BottomSheet, Button, SearchInput, SegmentedControl } from "@khmer-micro-store/ui";
-import { ChevronRight } from "lucide-react";
+import { formatKhr, formatUsd, isStorefrontOpen, maxOrderQuantity, type Currency } from "@khmer-micro-store/shared";
+import { Badge, Button, cn, SearchInput, SegmentedControl, Skeleton, ThemeSwitcher } from "@khmer-micro-store/ui";
+import { ChevronRight, Clock, Info, SearchX, ShoppingBag, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import {
-  getStoreMaxDiscountPercent,
-  getUnitKhr,
-  getUnitUsdCents,
-  lineKey,
-  mockCategories,
-  mockProducts,
-  mockStore,
-  type MockProduct,
-} from "@/mock/mock-data";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { getStoreMaxDiscountPercent, mockStore, parseLineKey, type MockProduct } from "@/mock/mock-data";
+import { useAdmin } from "../admin-context";
 import { useCart } from "../cart-context";
-import { useCartSummary } from "../use-cart-summary";
-import { CategoryChip, ProductCard, VariantRow } from "../shared-ui";
+import { useDeliverySettings } from "../delivery-settings-context";
+import { useMerchantSubscription } from "../merchant-subscription-context";
+import { useOnlineStock } from "../online-stock";
+import { useCheckoutTotal } from "../use-checkout-total";
+import { useThemeLabels } from "../use-theme-labels";
+import { CategoryChip, ProductCard } from "../shared-ui";
+import { useShopIdentity } from "../shop-identity";
+import { useShopProducts } from "../shop-products";
+import { ProductDetail } from "./product-detail";
+import { ShopInfo } from "./shop-info";
 
+// A paused store (trial ended or subscription unpaid) keeps its link working
+// but takes no orders — see docs/blueprint.md "Subscription life cycle".
 export default function StorefrontMockupPage() {
+  const { hydrated, subscription } = useMerchantSubscription();
+  const { hydrated: stockReady } = useOnlineStock();
+  const { hydrated: productsReady } = useShopProducts();
+  const { hydrated: identityReady } = useShopIdentity();
+  const { hydrated: deliveryReady } = useDeliverySettings();
+  // Waits for saved stock, products and shop details too, so nothing flashes in (or out) after the page appears.
+  if (!hydrated || !stockReady || !productsReady || !identityReady || !deliveryReady) return <StorefrontSkeleton />;
+  if (!isStorefrontOpen(subscription.status)) return <StoreClosed />;
+  // useSearchParams (the ?product= link) needs a Suspense boundary for Next's static prerender.
+  return (
+    <Suspense fallback={<StorefrontSkeleton />}>
+      <Storefront />
+    </Suspense>
+  );
+}
+
+/** The shop's shape in grey blocks while its data loads — never a blank page or a spinner. */
+function StorefrontSkeleton() {
   const t = useTranslations("Storefront");
+  return (
+    <div className="min-h-dvh bg-canvas" aria-busy="true">
+      <span className="sr-only" role="status">
+        {t("loading")}
+      </span>
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1100px] flex-col bg-bg md:border-x md:border-border">
+        <Skeleton className="h-32 w-full rounded-none sm:h-44" />
+        <div className="flex flex-col gap-2 px-4 pt-9">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-56" />
+          <Skeleton className="mt-1 h-11 w-full" />
+        </div>
+        <div className="flex gap-2 px-4 pt-5">
+          <Skeleton className="h-11 w-16 rounded-full" />
+          <Skeleton className="h-11 w-24 rounded-full" />
+          <Skeleton className="h-11 w-24 rounded-full" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-4 pt-5 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index} className="flex flex-col gap-2">
+              <Skeleton className="aspect-square w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StoreClosed() {
+  const t = useTranslations("Storefront");
+  const { name: storeName } = useShopIdentity();
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-canvas p-4 text-fg">
+      <div className="flex w-full max-w-[420px] flex-col items-center gap-3 rounded-2xl bg-bg p-8 text-center shadow-card">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-border/30">
+          <Store className="h-8 w-8 text-muted" aria-hidden="true" />
+        </span>
+        <h1 className="text-lg font-semibold">{storeName}</h1>
+        <p className="text-sm text-muted">{t("temporarilyClosed")}</p>
+      </div>
+    </div>
+  );
+}
+
+function Storefront() {
+  const t = useTranslations("Storefront");
+  const { demoKycStatus } = useAdmin();
+  const themeLabels = useThemeLabels();
   const locale = useLocale();
   const router = useRouter();
-  const { quantities, setQuantities } = useCart();
-  const storeName = locale === "km" ? mockStore.nameKm : mockStore.nameEn;
+  const { quantities, setQuantities, currency } = useCart();
+  const { name: storeName, initial: storeInitial, logoDataUrl } = useShopIdentity();
+  // The seller's logo once they've added one; the shop's first letter until then.
+  const logo = logoDataUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- merchant's own upload preview, not a remote image
+    <img src={logoDataUrl} alt="" className="h-full w-full object-cover" />
+  ) : (
+    storeInitial
+  );
   const ratingCountLabel = locale === "km" ? mockStore.ratingCountLabelKm : mockStore.ratingCountLabelEn;
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [pickerProductId, setPickerProductId] = useState<string | null>(null);
+  const { products, categories } = useShopProducts();
 
-  const maxDiscount = getStoreMaxDiscountPercent(mockProducts);
-  const specialOfferProducts = mockProducts.filter((product) => (product.discountPercent ?? 0) > 0);
+  // The open product lives in the link (?product=p1), so a product can be
+  // shared on Facebook or TikTok and the phone's Back button closes it.
+  const pathname = usePathname();
+  const productParam = useSearchParams().get("product");
+  const detailProduct = productParam ? (products.find((product) => product.id === productParam) ?? null) : null;
+  const openedHere = useRef(false);
+
+  function openProduct(product: MockProduct) {
+    openedHere.current = true;
+    router.push(`${pathname}?product=${encodeURIComponent(product.id)}`, { scroll: false });
+  }
+
+  /** Back if the buyer opened it from this page; a buyer who arrived by a shared link stays in the shop. */
+  function closeProduct() {
+    if (openedHere.current) {
+      openedHere.current = false;
+      router.back();
+    } else {
+      router.replace(pathname, { scroll: false });
+    }
+  }
+
+  // Once the banner has scrolled away, the pinned search bar shows the shop's
+  // initial so the buyer still knows whose shop this is.
+  const identityRef = useRef<HTMLDivElement>(null);
+  const [identityHidden, setIdentityHidden] = useState(false);
+  useEffect(() => {
+    const target = identityRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => setIdentityHidden(!entry?.isIntersecting));
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const maxDiscount = getStoreMaxDiscountPercent(products);
+  const specialOfferProducts = products.filter((product) => (product.discountPercent ?? 0) > 0);
+  // Only categories with something to buy get a chip.
+  const shownCategories = categories.filter((category) => products.some((product) => product.categoryId === category.id));
   const showSpecialOffers = selectedCategory === "all" && !searchQuery && specialOfferProducts.length > 0;
 
   const visibleProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
+    const query = searchQuery.trim().toLowerCase();
+    return products.filter((product) => {
       const inCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
-      const title = locale === "km" ? product.titleKm : product.titleEn;
-      const matchesSearch = title.toLowerCase().includes(searchQuery.trim().toLowerCase());
+      // Search both languages: a buyer may type "coffee" on the Khmer page.
+      const matchesSearch = `${product.titleKm} ${product.titleEn}`.toLowerCase().includes(query);
       return inCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery, locale]);
+  }, [products, selectedCategory, searchQuery]);
 
-  const { cartCount, totalUsdCents } = useCartSummary(quantities, locale, null);
+  // The cart bar shows the goods total in the buyer's currency — the same
+  // round-each-line-then-sum numbers checkout uses.
+  const { itemCount, lines } = useCheckoutTotal(quantities, locale, null, currency);
+  const goodsTotal = lines.reduce((sum, line) => sum + line.discounted * line.qty, 0);
+  const format = (amount: number, cur: Currency) => (cur === "USD" ? formatUsd(amount) : formatKhr(amount));
 
+  const { stateFor } = useOnlineStock();
+  const stockLabels = { soldOut: t("soldOut"), onlyLeft: (count: number) => t("onlyLeft", { count }) };
+
+  /** Adds or removes one, never beyond what the shop has in stock (Pro and Advance). */
   function adjustQuantity(key: string, delta: number) {
+    const { productId, variantId } = parseLineKey(key);
+    const max = maxOrderQuantity(stateFor(productId, variantId));
     setQuantities((prev) => {
-      const next = Math.max(0, (prev[key] ?? 0) + delta);
-      return { ...prev, [key]: next };
+      const wanted = Math.max(0, (prev[key] ?? 0) + delta);
+      return { ...prev, [key]: max === null ? wanted : Math.min(wanted, max) };
     });
   }
 
-  function openPicker(product: MockProduct) {
-    setPickerProductId(product.id);
+  function clearFilters() {
+    setSearchQuery("");
+    setSelectedCategory("all");
   }
-
-  function closePicker() {
-    setPickerProductId(null);
-  }
-
-  const pickerProduct = pickerProductId ? (mockProducts.find((p) => p.id === pickerProductId) ?? null) : null;
 
   const cardProps = {
     locale,
+    currency,
     quantities,
+    stockFor: stateFor,
+    stockLabels,
     onAdjustQuantity: adjustQuantity,
-    onOpenPicker: openPicker,
+    onOpen: openProduct,
     addLabel: t("add"),
     startingFromLabel: t("startingFrom"),
     decreaseLabelFor: (title: string) => t("decrease", { title }),
@@ -77,31 +200,14 @@ export default function StorefrontMockupPage() {
   };
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-[480px] flex-col bg-bg pb-24 text-fg">
-      <header className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
-        <div className="relative">
-          <div className={`h-32 w-full ${mockStore.bannerColor}`} />
-          {maxDiscount > 0 && (
-            <div className="absolute inset-x-0 top-6 text-center">
-              <span className="text-2xl font-extrabold text-white drop-shadow-md">
-                {t("upTo", { percent: maxDiscount })}
-              </span>
-            </div>
-          )}
-          <div className="absolute -bottom-6 left-4 flex h-14 w-14 items-center justify-center rounded-full border-4 border-bg bg-brand text-xl font-bold text-white shadow-md">
-            {storeName.charAt(0)}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 px-4 pb-3 pt-8">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-semibold">{storeName}</span>
-              <div className="flex items-center gap-2 text-xs text-muted">
-                {mockStore.verified && <Badge>{t("verified")}</Badge>}
-                <span>{t("rating", { value: mockStore.ratingValue, count: ratingCountLabel })}</span>
-              </div>
-            </div>
+    <div className="min-h-dvh bg-canvas text-fg">
+      {/* Phones: full width. Tablet and up: a centred shop column on the page background. */}
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1100px] flex-col bg-bg pb-32 md:border-x md:border-border">
+        <section className="relative">
+          <div className={cn("h-32 w-full sm:h-44", mockStore.bannerColor)} />
+          {/* A dark shade at the bottom keeps the offer text readable on any banner colour. */}
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-nav-bg/50 via-transparent to-transparent" />
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-bg/85 p-0.5 shadow-card backdrop-blur">
             <SegmentedControl
               value={locale}
               onChange={(next) => router.push(`/${next}/mockup/storefront`)}
@@ -110,20 +216,62 @@ export default function StorefrontMockupPage() {
                 { value: "en", label: "EN" },
               ]}
             />
+            <ThemeSwitcher labels={themeLabels} />
           </div>
+          {maxDiscount > 0 && (
+            <span className="absolute bottom-3 right-4 text-xl font-extrabold text-nav-fg drop-shadow sm:text-2xl">
+              {t("upTo", { percent: maxDiscount })}
+            </span>
+          )}
+          <div className="absolute -bottom-7 left-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-bg bg-brand text-2xl font-bold text-on-brand shadow-raised">
+            {logo}
+          </div>
+        </section>
 
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-            aria-label={t("searchPlaceholder")}
-          />
+        <div ref={identityRef} className="flex flex-col gap-1 px-4 pb-3 pt-9">
+          <h1 className="text-lg font-bold leading-normal">{storeName}</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+            {/* Only after the super admin approved the owner's ID — the badge is a promise to buyers. */}
+            {demoKycStatus === "approved" && <Badge>{t("verified")}</Badge>}
+            <span>{t("rating", { value: mockStore.ratingValue, count: ratingCountLabel })}</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("deliveryTime", { min: mockStore.deliveryEtaMinMinutes, max: mockStore.deliveryEtaMaxMinutes })}
+            </span>
+          </div>
+          <div className="mt-2">
+            <ShopInfo />
+          </div>
+        </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
+        {/* Only search and categories stay pinned — the rest of the screen is for products. */}
+        <div className="sticky top-0 z-20 flex flex-col gap-2 border-b border-border bg-bg pb-2 pt-2">
+          <div className="flex items-center gap-2 px-4">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-sm font-bold text-on-brand transition-all duration-200 motion-reduce:transition-none",
+                identityHidden ? "w-9 opacity-100" : "w-0 opacity-0",
+              )}
+            >
+              {logo}
+            </span>
+            <div className="min-w-0 flex-1">
+              <SearchInput
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => setSearchQuery("")}
+                clearLabel={t("clearSearch")}
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("searchPlaceholder")}
+              />
+            </div>
+          </div>
+          <div className="no-scrollbar flex snap-x gap-2 overflow-x-auto scroll-px-4 px-4">
             <CategoryChip active={selectedCategory === "all"} onClick={() => setSelectedCategory("all")}>
               {t("categoryAll")}
             </CategoryChip>
-            {mockCategories.map((category) => (
+            {shownCategories.map((category) => (
               <CategoryChip
                 key={category.id}
                 active={selectedCategory === category.id}
@@ -134,82 +282,85 @@ export default function StorefrontMockupPage() {
             ))}
           </div>
         </div>
-      </header>
 
-      {showSpecialOffers && (
-        <section className="flex flex-col gap-2 border-b border-border p-4">
-          <h2 className="text-sm font-semibold text-fg">{t("specialOffers")}</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {specialOfferProducts.map((product) => (
-              <ProductCard key={product.id} product={product} className="w-36 shrink-0" {...cardProps} />
-            ))}
+        {productParam && !detailProduct && (
+          <div role="status" className="mx-4 mt-4 flex items-center gap-3 rounded-DEFAULT border border-border bg-canvas p-3 text-sm">
+            <Info className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+            <p className="flex-1">{t("productUnavailable")}</p>
+            <button
+              type="button"
+              onClick={closeProduct}
+              aria-label={t("close")}
+              className="-my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-border/30"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
-        </section>
-      )}
-
-      <main className="grid flex-1 auto-rows-min grid-cols-2 gap-3 p-4">
-        {visibleProducts.map((product) => (
-          <ProductCard key={product.id} product={product} {...cardProps} />
-        ))}
-        {visibleProducts.length === 0 && (
-          <p className="col-span-2 py-8 text-center text-sm text-muted">{t("noProducts")}</p>
         )}
-      </main>
 
-      {pickerProduct && (
-        <BottomSheet
-          open
-          onClose={closePicker}
-          closeLabel={t("close")}
-          title={locale === "km" ? pickerProduct.titleKm : pickerProduct.titleEn}
-        >
-          <div className="flex flex-col gap-3">
-            <div className={`aspect-video w-full rounded-DEFAULT ${pickerProduct.photoColor}`} />
-            <p className="text-sm font-medium text-muted">{t("chooseOption")}</p>
-            <div>
-              {pickerProduct.variants!.map((variant) => {
-                const key = lineKey(pickerProduct.id, variant.id);
-                const qty = quantities[key] ?? 0;
-                const label = locale === "km" ? variant.labelKm : variant.labelEn;
-                return (
-                  <VariantRow
-                    key={variant.id}
-                    label={label}
-                    usdCents={getUnitUsdCents(pickerProduct, variant)}
-                    khr={getUnitKhr(pickerProduct, variant)}
-                    originalUsdCents={pickerProduct.discountPercent ? variant.priceUsdCents : undefined}
-                    originalKhr={pickerProduct.discountPercent ? variant.priceKhr : undefined}
-                    qty={qty}
-                    onDecrease={() => adjustQuantity(key, -1)}
-                    onIncrease={() => adjustQuantity(key, 1)}
-                    addLabel={t("add")}
-                    decreaseLabel={t("decrease", { title: label })}
-                    increaseLabel={t("increase", { title: label })}
-                  />
-                );
-              })}
+        {showSpecialOffers && (
+          <section className="flex flex-col gap-3 pt-4">
+            <h2 className="px-4 text-base font-semibold">{t("specialOffers")}</h2>
+            <div className="no-scrollbar flex snap-x gap-3 overflow-x-auto scroll-px-4 px-4 pb-1">
+              {specialOfferProducts.map((product) => (
+                <ProductCard key={product.id} product={product} className="w-40 shrink-0 snap-start sm:w-44" {...cardProps} />
+              ))}
             </div>
-            <Button variant="primary" onClick={closePicker} className="w-full">
-              {t("done")}
-            </Button>
-          </div>
-        </BottomSheet>
-      )}
+          </section>
+        )}
 
-      {cartCount > 0 && (
-        <Link
-          href={`/${locale}/mockup/cart`}
-          className="fixed inset-x-0 bottom-0 mx-auto flex max-w-[480px] min-h-touch items-center justify-between gap-3 bg-brand p-3 text-white shadow-[0_-2px_8px_rgba(0,0,0,0.15)]"
-        >
-          <span className="flex flex-col items-start">
-            <span className="text-xs opacity-90">{t("itemCount", { count: cartCount })}</span>
-            <span className="text-base font-semibold">{formatUsd(totalUsdCents)}</span>
-          </span>
-          <span className="flex items-center gap-1 text-sm font-medium">
-            {t("viewCart")}
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </span>
-        </Link>
+        <section className="flex flex-1 flex-col gap-3 pt-4">
+          {showSpecialOffers && <h2 className="px-4 text-base font-semibold">{t("allProducts")}</h2>}
+          {visibleProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 lg:grid-cols-4">
+              {visibleProducts.map((product) => (
+                <ProductCard key={product.id} product={product} {...cardProps} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-border/30">
+                <SearchX className="h-7 w-7 text-muted" aria-hidden="true" />
+              </span>
+              <p className="text-sm text-muted">
+                {searchQuery.trim() ? t("noResultsFor", { query: searchQuery.trim() }) : t("noProducts")}
+              </p>
+              <Button variant="secondary" onClick={clearFilters}>
+                {t("showAllProducts")}
+              </Button>
+            </div>
+          )}
+        </section>
+      </div>
+
+      {detailProduct && <ProductDetail key={detailProduct.id} product={detailProduct} onClose={closeProduct} />}
+
+      {itemCount > 0 && (
+        <div className="pb-safe pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pt-3">
+          <Link
+            // Re-mounting on each change replays the small "bump", so adding an item is felt.
+            key={itemCount}
+            href={`/${locale}/mockup/cart`}
+            className="pointer-events-auto mx-auto flex min-h-[56px] w-full max-w-[520px] animate-bump items-center justify-between gap-3 rounded-2xl bg-brand px-4 py-2 text-on-brand shadow-raised motion-reduce:animate-none"
+          >
+            <span className="flex items-center gap-3">
+              <span className="relative">
+                <ShoppingBag className="h-6 w-6" aria-hidden="true" />
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-bg px-1 text-xs font-bold text-brand">
+                  {itemCount}
+                </span>
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-xs opacity-90">{t("itemCount", { count: itemCount })}</span>
+                <span className="text-base font-semibold">{format(goodsTotal, currency)}</span>
+              </span>
+            </span>
+            <span className="flex items-center gap-1 text-sm font-semibold">
+              {t("viewCart")}
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </Link>
+        </div>
       )}
     </div>
   );

@@ -2,33 +2,146 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kantumruy Pro for Khmer script; falls back to system sans for Latin.
-   Khmer vowels above/below the base line get cut off below ~1.5 line-height. */
+/*
+  Colour tokens (RGB channels, so Tailwind can add opacity: bg-brand/10).
+  Theme = <html data-theme="light|dark"> (no attribute = follow the device),
+  accent = <html data-accent="teal|indigo|violet|rose|amber">. Both are set
+  before first paint by the script in app/[locale]/layout.tsx.
+
+  Kantumruy Pro for Khmer script; falls back to system sans for Latin.
+  Khmer vowels above/below the base line get cut off below ~1.5 line-height.
+*/
 :root {
   --font-khmer: "Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif;
 
-  --color-brand: 8 145 178; /* cyan-700 */
-  --color-success: 22 163 74; /* green-600, "paid" */
-  --color-danger: 220 38 38; /* red-600 */
-  --color-bg: 255 255 255;
+  --color-brand: 8 145 178; /* teal accent: cyan-700 */
+  --color-on-brand: 255 255 255;
+  --color-success: 22 163 74;
+  --color-warning: 180 83 9;
+  --color-info: 37 99 235;
+  --color-danger: 220 38 38;
+  --color-bg: 255 255 255; /* cards, inputs, sheets */
+  --color-canvas: 244 246 250; /* page background behind cards */
   --color-fg: 15 23 42;
   --color-muted: 100 116 139;
   --color-border: 226 232 240;
+
+  /* The KHQR payment card: NBC's KHQR red, on a white card with black ink.
+     Never themed — it's a payment standard, and a QR must stay dark-on-white to scan. */
+  --color-khqr: 225 35 46;
+  --color-khqr-surface: 255 255 255;
+  --color-khqr-ink: 17 24 39;
+
+  /* The admin sidebar stays dark in both themes. */
+  --color-nav-bg: 15 23 42;
+  --color-nav-fg: 241 245 249;
+  --color-nav-muted: 148 163 184;
+  --color-nav-border: 30 41 59;
+
+  color-scheme: light;
 }
 
+/* Dark — when chosen, or when following a device set to dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-brand: 45 212 191; /* teal-400 */
-    --color-success: 74 222 128; /* green-400 */
-    --color-danger: 248 113 113; /* red-400 */
-    --color-bg: 15 23 42;
+  :root:not([data-theme="light"]) {
+    --color-brand: 45 212 191;
+    --color-on-brand: 4 47 46;
+    --color-success: 74 222 128;
+    --color-warning: 251 191 36;
+    --color-info: 96 165 250;
+    --color-danger: 239 68 68;
+    --color-bg: 22 30 46;
+    --color-canvas: 11 17 30;
     --color-fg: 241 245 249;
     --color-muted: 148 163 184;
-    --color-border: 51 65 85;
+    --color-border: 45 57 78;
+    --color-nav-bg: 5 10 22;
+    --color-nav-border: 25 33 50;
+    color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+  --color-brand: 45 212 191;
+  --color-on-brand: 4 47 46;
+  --color-success: 74 222 128;
+  --color-warning: 251 191 36;
+  --color-info: 96 165 250;
+  --color-danger: 239 68 68;
+  --color-bg: 22 30 46;
+  --color-canvas: 11 17 30;
+  --color-fg: 241 245 249;
+  --color-muted: 148 163 184;
+  --color-border: 45 57 78;
+  --color-nav-bg: 5 10 22;
+  --color-nav-border: 25 33 50;
+  color-scheme: dark;
+}
+
+/* Accent colours. Each has a light-theme shade (white text on top) and a
+   brighter dark-theme shade (dark text on top) so buttons stay readable. */
+:root[data-accent="indigo"] { --color-brand: 79 70 229; --color-on-brand: 255 255 255; }
+:root[data-accent="violet"] { --color-brand: 124 58 237; --color-on-brand: 255 255 255; }
+:root[data-accent="rose"] { --color-brand: 225 29 72; --color-on-brand: 255 255 255; }
+:root[data-accent="amber"] { --color-brand: 180 83 9; --color-on-brand: 255 255 255; }
+
+@media (prefers-color-scheme: dark) {
+  :root[data-accent="indigo"]:not([data-theme="light"]) { --color-brand: 129 140 248; --color-on-brand: 30 27 75; }
+  :root[data-accent="violet"]:not([data-theme="light"]) { --color-brand: 167 139 250; --color-on-brand: 46 16 101; }
+  :root[data-accent="rose"]:not([data-theme="light"]) { --color-brand: 251 113 133; --color-on-brand: 76 5 25; }
+  :root[data-accent="amber"]:not([data-theme="light"]) { --color-brand: 251 191 36; --color-on-brand: 69 26 3; }
+}
+:root[data-theme="dark"][data-accent="indigo"] { --color-brand: 129 140 248; --color-on-brand: 30 27 75; }
+:root[data-theme="dark"][data-accent="violet"] { --color-brand: 167 139 250; --color-on-brand: 46 16 101; }
+:root[data-theme="dark"][data-accent="rose"] { --color-brand: 251 113 133; --color-on-brand: 76 5 25; }
+:root[data-theme="dark"][data-accent="amber"] { --color-brand: 251 191 36; --color-on-brand: 69 26 3; }
 
 html {
   font-family: var(--font-khmer);
   line-height: 1.6;
+}
+
+body {
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-fg));
+}
+
+@layer utilities {
+  /* iPhone home bar / Android gesture bar: keep fixed bottom bars clear of it.
+     Needs viewport-fit=cover (app/[locale]/layout.tsx). 0 on devices without one. */
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  /* A sticky bar that sits on top of the dashboard's phone bottom nav (4rem + home bar). */
+  .bottom-above-nav {
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+  /* Swipeable rows (categories, offers): scroll by touch or trackpad, no visible bar. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Thin, quiet scrollbar for side menus. */
+.nav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-nav-muted) / 0.35) transparent;
+  scroll-behavior: smooth;
+}
+.nav-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.nav-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: rgb(var(--color-nav-muted) / 0.35);
+}
+.nav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-scroll {
+    scroll-behavior: auto;
+  }
 }

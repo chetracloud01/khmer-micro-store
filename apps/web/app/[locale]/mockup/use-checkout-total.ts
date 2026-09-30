@@ -1,20 +1,32 @@
-import { convertKhrToUsdCents, convertUsdCentsToKhr, type Currency } from "@khmer-micro-store/shared";
+import {
+  convertKhrToUsdCents,
+  convertUsdCentsToKhr,
+  deliveryFeeIn,
+  getDeliveryQuote,
+  type Currency,
+} from "@khmer-micro-store/shared";
 import {
   getDiscountedUnitAmount,
-  getEffectiveExchangeRate,
   getUnitAmount,
   lineKey,
-  mockProducts,
-  mockStore,
   type MockPromoCode,
 } from "@/mock/mock-data";
+import { useCart } from "./cart-context";
+import { useDeliverySettings } from "./delivery-settings-context";
+import { useShopProducts } from "./shop-products";
+import { useStoreSettings } from "./store-settings-context";
 
 /**
  * The buyer's order total in their chosen currency, following the rule in
  * docs/blueprint.md "Multi-currency pricing and totals": each line uses its
  * native price in that currency, or converts via the store's rate if it has
- * none, rounding each line before summing. Shared by Checkout and the KHQR
- * payment screen so both show exactly the same amount.
+ * none, rounding each line before summing. Shared by the shop page, cart,
+ * checkout and the KHQR payment screen so all show exactly the same amount.
+ *
+ * The delivery fee follows what the buyer chose at checkout (pickup, or the
+ * zone their district is in). Until a district or province is chosen,
+ * `deliveryStatus` is "incomplete" and the fee counts as 0 — screens say
+ * "choose where" rather than showing a fee that may change.
  */
 export function useCheckoutTotal(
   quantities: Record<string, number>,
@@ -22,9 +34,13 @@ export function useCheckoutTotal(
   appliedPromo: MockPromoCode | null,
   currency: Currency,
 ) {
-  const rate = getEffectiveExchangeRate(mockStore);
+  const { settings, rate } = useStoreSettings();
+  const { settings: delivery } = useDeliverySettings();
+  const { fulfilment, area, districtId, provinceId } = useCart();
 
-  const lines = mockProducts.flatMap((product) => {
+  const { products } = useShopProducts();
+
+  const lines = products.flatMap((product) => {
     const title = locale === "km" ? product.titleKm : product.titleEn;
     if (product.variants?.length) {
       return product.variants.flatMap((variant) => {
@@ -60,11 +76,14 @@ export function useCheckoutTotal(
         );
 
   const goodsAfterDiscount = afterItemDiscount - promoDiscount;
-  const vat = Math.round(goodsAfterDiscount * (mockStore.vatPercent / 100));
-  const deliveryFee =
-    currency === "USD"
-      ? mockStore.deliveryFeeUsdCents
-      : convertUsdCentsToKhr(mockStore.deliveryFeeUsdCents, rate);
+  const vat = Math.round(goodsAfterDiscount * (settings.vatPercent / 100));
+  const quote = getDeliveryQuote(delivery, {
+    fulfilment,
+    area,
+    districtId: districtId || undefined,
+    provinceId: provinceId || undefined,
+  });
+  const deliveryFee = quote.status === "ok" ? deliveryFeeIn(quote.fee, currency, rate) : 0;
   const total = goodsAfterDiscount + vat + deliveryFee;
   const secondaryTotal = currency === "USD" ? convertUsdCentsToKhr(total, rate) : convertKhrToUsdCents(total, rate);
 
@@ -75,6 +94,8 @@ export function useCheckoutTotal(
     itemDiscount,
     promoDiscount,
     deliveryFee,
+    /** "ok" = fee known; "incomplete" = buyer still has to pick where; "unavailable" = the shop doesn't do this. */
+    deliveryStatus: quote.status,
     vat,
     total,
     secondaryTotal,

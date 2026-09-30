@@ -9,3 +9,8 @@ export * from "./PriceTag";
 export * from "./SearchInput";
 export * from "./Select";
 export * from "./SegmentedControl";
+export * from "./Skeleton";
+export * from "./Switch";
+export * from "./Textarea";
+export * from "./theme";
+export * from "./ThemeSwitcher";

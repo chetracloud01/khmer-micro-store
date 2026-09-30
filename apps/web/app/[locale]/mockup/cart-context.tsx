@@ -1,51 +1,50 @@
 "use client";
 
-import type { Currency } from "@khmer-micro-store/shared";
+import {
+  deliveryAreaSchema,
+  fulfilmentSchema,
+  type Currency,
+  type DeliveryArea,
+  type Fulfilment,
+} from "@khmer-micro-store/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { mockStore, type MockPromoCode } from "@/mock/mock-data";
+import type { MockPromoCode } from "@/mock/mock-data";
+import { useStoreSettings } from "./store-settings-context";
 
-export type Area = "phnom_penh" | "province";
-
-export interface OrderLineSnapshot {
-  key: string;
-  label: string;
-  qty: number;
-  lineTotal: number;
-}
-
-/** A completed order, captured once at payment success so it survives the cart being cleared. */
-export interface OrderSnapshot {
-  orderNumber: string;
-  currency: Currency;
-  total: number;
-  lines: OrderLineSnapshot[];
-  name: string;
-  phone: string;
-  area: Area;
-  landmark: string;
-  placedAtIso: string;
-}
+export type Area = DeliveryArea;
 
 interface CartContextValue {
+  /** False until the saved cart has been read — screens that redirect on an empty cart must wait for this. */
+  hydrated: boolean;
   quantities: Record<string, number>;
   setQuantities: Dispatch<SetStateAction<Record<string, number>>>;
   appliedPromo: MockPromoCode | null;
   setAppliedPromo: Dispatch<SetStateAction<MockPromoCode | null>>;
   /** The currency chosen at checkout; carried through to the KHQR payment screen so both agree on the same amount. */
   currency: Currency;
-  setCurrency: Dispatch<SetStateAction<Currency>>;
+  setCurrency: (currency: Currency) => void;
   name: string;
   setName: Dispatch<SetStateAction<string>>;
   phone: string;
   setPhone: Dispatch<SetStateAction<string>>;
+  /** Delivery to the buyer, or the buyer collects from the shop. */
+  fulfilment: Fulfilment;
+  setFulfilment: Dispatch<SetStateAction<Fulfilment>>;
   area: Area;
   setArea: Dispatch<SetStateAction<Area>>;
+  /** Phnom Penh delivery: the district, which sets the fee. "" = not chosen yet. */
+  districtId: string;
+  setDistrictId: Dispatch<SetStateAction<string>>;
+  /** Province delivery. "" = not chosen yet. */
+  provinceId: string;
+  setProvinceId: Dispatch<SetStateAction<string>>;
   landmark: string;
   setLandmark: Dispatch<SetStateAction<string>>;
-  lastOrder: OrderSnapshot | null;
-  setLastOrder: Dispatch<SetStateAction<OrderSnapshot | null>>;
-  /** Resets the active cart (items + promo) once an order is placed; keeps buyer details for next time. */
+  /** Keep name, phone and address on this device for the next order. */
+  rememberDetails: boolean;
+  setRememberDetails: Dispatch<SetStateAction<boolean>>;
+  /** Empties the cart (items + promo) once an order is placed; keeps buyer details for next time. */
   clearCart: () => void;
 }
 
@@ -59,22 +58,37 @@ interface PersistedCart {
   quantities: Record<string, number>;
   appliedPromo: MockPromoCode | null;
   currency: Currency;
+  /** False = still following the store's default currency. */
+  currencyChosen: boolean;
   name: string;
   phone: string;
+  fulfilment: Fulfilment;
   area: Area;
+  districtId: string;
+  provinceId: string;
   landmark: string;
-  lastOrder: OrderSnapshot | null;
+  rememberDetails: boolean;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [appliedPromo, setAppliedPromo] = useState<MockPromoCode | null>(null);
-  const [currency, setCurrency] = useState<Currency>(mockStore.defaultCurrency);
+  const { settings: storeSettings, hydrated: storeSettingsReady } = useStoreSettings();
+  const [currency, setCurrencyState] = useState<Currency>(storeSettings.defaultCurrency);
+  // Until the buyer picks a currency (now or in an earlier visit), follow the store's default.
+  const [currencyChosen, setCurrencyChosen] = useState(false);
+  const setCurrency = (next: Currency) => {
+    setCurrencyState(next);
+    setCurrencyChosen(true);
+  };
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [fulfilment, setFulfilment] = useState<Fulfilment>("delivery");
   const [area, setArea] = useState<Area>("phnom_penh");
+  const [districtId, setDistrictId] = useState("");
+  const [provinceId, setProvinceId] = useState("");
   const [landmark, setLandmark] = useState("");
-  const [lastOrder, setLastOrder] = useState<OrderSnapshot | null>(null);
+  const [rememberDetails, setRememberDetails] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 
   // Read persisted cart client-side only, after the initial (empty) render
@@ -86,12 +100,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(raw) as Partial<PersistedCart>;
         if (parsed.quantities) setQuantities(parsed.quantities);
         if (parsed.appliedPromo) setAppliedPromo(parsed.appliedPromo);
-        if (parsed.currency) setCurrency(parsed.currency);
+        if (parsed.currency) {
+          setCurrencyState(parsed.currency);
+          setCurrencyChosen(parsed.currencyChosen ?? false);
+        }
         if (parsed.name) setName(parsed.name);
         if (parsed.phone) setPhone(parsed.phone);
-        if (parsed.area) setArea(parsed.area);
+        const storedFulfilment = fulfilmentSchema.safeParse(parsed.fulfilment);
+        if (storedFulfilment.success) setFulfilment(storedFulfilment.data);
+        const storedArea = deliveryAreaSchema.safeParse(parsed.area);
+        if (storedArea.success) setArea(storedArea.data);
+        if (typeof parsed.districtId === "string") setDistrictId(parsed.districtId);
+        if (typeof parsed.provinceId === "string") setProvinceId(parsed.provinceId);
         if (parsed.landmark) setLandmark(parsed.landmark);
-        if (parsed.lastOrder) setLastOrder(parsed.lastOrder);
+        if (typeof parsed.rememberDetails === "boolean") setRememberDetails(parsed.rememberDetails);
       }
     } catch {
       // Corrupt or inaccessible storage (e.g. private browsing) — start empty.
@@ -105,21 +127,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
+      // "Remember my details" off: the cart itself is kept, who and where are not.
+      const details = rememberDetails
+        ? { name, phone, fulfilment, area, districtId, provinceId, landmark }
+        : { name: "", phone: "", fulfilment: "delivery" as const, area: "phnom_penh" as const, districtId: "", provinceId: "", landmark: "" };
       const payload: PersistedCart = {
         quantities,
         appliedPromo,
         currency,
-        name,
-        phone,
-        area,
-        landmark,
-        lastOrder,
+        currencyChosen,
+        ...details,
+        rememberDetails,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // Storage full or unavailable — cart just won't persist this time.
     }
-  }, [quantities, appliedPromo, currency, name, phone, area, landmark, lastOrder, hydrated]);
+  }, [
+    quantities,
+    appliedPromo,
+    currency,
+    currencyChosen,
+    name,
+    phone,
+    fulfilment,
+    area,
+    districtId,
+    provinceId,
+    landmark,
+    rememberDetails,
+    hydrated,
+  ]);
+
+  // A buyer who hasn't picked a currency sees the store's default — including after the seller changes it.
+  useEffect(() => {
+    if (hydrated && storeSettingsReady && !currencyChosen) setCurrencyState(storeSettings.defaultCurrency);
+  }, [hydrated, storeSettingsReady, currencyChosen, storeSettings.defaultCurrency]);
 
   function clearCart() {
     setQuantities({});
@@ -129,6 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider
       value={{
+        hydrated,
         quantities,
         setQuantities,
         appliedPromo,
@@ -139,12 +183,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setName,
         phone,
         setPhone,
+        fulfilment,
+        setFulfilment,
         area,
         setArea,
+        districtId,
+        setDistrictId,
+        provinceId,
+        setProvinceId,
         landmark,
         setLandmark,
-        lastOrder,
-        setLastOrder,
+        rememberDetails,
+        setRememberDetails,
         clearCart,
       }}
     >

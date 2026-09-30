@@ -32,6 +32,9 @@ pnpm dev | pnpm lint | pnpm typecheck | pnpm test | pnpm db:migrate
 - Phone: accept 012 345 678 and 097 123 4567, +855 or 855 prefix; strip spaces,
   prefix and leading 0; 8-9 digits remain; save as 855XXXXXXXX(X).
 - Every merchant query filters by store_id. No `any`. Zod on every input.
+- Plan features/limits only from packages/shared/plans.ts; enforce in the API,
+  not just the UI. Downgrade/pause locks data, never deletes it. Full rules:
+  docs/blueprint.md "Subscription tiers".
 - No hard-coded text: use messages/km.json and messages/en.json.
 - Payment providers only through packages/payments. Never trust a callback
   alone: always confirm with the provider's status API.

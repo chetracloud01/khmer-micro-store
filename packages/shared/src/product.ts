@@ -1,0 +1,108 @@
+import { z } from "zod";
+
+// A product as the merchant saves it from the product form. The same schema
+// checks the form now and the API request later. Rules from docs/blueprint.md
+// "Multi-currency pricing and totals": a sellable line needs a price in at
+// least one currency; prices are whole cents / riel.
+
+/** Above this a discount is almost certainly a typo, and 100% would give the product away. */
+export const MAX_DISCOUNT_PERCENT = 90;
+export const MAX_PRODUCT_OPTIONS = 50;
+export const MAX_PRODUCT_DESCRIPTION_LENGTH = 1000;
+
+/** Cents or riel. The cap stops a slipped finger (an extra few zeros) from saving. */
+const amountSchema = z
+  .number({ invalid_type_error: "price_invalid" })
+  .int("price_invalid")
+  .min(0, "price_invalid")
+  .max(1_000_000_000, "price_invalid");
+
+const optionalAmount = amountSchema.optional();
+
+const priceFields = {
+  /** Price the storefront shows buyers. */
+  retailPriceUsdCents: optionalAmount,
+  retailPriceKhr: optionalAmount,
+  /** Bulk/B2B price — Pro and Advance only; kept, hidden, on lower plans. */
+  wholesalePriceUsdCents: optionalAmount,
+  wholesalePriceKhr: optionalAmount,
+};
+
+type Prices = { [K in keyof typeof priceFields]?: number };
+
+/** Adds the price rules shared by a simple product and each of its options. */
+function checkPrices(prices: Prices, ctx: z.RefinementCtx, path: (string | number)[]) {
+  if (prices.retailPriceUsdCents === undefined && prices.retailPriceKhr === undefined) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "price_required", path: [...path, "retailPrice"] });
+  }
+  const aboveRetail =
+    (prices.wholesalePriceUsdCents !== undefined &&
+      prices.retailPriceUsdCents !== undefined &&
+      prices.wholesalePriceUsdCents > prices.retailPriceUsdCents) ||
+    (prices.wholesalePriceKhr !== undefined &&
+      prices.retailPriceKhr !== undefined &&
+      prices.wholesalePriceKhr > prices.retailPriceKhr);
+  if (aboveRetail) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "wholesale_above_retail", path: [...path, "wholesalePrice"] });
+  }
+}
+
+export const productOptionInputSchema = z.object({
+  id: z.string().min(1, "required"),
+  /** Blank = generated from the title and option name on save. */
+  sku: z
+    .string()
+    .trim()
+    .max(40, "too_long")
+    .regex(/^[A-Za-z0-9._-]*$/, "sku_invalid"),
+  labelKm: z.string().trim().max(40, "too_long"),
+  labelEn: z.string().trim().max(40, "too_long"),
+  ...priceFields,
+});
+
+export const productInputSchema = z
+  .object({
+    titleKm: z.string().trim().min(2, "too_short").max(120, "too_long"),
+    /** Blank = the Khmer title is used. */
+    titleEn: z.string().trim().max(120, "too_long"),
+    /** Shown on the buyer's product page. Optional; blank English = the Khmer text is used. */
+    descriptionKm: z.string().trim().max(MAX_PRODUCT_DESCRIPTION_LENGTH, "too_long").default(""),
+    descriptionEn: z.string().trim().max(MAX_PRODUCT_DESCRIPTION_LENGTH, "too_long").default(""),
+    /** False = kept in the dashboard but not shown in the shop (out of season, not ready yet). */
+    isVisible: z.boolean().default(true),
+    categoryId: z.string().min(1, "required"),
+    brandId: z.string().min(1).optional(),
+    uomId: z.string().min(1).optional(),
+    discountPercent: z
+      .number({ invalid_type_error: "discount_range" })
+      .int("discount_range")
+      .min(0, "discount_range")
+      .max(MAX_DISCOUNT_PERCENT, "discount_range")
+      .optional(),
+    ...priceFields,
+    /** When present, prices live on each option and the product-level prices are ignored. */
+    options: z.array(productOptionInputSchema).max(MAX_PRODUCT_OPTIONS, "too_long").optional(),
+  })
+  .superRefine((product, ctx) => {
+    if (!product.options?.length) {
+      checkPrices(product, ctx, []);
+      return;
+    }
+    const seenSkus = new Set<string>();
+    product.options.forEach((option, index) => {
+      if (!option.labelKm && !option.labelEn) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "option_label_required", path: ["options", index, "label"] });
+      }
+      checkPrices(option, ctx, ["options", index]);
+      const sku = option.sku.toUpperCase();
+      if (sku && seenSkus.has(sku)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "sku_duplicate", path: ["options", index, "sku"] });
+      }
+      if (sku) seenSkus.add(sku);
+    });
+  });
+
+export type ProductInput = z.infer<typeof productInputSchema>;
+/** What a form hands to the schema: description and visibility may be left out. */
+export type ProductFormInput = z.input<typeof productInputSchema>;
+export type ProductOptionInput = z.infer<typeof productOptionInputSchema>;

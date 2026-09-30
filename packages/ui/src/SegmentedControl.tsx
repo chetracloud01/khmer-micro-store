@@ -30,7 +30,7 @@ export function SegmentedControl({ options, value, onChange, className }: Segmen
           onClick={() => onChange(option.value)}
           className={cn(
             "min-h-touch shrink-0 rounded-full px-4 text-sm font-medium transition-colors",
-            value === option.value ? "bg-brand text-white" : "text-muted hover:text-fg",
+            value === option.value ? "bg-brand text-on-brand" : "text-muted hover:text-fg",
           )}
         >
           {option.label}

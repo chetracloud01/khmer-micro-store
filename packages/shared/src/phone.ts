@@ -26,6 +26,17 @@ export function normalizeKhmerPhone(input: string): string | null {
   return `855${digits}`;
 }
 
+/**
+ * A saved `855…` number back in the way Cambodians write it: 8 digits →
+ * "012 345 678", 9 digits → "097 123 4567". Anything else is returned as is.
+ */
+export function formatKhmerPhoneLocal(saved: string): string {
+  const normalized = normalizeKhmerPhone(saved);
+  if (!normalized) return saved;
+  const local = `0${normalized.slice(3)}`;
+  return `${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+}
+
 export const khmerPhoneSchema = z
   .string()
   .transform((val, ctx) => {

@@ -1,12 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { THEME_BOOT_SCRIPT } from "@khmer-micro-store/ui";
 import { isValidLocale, routing } from "@/i18n/routing";
 import "@khmer-micro-store/ui/globals.css";
 
 export const metadata: Metadata = {
   title: "Khmer Micro-Store",
+};
+
+// viewport-fit=cover lets pages use the full screen on notched phones; fixed
+// bottom bars then add the home-bar gap themselves (.pb-safe in globals.css).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export function generateStaticParams() {
@@ -27,8 +36,13 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
+  // suppressHydrationWarning: the theme script sets data-theme/data-accent on
+  // <html> before React loads, so the server HTML intentionally differs there.
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="font-khmer">
         <NextIntlClientProvider messages={messages}>
           {children}

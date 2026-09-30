@@ -24,7 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </label>
         <div className="flex items-stretch">
           {prefix && (
-            <span className="flex items-center rounded-l-DEFAULT border border-r-0 border-border bg-border/20 px-3 text-base text-muted">
+            <span className="flex shrink-0 items-center whitespace-nowrap rounded-l-DEFAULT border border-r-0 border-border bg-border/20 px-3 text-base text-muted">
               {prefix}
             </span>
           )}
