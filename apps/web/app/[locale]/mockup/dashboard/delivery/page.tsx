@@ -17,6 +17,7 @@ import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { useDeliverySettings } from "../../delivery-settings-context";
+import { useMerchantProfile } from "../../merchant-profile-context";
 import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "../../form-ui";
 
 interface ZoneDraft {
@@ -92,7 +93,8 @@ function newId(prefix: string): string {
 
 export default function DashboardDeliveryPage() {
   const { hydrated } = useDeliverySettings();
-  return hydrated ? <DeliveryForm /> : null;
+  const { hydrated: profileReady } = useMerchantProfile();
+  return hydrated && profileReady ? <DeliveryForm /> : null;
 }
 
 // The standard form (../../form-ui.tsx) over deliverySettingsSchema — the same
@@ -102,9 +104,15 @@ function DeliveryForm() {
   const errorText = useFormErrorText();
   const locale = useLocale();
   const { settings, saveSettings, configured } = useDeliverySettings();
+  const { businessType } = useMerchantProfile();
   const formRef = useRef<HTMLDivElement>(null);
 
-  const [draft, setDraft] = useState<Draft>(() => toDraft(settings));
+  // Buyers usually come to a salon or a repair shop, so a new service shop
+  // starts with pickup ("at the shop") switched on — saving then asks for the address.
+  const [draft, setDraft] = useState<Draft>(() => {
+    const saved = toDraft(settings);
+    return businessType === "service" && !configured ? { ...saved, pickup: { ...saved.pickup, enabled: true } } : saved;
+  });
   const [errors, setErrors] = useState<Record<string, FormErrorCode>>({});
   const [justSaved, setJustSaved] = useState(false);
   const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(settings));

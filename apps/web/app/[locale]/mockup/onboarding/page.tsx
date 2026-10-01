@@ -1,6 +1,15 @@
 "use client";
 
-import { BUSINESS_TYPES, shopNameSchema, shopSlugSchema, toFieldErrors, type BusinessType } from "@khmer-micro-store/shared";
+import {
+  BUSINESS_TYPES,
+  SHARE_REQUIREMENTS,
+  shopNameSchema,
+  shopSlugSchema,
+  suggestShopSlug,
+  toFieldErrors,
+  type BusinessType,
+  type ShareRequirement,
+} from "@khmer-micro-store/shared";
 import { Button, cn, Input, SegmentedControl } from "@khmer-micro-store/ui";
 import {
   Check,
@@ -11,7 +20,6 @@ import {
   Store,
   Upload,
   UtensilsCrossed,
-  Wallet,
   Wrench,
   X,
   type LucideIcon,
@@ -22,11 +30,20 @@ import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
-import { mockBusinessTypeDefaults, mockTakenSlugs, mockUoms, slugify } from "@/mock/mock-data";
+import { mockTakenSlugs, slugify } from "@/mock/mock-data";
 import { ACCEPTED_IMAGE_TYPES, compressImage } from "../compress-image";
 import { useFormErrorText } from "../form-ui";
-import { useMerchantProducts } from "../merchant-products-context";
+import { useMerchantAccount } from "../merchant-account-context";
 import { useMerchantProfile } from "../merchant-profile-context";
+import { useShopReadiness, useStartNewShop } from "../new-shop";
+
+/** Where each thing a shop needs before sharing is done. */
+const REQUIREMENT_HREF: Record<ShareRequirement, string> = {
+  products: "dashboard/products/new",
+  phone: "dashboard/profile#details",
+  delivery: "dashboard/delivery",
+  payment: "dashboard/profile#payments",
+};
 
 type SlugStatus = "idle" | "checking" | "available" | "taken";
 
@@ -47,6 +64,7 @@ const BUSINESS_TYPE_ICONS: Record<BusinessType, LucideIcon> = {
 export default function OnboardingMockupPage() {
   const t = useTranslations("Onboarding");
   const tType = useTranslations("BusinessType");
+  const tReady = useTranslations("Readiness");
   const locale = useLocale();
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -68,11 +86,22 @@ export default function OnboardingMockupPage() {
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const merchantProfile = useMerchantProfile();
-  const { categories, addCategory, uoms, addUom } = useMerchantProducts();
+  const { logins } = useMerchantAccount();
+  const startNewShop = useStartNewShop();
+  const readiness = useShopReadiness();
 
+  // A link can only use English letters, so a name in Khmer gives none: then
+  // the seller gets one from their login instead of an empty box.
+  const nameGivesNoLink = shopName.trim().length > 0 && slugify(shopName) === "";
+  const loginSlug = suggestShopSlug({
+    telegramUsername: logins.find((login) => login.method === "telegram")?.account,
+    phone: logins.find((login) => login.method === "phone")?.account,
+  });
   useEffect(() => {
-    if (!slugTouched) setSlug(slugify(shopName));
-  }, [shopName, slugTouched]);
+    if (slugTouched) return;
+    const fromName = slugify(shopName);
+    setSlug(fromName || (shopName.trim() ? loginSlug : ""));
+  }, [shopName, slugTouched, loginSlug]);
 
   // Real QR code: it just encodes the shop's public link, so no backend is
   // needed to generate it (unlike the KHQR payment code, which is mocked).
@@ -110,6 +139,7 @@ export default function OnboardingMockupPage() {
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`);
+      merchantProfile.setLinkShared(true);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -121,6 +151,7 @@ export default function OnboardingMockupPage() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: shopName, url: `${window.location.origin}/s/${slug}` });
+        merchantProfile.setLinkShared(true);
       } catch {
         // User cancelled the share sheet — no-op.
       }
@@ -144,21 +175,17 @@ export default function OnboardingMockupPage() {
     const nameOk = shopNameSchema.safeParse(shopName).success;
     const slugResult = shopSlugSchema.safeParse(slug);
     setShopNameError(nameOk ? null : t("shopNameError"));
-    setSlugError(slugResult.success ? null : (errorText(toFieldErrors(slugResult.error)[""]) ?? null));
+    // An empty link gets its own message: "too short" would send the seller to the wrong box.
+    setSlugError(slug === "" ? t("slugRequired") : slugResult.success ? null : (errorText(toFieldErrors(slugResult.error)[""]) ?? null));
     if (!nameOk || !slugResult.success || slugStatus !== "available") return;
 
-    if (businessType) {
-      merchantProfile.setBusinessType(businessType);
-      // Only adds what's missing — never renames or removes existing data.
-      const defaults = mockBusinessTypeDefaults[businessType];
-      defaults.categories
-        .filter((suggested) => !categories.some((existing) => existing.id === suggested.id))
-        .forEach(addCategory);
-      if (!uoms.some((uom) => uom.id === defaults.uomId)) {
-        const seedUom = mockUoms.find((uom) => uom.id === defaults.uomId);
-        if (seedUom) addUom(seedUom);
-      }
-    }
+    const type = businessType ?? "other";
+    merchantProfile.setBusinessType(type);
+    // The seller's own shop starts empty — the sample shop's products, orders and drivers aren't theirs.
+    startNewShop(type);
+    // Logged in with a phone number: that's the shop's phone until they change it.
+    const loginPhone = logins.find((login) => login.method === "phone")?.account;
+    if (loginPhone && !merchantProfile.phone) merchantProfile.setPhone(loginPhone);
     merchantProfile.setShopName(shopName.trim());
     merchantProfile.setSlug(slug);
     merchantProfile.setLogoDataUrl(logoDataUrl);
@@ -177,7 +204,7 @@ export default function OnboardingMockupPage() {
   );
 
   if (done) {
-    const profileHref = `/${locale}/mockup/dashboard/profile#payments`;
+    const base = `/${locale}/mockup/`;
     return (
       <div className="min-h-dvh bg-canvas text-fg">
         <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col items-center gap-4 bg-bg p-4 pb-8 text-center md:border-x md:border-border">
@@ -202,42 +229,74 @@ export default function OnboardingMockupPage() {
             </div>
           </div>
 
-          {/* The one thing still needed before buyers can pay online — first, and hard to miss. */}
-          <Link
-            href={profileHref}
-            className="flex w-full items-center gap-3 rounded-2xl border border-warning/40 bg-warning/5 p-3 text-left"
-          >
-            <Wallet className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">{t("addBakongReminder")}</span>
-              <span className="block text-xs text-muted">{t("addBakongWhy")}</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
-          </Link>
+          {/* Sharing waits until a buyer who opens the link can actually order (packages/shared shop-readiness.ts). */}
+          {!readiness.ready && (
+            <div className="flex w-full flex-col gap-2 rounded-2xl border border-border p-3 text-left">
+              <div>
+                <p className="text-sm font-semibold">{tReady("title")}</p>
+                <p className="text-sm text-muted">{tReady("intro")}</p>
+              </div>
+              <ul className="flex flex-col gap-1">
+                {SHARE_REQUIREMENTS.map((requirement, index) => {
+                  const met = !readiness.missing.includes(requirement);
+                  return (
+                    <li key={requirement}>
+                      <Link
+                        href={base + REQUIREMENT_HREF[requirement]}
+                        aria-disabled={met}
+                        className={cn(
+                          "flex min-h-touch items-center gap-3 rounded-DEFAULT px-2 py-2",
+                          met ? "pointer-events-none" : "hover:bg-border/10",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+                            met ? "bg-success/10 text-success" : "bg-border/30 text-muted",
+                          )}
+                        >
+                          {met ? <Check className="h-4 w-4" aria-hidden="true" /> : index + 1}
+                        </span>
+                        <span className={cn("min-w-0 flex-1 text-sm", met ? "text-muted line-through" : "font-medium")}>
+                          {tReady(requirement === "products" && businessType === "service" ? "req_products_service" : `req_${requirement}`)}
+                        </span>
+                        {!met && <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
-          <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-border p-3">
-            <p className="text-sm font-medium">{t("showQrTitle")}</p>
-            {qrDataUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- locally generated data URL, not a remote image
-              <img src={qrDataUrl} alt="" className="h-40 w-40" />
-            ) : (
-              <div className="h-40 w-40 animate-pulse rounded-DEFAULT bg-border/30" />
-            )}
-            <p className="text-xs text-muted">{t("qrScanHint")}</p>
-            <Button variant="secondary" onClick={handleDownloadQr} disabled={!qrDataUrl} className="w-full">
-              <Download className="h-4 w-4" aria-hidden="true" />
-              {t("downloadQr")}
-            </Button>
-          </div>
+          {readiness.ready && (
+            <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-border p-3">
+              <p className="text-sm font-medium">{t("showQrTitle")}</p>
+              {qrDataUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- locally generated data URL, not a remote image
+                <img src={qrDataUrl} alt="" className="h-40 w-40" />
+              ) : (
+                <div className="h-40 w-40 animate-pulse rounded-DEFAULT bg-border/30" />
+              )}
+              <p className="text-xs text-muted">{t("qrScanHint")}</p>
+              <Button variant="secondary" onClick={handleDownloadQr} disabled={!qrDataUrl} className="w-full">
+                <Download className="h-4 w-4" aria-hidden="true" />
+                {t("downloadQr")}
+              </Button>
+            </div>
 
-          <div className="grid w-full grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={handleCopyLink} className="w-full">
-              {copied ? t("linkCopied") : t("copyLink")}
-            </Button>
-            <Button variant="secondary" onClick={handleShare} className="w-full">
-              {t("shareLink")}
-            </Button>
-          </div>
+          )}
+
+          {readiness.ready && (
+            <div className="grid w-full grid-cols-2 gap-2">
+              <Button variant="secondary" onClick={handleCopyLink} className="w-full">
+                {copied ? t("linkCopied") : t("copyLink")}
+              </Button>
+              <Button variant="secondary" onClick={handleShare} className="w-full">
+                {t("shareLink")}
+              </Button>
+            </div>
+          )}
 
           <Link href={`/${locale}/mockup/dashboard`} className="block w-full">
             <Button variant="primary" className="w-full">
@@ -360,6 +419,7 @@ export default function OnboardingMockupPage() {
                 }}
                 error={slugError ?? (slugStatus === "taken" ? t("slugTaken") : undefined)}
               />
+              {nameGivesNoLink && !slugTouched && slug !== "" && <p className="text-sm text-muted">{t("slugFromKhmerHint")}</p>}
               {slugStatus === "checking" && <p className="text-xs text-muted">{t("slugChecking")}</p>}
               {slugStatus === "available" && !slugError && (
                 <p className="flex items-center gap-1 text-xs text-success">

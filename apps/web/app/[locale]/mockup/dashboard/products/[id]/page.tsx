@@ -665,7 +665,7 @@ function ProductForm({ onReset }: { onReset: () => void }) {
       <FormSection stacked title={t("detailsTitle")} description={t("detailsHelp")}>
         <Input
           label={t("titleKmLabel")}
-          placeholder={t("titleKmPlaceholder")}
+          placeholder={t(`titleKmPlaceholder_${businessType}`)}
           value={titleKm}
           onChange={(e) => {
             setTitleKm(e.target.value);
@@ -678,7 +678,7 @@ function ProductForm({ onReset }: { onReset: () => void }) {
         <div className="flex flex-col gap-1.5">
           <Input
             label={t("titleEnLabel")}
-            placeholder={t("titleEnPlaceholder")}
+            placeholder={t(`titleEnPlaceholder_${businessType}`)}
             value={titleEn}
             onChange={(e) => {
               setTitleEn(e.target.value);
@@ -819,7 +819,7 @@ function ProductForm({ onReset }: { onReset: () => void }) {
       <FormSection stacked title={t("descriptionTitle")} description={t("descriptionHelp")}>
         <Textarea
           label={t("descriptionKmLabel")}
-          placeholder={t("descriptionPlaceholder")}
+          placeholder={t(`descriptionPlaceholder_${businessType}`)}
           maxLength={MAX_PRODUCT_DESCRIPTION_LENGTH}
           value={descriptionKm}
           onChange={(e) => {

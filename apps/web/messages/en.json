@@ -224,8 +224,8 @@
     "goToDashboard": "Go to dashboard",
     "nameStepHint": "Buyers see this name and link. You can change the name later.",
     "uploadLogoOptional": "Add logo (optional)",
-    "addBakongReminder": "Add your Bakong ID to get paid",
-    "addBakongWhy": "Buyers can pay by KHQR as soon as you add it."
+    "slugFromKhmerHint": "A shop link uses English letters, so we made one for you. You can change it.",
+    "slugRequired": "Type a link using English letters, e.g. sreyneang"
   },
   "Dashboard": {
     "verified": "Verified merchant",
@@ -257,13 +257,9 @@
     "verificationPending": "Verification in review",
     "setupTitle": "Finish setting up your shop",
     "setupProgress": "{done} of {total} done",
-    "setupBakong": "Connect payment: add your Bakong ID",
-    "setupBakongHint": "Buyers can't pay by KHQR until you do",
-    "setupProducts": "Add your products",
     "setupAlerts": "Get order alerts on Telegram",
     "setupLogo": "Add your logo",
     "setupVerify": "Verify your shop",
-    "bannerNoBakong": "Buyers can't pay by KHQR yet — add your Bakong ID.",
     "bannerAddBakong": "Add now",
     "navDelivery": "Delivery",
     "loading": "Loading your dashboard…",
@@ -277,15 +273,15 @@
     "allCaughtUpBody": "New orders show up here, each with its next step.",
     "sampleData": "Sample data",
     "chartTotals": "{orders} orders · {revenue}",
-    "setupDelivery": "Set your delivery",
-    "setupDeliveryHint": "Check the areas and fees we suggested, then save",
     "setupTestOrder": "Place a test order",
     "setupTestOrderHint": "Open your shop and order something, like a buyer would",
     "setupShare": "Share your shop link",
     "setupShareHint": "Tap to copy it, then post it on Facebook, TikTok or Telegram",
     "setupShareManual": "Copy this link and send it to your buyers:",
     "setupShareDone": "I've shared it",
-    "setupExtras": "Good to have"
+    "setupExtras": "Good to have",
+    "setupBakongExtra": "Add a Bakong ID so buyers can pay by KHQR",
+    "bannerNoPayment": "Buyers can't pay you yet — add a Bakong ID or turn on cash on delivery."
   },
   "BusinessType": {
     "shop": "Shop",
@@ -307,7 +303,7 @@
     "logoLabel": "Logo",
     "uploadLogo": "Upload logo",
     "removeLogo": "Remove",
-    "phoneLabel": "Contact phone (optional)",
+    "phoneLabel": "Shop phone",
     "areaLabel": "Shop area",
     "phnomPenh": "Phnom Penh",
     "otherProvince": "Other province",
@@ -373,9 +369,7 @@
     "photosHint": "Up to 6 photos",
     "removePhoto": "Remove photo",
     "titleKmLabel": "Khmer title",
-    "titleKmPlaceholder": "e.g. កាហ្វេទឹកកក",
     "titleEnLabel": "English title",
-    "titleEnPlaceholder": "e.g. Iced Coffee",
     "autoTranslate": "Auto-translate",
     "translating": "Translating…",
     "translateNote": "Mock translation — connects to a real translation API once the merchant backend exists",
@@ -424,7 +418,6 @@
     "descriptionHelp": "Shown on the product page. Say what it is, the size, and what's included.",
     "descriptionKmLabel": "Khmer description",
     "descriptionEnLabel": "English description (optional)",
-    "descriptionPlaceholder": "e.g. កាហ្វេឆុងថ្មីៗ ជាមួយទឹកដោះគោខាប់",
     "writeForMe": "Write it for me",
     "comingSoon": "Coming soon",
     "visibilityTitle": "Show in shop",
@@ -435,7 +428,19 @@
     "draftSaved": "Draft saved on this device",
     "draftRestoredTitle": "Draft restored.",
     "draftRestoredBody": "We brought back the product you were adding. Photos aren't kept in a draft, so add them again.",
-    "discardDraft": "Discard draft"
+    "discardDraft": "Discard draft",
+    "titleKmPlaceholder_shop": "e.g. អាវយឺតនារី ពណ៌ស",
+    "titleEnPlaceholder_shop": "e.g. Women's white T-shirt",
+    "descriptionPlaceholder_shop": "e.g. Soft cotton, sizes S to XL",
+    "titleKmPlaceholder_restaurant": "e.g. បាយឆាសាច់មាន់",
+    "titleEnPlaceholder_restaurant": "e.g. Chicken fried rice",
+    "descriptionPlaceholder_restaurant": "e.g. Fried rice with chicken and egg, for one person",
+    "titleKmPlaceholder_service": "e.g. កាត់សក់បុរស",
+    "titleEnPlaceholder_service": "e.g. Men's haircut",
+    "descriptionPlaceholder_service": "e.g. Wash, cut and style, about 45 minutes",
+    "titleKmPlaceholder_other": "e.g. កាបូបដៃធ្វើពីដៃ",
+    "titleEnPlaceholder_other": "e.g. Handmade bag",
+    "descriptionPlaceholder_other": "e.g. Woven by hand in Takeo"
   },
   "Stock": {
     "title": "Stock",
@@ -1239,5 +1244,19 @@
     "buyerBody_not_collected": "Call the shop to arrange a new time.",
     "hint_settle_cash_pickup": "Tap when the buyer has paid you.",
     "buyerBody_out_for_delivery_bus": "It was sent by bus. Collect it with the ticket number below."
+  },
+  "Readiness": {
+    "title": "Before you share your shop",
+    "intro": "Buyers who open your link need these. You can do them now or later in your dashboard.",
+    "req_products": "Add a product with a photo and a price",
+    "req_phone": "Add your shop's phone number",
+    "req_delivery": "Check and save your delivery",
+    "req_payment": "Choose how buyers pay you",
+    "hint_products": "Buyers see an empty shop until you add one",
+    "hint_delivery": "Check the areas and fees we suggested, then save",
+    "hint_payment": "Cash on delivery, a Bakong ID, or both",
+    "shareLocked": "Unlocks when steps 1–4 are done",
+    "req_products_service": "Add a service with a price",
+    "hint_delivery_service": "Turn on \"pickup\" and add your shop's address, so buyers know where to come"
   }
 }

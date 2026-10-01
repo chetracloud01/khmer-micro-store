@@ -13,6 +13,11 @@ interface DeliverySettingsContextValue {
   saveSettings: (settings: DeliverySettings) => void;
   /** True once the seller has saved delivery settings themselves (the setup checklist's "Set delivery"). */
   configured: boolean;
+  /**
+   * A new shop keeps the suggested Phnom Penh zones and province fee to review,
+   * but none of the sample shop's own details: no pickup address, no drivers.
+   */
+  startNewShop: () => void;
 }
 
 const DeliverySettingsContext = createContext<DeliverySettingsContextValue | null>(null);
@@ -58,8 +63,18 @@ export function DeliverySettingsProvider({ children }: { children: ReactNode }) 
     setConfigured(true);
   }
 
+  function startNewShop() {
+    setSettings({ ...mockDeliverySettings, pickup: { enabled: false, address: "", hours: "" }, drivers: [] });
+    setConfigured(false);
+    try {
+      window.localStorage.removeItem(CONFIGURED_KEY);
+    } catch {
+      // Storage unavailable — nothing was saved to clear.
+    }
+  }
+
   return (
-    <DeliverySettingsContext.Provider value={{ hydrated, settings, saveSettings, configured }}>
+    <DeliverySettingsContext.Provider value={{ hydrated, settings, saveSettings, configured, startNewShop }}>
       {children}
     </DeliverySettingsContext.Provider>
   );

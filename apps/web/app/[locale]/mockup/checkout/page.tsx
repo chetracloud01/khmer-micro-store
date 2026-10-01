@@ -531,10 +531,12 @@ export default function CheckoutMockupPage() {
                     : "—"}
               </dd>
             </div>
-            <div className="flex items-center justify-between text-muted">
-              <dt>{tStore("vat", { percent: storeSettings.vatPercent })}</dt>
-              <dd className="tabular-nums">{format(vat, currency)}</dd>
-            </div>
+            {storeSettings.vatPercent > 0 && (
+              <div className="flex items-center justify-between text-muted">
+                <dt>{tStore("vat", { percent: storeSettings.vatPercent })}</dt>
+                <dd className="tabular-nums">{format(vat, currency)}</dd>
+              </div>
+            )}
           </dl>
           <div className="flex items-center justify-between border-t border-border pt-2">
             <span className="font-semibold">{tStore("totalToPay")}</span>

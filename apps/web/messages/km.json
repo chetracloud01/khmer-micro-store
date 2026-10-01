@@ -224,8 +224,8 @@
     "goToDashboard": "ទៅកាន់ផ្ទាំងគ្រប់គ្រង",
     "nameStepHint": "អ្នកទិញឃើញឈ្មោះ និងតំណនេះ។ អ្នកអាចប្តូរឈ្មោះពេលក្រោយ។",
     "uploadLogoOptional": "បន្ថែមស្លាកសញ្ញា (ស្រេចចិត្ត)",
-    "addBakongReminder": "បន្ថែមគណនី Bakong ដើម្បីទទួលប្រាក់",
-    "addBakongWhy": "អ្នកទិញអាចបង់តាម KHQR ភ្លាមៗពេលអ្នកបន្ថែម។"
+    "slugFromKhmerHint": "តំណហាងប្រើអក្សរអង់គ្លេស ដូច្នេះយើងបានបង្កើតមួយឲ្យអ្នក។ អ្នកអាចប្តូរវាបាន។",
+    "slugRequired": "វាយតំណជាអក្សរអង់គ្លេស ឧ. sreyneang"
   },
   "Dashboard": {
     "verified": "ហាងបានផ្ទៀងផ្ទាត់",
@@ -257,13 +257,9 @@
     "verificationPending": "កំពុងពិនិត្យការផ្ទៀងផ្ទាត់",
     "setupTitle": "បញ្ចប់ការរៀបចំហាងរបស់អ្នក",
     "setupProgress": "រួចរាល់ {done} ក្នុងចំណោម {total}",
-    "setupBakong": "ភ្ជាប់ការបង់ប្រាក់៖ បញ្ចូល Bakong ID",
-    "setupBakongHint": "អ្នកទិញមិនអាចបង់តាម KHQR រហូតដល់អ្នកបន្ថែម",
-    "setupProducts": "បន្ថែមទំនិញរបស់អ្នក",
     "setupAlerts": "ទទួលការជូនដំណឹងការបញ្ជាទិញតាម Telegram",
     "setupLogo": "បន្ថែមស្លាកសញ្ញារបស់អ្នក",
     "setupVerify": "ផ្ទៀងផ្ទាត់ហាងរបស់អ្នក",
-    "bannerNoBakong": "អ្នកទិញមិនទាន់អាចបង់តាម KHQR — សូមបន្ថែមគណនី Bakong។",
     "bannerAddBakong": "បន្ថែមឥឡូវ",
     "navDelivery": "ការដឹកជញ្ជូន",
     "loading": "កំពុងបើកផ្ទាំងគ្រប់គ្រង…",
@@ -277,15 +273,15 @@
     "allCaughtUpBody": "ការបញ្ជាទិញថ្មីនឹងបង្ហាញនៅទីនេះ ជាមួយជំហានបន្ទាប់របស់វា។",
     "sampleData": "ទិន្នន័យគំរូ",
     "chartTotals": "{orders} ការបញ្ជាទិញ · {revenue}",
-    "setupDelivery": "កំណត់ការដឹកជញ្ជូន",
-    "setupDeliveryHint": "ពិនិត្យតំបន់ និងថ្លៃដែលយើងបានស្នើ រួចរក្សាទុក",
     "setupTestOrder": "សាកល្បងបញ្ជាទិញ",
     "setupTestOrderHint": "បើកហាងរបស់អ្នក ហើយបញ្ជាទិញដូចអ្នកទិញ",
     "setupShare": "ចែករំលែកតំណហាងរបស់អ្នក",
     "setupShareHint": "ចុចដើម្បីចម្លង រួចបង្ហោះលើ Facebook, TikTok ឬ Telegram",
     "setupShareManual": "ចម្លងតំណនេះ ហើយផ្ញើទៅអ្នកទិញរបស់អ្នក៖",
     "setupShareDone": "ខ្ញុំបានចែករំលែកហើយ",
-    "setupExtras": "គួរមាន"
+    "setupExtras": "គួរមាន",
+    "setupBakongExtra": "បញ្ចូល Bakong ID ដើម្បីឲ្យអ្នកទិញអាចបង់តាម KHQR",
+    "bannerNoPayment": "អ្នកទិញមិនទាន់អាចបង់ប្រាក់ឲ្យអ្នកបានទេ — សូមបញ្ចូល Bakong ID ឬបើកការបង់ប្រាក់ពេលទទួល។"
   },
   "BusinessType": {
     "shop": "ហាងលក់ទំនិញ",
@@ -307,7 +303,7 @@
     "logoLabel": "និមិត្តសញ្ញា",
     "uploadLogo": "ផ្ទុកឡើងនិមិត្តសញ្ញា",
     "removeLogo": "លុប",
-    "phoneLabel": "លេខទូរស័ព្ទទំនាក់ទំនង (ស្រេចចិត្ត)",
+    "phoneLabel": "លេខទូរស័ព្ទហាង",
     "areaLabel": "តំបន់ហាង",
     "phnomPenh": "ភ្នំពេញ",
     "otherProvince": "ខេត្តផ្សេងទៀត",
@@ -373,9 +369,7 @@
     "photosHint": "រហូតដល់ ៦ រូបភាព",
     "removePhoto": "លុបរូបភាព",
     "titleKmLabel": "ចំណងជើងខ្មែរ",
-    "titleKmPlaceholder": "ឧទាហរណ៍៖ កាហ្វេទឹកកក",
     "titleEnLabel": "ចំណងជើងអង់គ្លេស",
-    "titleEnPlaceholder": "ឧទាហរណ៍៖ Iced Coffee",
     "autoTranslate": "បកប្រែស្វ័យប្រវត្តិ",
     "translating": "កំពុងបកប្រែ…",
     "translateNote": "ការបកប្រែសាកល្បង — នឹងភ្ជាប់ទៅសេវាបកប្រែពិតនៅពេលមានផ្នែកខាងក្រោយសម្រាប់អ្នកលក់",
@@ -424,7 +418,6 @@
     "descriptionHelp": "បង្ហាញនៅលើទំព័រទំនិញ។ ប្រាប់ថាវាជាអ្វី ទំហំ និងអ្វីដែលរួមបញ្ចូល។",
     "descriptionKmLabel": "ការពិពណ៌នាជាភាសាខ្មែរ",
     "descriptionEnLabel": "ការពិពណ៌នាជាភាសាអង់គ្លេស (ស្រេចចិត្ត)",
-    "descriptionPlaceholder": "ឧ. កាហ្វេឆុងថ្មីៗ ជាមួយទឹកដោះគោខាប់",
     "writeForMe": "សរសេរឲ្យខ្ញុំ",
     "comingSoon": "នឹងមកដល់ឆាប់ៗ",
     "visibilityTitle": "បង្ហាញក្នុងហាង",
@@ -435,7 +428,19 @@
     "draftSaved": "បានរក្សាទុកព្រាងនៅលើឧបករណ៍នេះ",
     "draftRestoredTitle": "បានស្តារព្រាង។",
     "draftRestoredBody": "យើងបាននាំទំនិញដែលអ្នកកំពុងបន្ថែមមកវិញ។ រូបថតមិនត្រូវបានរក្សាក្នុងព្រាងទេ សូមបន្ថែមម្តងទៀត។",
-    "discardDraft": "បោះបង់ព្រាង"
+    "discardDraft": "បោះបង់ព្រាង",
+    "titleKmPlaceholder_shop": "ឧទាហរណ៍៖ អាវយឺតនារី ពណ៌ស",
+    "titleEnPlaceholder_shop": "ឧទាហរណ៍៖ Women's white T-shirt",
+    "descriptionPlaceholder_shop": "ឧ. ក្រណាត់កប្បាសទន់ មានទំហំ S ដល់ XL",
+    "titleKmPlaceholder_restaurant": "ឧទាហរណ៍៖ បាយឆាសាច់មាន់",
+    "titleEnPlaceholder_restaurant": "ឧទាហរណ៍៖ Chicken fried rice",
+    "descriptionPlaceholder_restaurant": "ឧ. បាយឆាជាមួយសាច់មាន់ និងពងមាន់ សម្រាប់មួយនាក់",
+    "titleKmPlaceholder_service": "ឧទាហរណ៍៖ កាត់សក់បុរស",
+    "titleEnPlaceholder_service": "ឧទាហរណ៍៖ Men's haircut",
+    "descriptionPlaceholder_service": "ឧ. កក់ កាត់ និងតុបតែង ប្រហែល ៤៥ នាទី",
+    "titleKmPlaceholder_other": "ឧទាហរណ៍៖ កាបូបដៃធ្វើពីដៃ",
+    "titleEnPlaceholder_other": "ឧទាហរណ៍៖ Handmade bag",
+    "descriptionPlaceholder_other": "ឧ. ត្បាញដោយដៃនៅតាកែវ"
   },
   "Stock": {
     "title": "ស្តុក",
@@ -1239,5 +1244,19 @@
     "buyerBody_not_collected": "សូមហៅទៅហាងដើម្បីរៀបចំពេលថ្មី។",
     "hint_settle_cash_pickup": "ចុចពេលអ្នកទិញបានបង់ប្រាក់ឲ្យអ្នក។",
     "buyerBody_out_for_delivery_bus": "បានផ្ញើតាមឡានក្រុង។ សូមទៅយកដោយប្រើលេខសំបុត្រខាងក្រោម។"
+  },
+  "Readiness": {
+    "title": "មុនពេលចែករំលែកហាងរបស់អ្នក",
+    "intro": "អ្នកទិញដែលបើកតំណរបស់អ្នកត្រូវការរបស់ទាំងនេះ។ អ្នកអាចធ្វើឥឡូវ ឬពេលក្រោយក្នុងផ្ទាំងគ្រប់គ្រង។",
+    "req_products": "បន្ថែមទំនិញមួយ ជាមួយរូបថត និងតម្លៃ",
+    "req_phone": "បញ្ចូលលេខទូរស័ព្ទហាងរបស់អ្នក",
+    "req_delivery": "ពិនិត្យ និងរក្សាទុកការដឹកជញ្ជូន",
+    "req_payment": "ជ្រើសរើសរបៀបដែលអ្នកទិញបង់ប្រាក់ឲ្យអ្នក",
+    "hint_products": "អ្នកទិញឃើញហាងទទេ រហូតដល់អ្នកបន្ថែមទំនិញ",
+    "hint_delivery": "ពិនិត្យតំបន់ និងថ្លៃដែលយើងបានស្នើ រួចរក្សាទុក",
+    "hint_payment": "បង់ប្រាក់ពេលទទួល Bakong ID ឬទាំងពីរ",
+    "shareLocked": "អាចប្រើបានពេលជំហានទី ១–៤ រួចរាល់",
+    "req_products_service": "បន្ថែមសេវាកម្មមួយ ជាមួយតម្លៃ",
+    "hint_delivery_service": "បើក \"មកយកផ្ទាល់\" ហើយបញ្ចូលអាសយដ្ឋានហាង ដើម្បីឲ្យអ្នកទិញដឹងកន្លែងត្រូវមក"
   }
 }

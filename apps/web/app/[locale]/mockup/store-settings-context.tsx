@@ -19,6 +19,8 @@ interface StoreSettingsContextValue {
   settings: StoreSettings;
   /** Callers validate with storeSettingsSchema(band) first; saved values are always valid. */
   saveSettings: (settings: StoreSettings) => void;
+  /** A new shop: the sample shop's currency and rate, cash on delivery on, and no VAT until the seller sets it. */
+  startNewShop: () => void;
 }
 
 const StoreSettingsContext = createContext<StoreSettingsContextValue | null>(null);
@@ -58,7 +60,9 @@ export function StoreSettingsProvider({ children }: { children: ReactNode }) {
   }, [settings, hydrated]);
 
   return (
-    <StoreSettingsContext.Provider value={{ hydrated, settings, saveSettings: setSettings }}>
+    <StoreSettingsContext.Provider
+      value={{ hydrated, settings, saveSettings: setSettings, startNewShop: () => setSettings({ ...mockStoreSettings, vatPercent: 0 }) }}
+    >
       {children}
     </StoreSettingsContext.Provider>
   );

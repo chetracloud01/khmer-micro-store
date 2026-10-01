@@ -22,7 +22,7 @@ import { mockStore } from "@/mock/mock-data";
 import { useAdmin } from "../admin-context";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
-import { useStorePayments } from "../store-settings-context";
+import { useStorePayments, useStoreSettings } from "../store-settings-context";
 import { useThemeLabels } from "../use-theme-labels";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -73,6 +73,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const stockHref = `/${locale}/mockup/dashboard/stock`;
   const stockLocked = subscriptionReady && !planHasFeature(subscription.plan, "stock");
   const { khqrReady } = useStorePayments();
+  const { settings: storeSettings } = useStoreSettings();
   const planBanner =
     subscriptionReady && !pathname.startsWith(billingHref)
       ? subscription.status === "trialing"
@@ -85,9 +86,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       : null;
   // An overdue or paused plan matters most; next, a missing Bakong ID (buyers
   // can't pay); the trial reminder comes last.
+  // A Bakong ID isn't required: with cash on delivery on, buyers can already pay.
   const paymentBanner =
-    profile.hasProfile && !khqrReady && !pathname.startsWith(profileHref)
-      ? { text: t("bannerNoBakong"), action: t("bannerAddBakong"), tone: "bg-warning/10 text-warning", href: `${profileHref}#payments`, urgent: true }
+    profile.hasProfile && !khqrReady && !storeSettings.allowCod && !pathname.startsWith(profileHref)
+      ? { text: t("bannerNoPayment"), action: t("bannerAddBakong"), tone: "bg-warning/10 text-warning", href: `${profileHref}#payments`, urgent: true }
       : null;
   const banner = planBanner?.urgent ? planBanner : (paymentBanner ?? planBanner);
 

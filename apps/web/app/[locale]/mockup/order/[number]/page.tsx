@@ -237,10 +237,12 @@ function OrderStatus({ order }: { order: OrderRecord }) {
           <span>{isPickup ? tCheckout("pickup") : tCheckout("deliveryFee")}</span>
           <span className="tabular-nums">{order.deliveryFee === 0 ? tCheckout("free") : formatMoney(order.deliveryFee, order.currency)}</span>
         </div>
-        <div className="flex items-center justify-between text-sm text-muted">
-          <span>{tStore("vat", { percent: order.vatPercent })}</span>
-          <span className="tabular-nums">{formatMoney(order.vat, order.currency)}</span>
-        </div>
+        {order.vatPercent > 0 && (
+          <div className="flex items-center justify-between text-sm text-muted">
+            <span>{tStore("vat", { percent: order.vatPercent })}</span>
+            <span className="tabular-nums">{formatMoney(order.vat, order.currency)}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between border-t border-border pt-2 font-semibold">
           <span>{t("total")}</span>
           <span className="text-lg tabular-nums">{formatMoney(order.total, order.currency)}</span>

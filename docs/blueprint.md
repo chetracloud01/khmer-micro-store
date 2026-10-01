@@ -583,6 +583,8 @@ A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets 
 
 Left out of Release 1 on purpose, although their screens exist: subscription billing, plan limits, KYC, stock, wholesale prices, ABA PayWay, phone-number login, admin roles.
 
+**Who Release 1 is for:** shops that sell physical goods (business types `shop` and `other`). A restaurant or a service business can open a shop, but the product model doesn't fit them yet — see step 14.
+
 ### Release 2 — Getting paid (public launch)
 
 | Step | Build | Done when |
@@ -591,6 +593,7 @@ Left out of Release 1 on purpose, although their screens exist: subscription bil
 | 11. Admin for money | Subscriptions, invoices (mark paid by hand, void), buyer payments, failed checks | Every screen in the admin "Revenue" and "Payments" groups runs on real data |
 | 12. Trust | KYC submission and review, the Verified badge; phone-number login by SMS code | A seller is verified end to end; a seller without Telegram can log in |
 | 13. Launch | Terms and privacy in Khmer and English, status page, Khmer video tutorials | First paying merchants |
+| 14. Restaurants and services | Up to 3 groups of choices per product ("pick one" or "pick any", each with an optional extra price) for size × colour, sugar and ice levels, add-ons; a note per cart item; a product marked as an item or a service — services have no stock or delivery, and a cart of only services asks for a preferred date and time and "at the shop / at my place" | A café sells an iced coffee with "less sugar, +1 shot"; a salon takes a booking for a haircut without any delivery question |
 
 ### Release 3 — Bigger shops
 

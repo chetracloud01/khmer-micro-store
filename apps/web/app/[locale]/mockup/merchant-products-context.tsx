@@ -27,6 +27,8 @@ interface MerchantProductsContextValue {
   addBrand: (brand: MockBrand) => void;
   uoms: MockUom[];
   addUom: (uom: MockUom) => void;
+  /** A seller who just onboarded starts empty: no products or brands, only their business type's categories and unit. */
+  startNewShop: (defaults: { categories: MockCategory[]; uoms: MockUom[] }) => void;
 }
 
 const MerchantProductsContext = createContext<MerchantProductsContextValue | null>(null);
@@ -124,6 +126,13 @@ export function MerchantProductsProvider({ children }: { children: ReactNode }) 
     setUoms((prev) => [...prev, uom]);
   }
 
+  function startNewShop(defaults: { categories: MockCategory[]; uoms: MockUom[] }) {
+    setProducts([]);
+    setBrands([]);
+    setCategories(defaults.categories);
+    setUoms(defaults.uoms);
+  }
+
   return (
     <MerchantProductsContext.Provider
       value={{
@@ -139,6 +148,7 @@ export function MerchantProductsProvider({ children }: { children: ReactNode }) 
         addBrand,
         uoms,
         addUom,
+        startNewShop,
       }}
     >
       {children}

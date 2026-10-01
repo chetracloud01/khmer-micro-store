@@ -14,5 +14,6 @@ export * from "./payment-attempts";
 export * from "./phone";
 export * from "./plans";
 export * from "./product";
+export * from "./shop-readiness";
 export * from "./stock";
 export * from "./store";

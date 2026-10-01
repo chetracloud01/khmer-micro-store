@@ -1,5 +1,6 @@
 "use client";
 
+import { SHARE_REQUIREMENTS, type ShareRequirement } from "@khmer-micro-store/shared";
 import { Button, Card, cn } from "@khmer-micro-store/ui";
 import {
   BadgeCheck,
@@ -7,7 +8,9 @@ import {
   Check,
   ChevronRight,
   ImagePlus,
+  Lock,
   PackagePlus,
+  Phone,
   Share2,
   ShoppingBag,
   Truck,
@@ -18,10 +21,9 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { useAdmin } from "../admin-context";
-import { useDeliverySettings } from "../delivery-settings-context";
 import { useMerchantAccount } from "../merchant-account-context";
-import { useMerchantProducts } from "../merchant-products-context";
 import { useMerchantProfile } from "../merchant-profile-context";
+import { useShopReadiness } from "../new-shop";
 import { useOrders } from "../orders-context";
 import { shareOrCopyLink } from "../share-link";
 import { useStorePayments } from "../store-settings-context";
@@ -34,34 +36,65 @@ interface SetupItem {
   /** Where the step is done. The last step (share) is done right here instead. */
   href?: string;
   done: boolean;
+  /** Can't be done yet — shows a lock and the hint says why. */
+  locked?: boolean;
 }
 
+const REQUIREMENT_ICON: Record<ShareRequirement, LucideIcon> = {
+  products: PackagePlus,
+  phone: Phone,
+  delivery: Truck,
+  payment: Wallet,
+};
+
 /**
- * What a new shop still needs after the 2-step onboarding, in the order of
- * docs/App Workflows "Seller onboarding": products → payment → delivery →
- * Telegram → a test order → share the link. Logo and verification help but
- * never hold the shop back, so they sit underneath as extras.
- * Hidden once the six steps are done.
+ * What a new shop still needs after the 2-step onboarding. Steps 1–4 are what
+ * a buyer needs before the link is shared (packages/shared shop-readiness.ts):
+ * a product, the shop's phone, delivery, and a way to pay — cash on delivery
+ * is enough, so a Bakong ID is never forced. Sharing unlocks when they're done.
+ * Bakong, logo and verification sit underneath as extras.
+ * Hidden once the seven steps are done.
  */
 export function SetupChecklist() {
   const t = useTranslations("Dashboard");
+  const tReady = useTranslations("Readiness");
   const locale = useLocale();
   const profile = useMerchantProfile();
-  const { products } = useMerchantProducts();
   const { telegramLogin } = useMerchantAccount();
   const { demoKycStatus } = useAdmin();
   const { khqrReady } = useStorePayments();
-  const { configured: deliveryConfigured } = useDeliverySettings();
   const { orders } = useOrders();
+  const readiness = useShopReadiness();
   const [shareNote, setShareNote] = useState<"idle" | "manual">("idle");
 
   if (!profile.hasProfile) return null;
 
   const base = `/${locale}/mockup/dashboard`;
+  const requirementHref: Record<ShareRequirement, string> = {
+    products: `${base}/products/new`,
+    phone: `${base}/profile#details`,
+    delivery: `${base}/delivery`,
+    payment: `${base}/profile#payments`,
+  };
+  const isService = profile.businessType === "service";
+  const requirementHint: Partial<Record<ShareRequirement, string>> = {
+    products: tReady("hint_products"),
+    delivery: tReady(isService ? "hint_delivery_service" : "hint_delivery"),
+    payment: tReady("hint_payment"),
+  };
+  /** A service shop is asked for "a service with a price" — no photo needed. */
+  const requirementTitle = (requirement: ShareRequirement) =>
+    tReady(requirement === "products" && isService ? "req_products_service" : `req_${requirement}`);
+
   const steps: SetupItem[] = [
-    { key: "products", icon: PackagePlus, title: t("setupProducts"), href: `${base}/products/new`, done: products.length > 0 },
-    { key: "bakong", icon: Wallet, title: t("setupBakong"), hint: t("setupBakongHint"), href: `${base}/profile#payments`, done: khqrReady },
-    { key: "delivery", icon: Truck, title: t("setupDelivery"), hint: t("setupDeliveryHint"), href: `${base}/delivery`, done: deliveryConfigured },
+    ...SHARE_REQUIREMENTS.map((requirement) => ({
+      key: requirement,
+      icon: REQUIREMENT_ICON[requirement],
+      title: requirementTitle(requirement),
+      hint: requirementHint[requirement],
+      href: requirementHref[requirement],
+      done: !readiness.missing.includes(requirement),
+    })),
     {
       key: "alerts",
       icon: Bell,
@@ -77,9 +110,17 @@ export function SetupChecklist() {
       href: `/${locale}/mockup/storefront`,
       done: orders.some((order) => order.fromShop),
     },
-    { key: "share", icon: Share2, title: t("setupShare"), hint: t("setupShareHint"), done: profile.linkShared },
+    {
+      key: "share",
+      icon: Share2,
+      title: t("setupShare"),
+      hint: readiness.ready ? t("setupShareHint") : tReady("shareLocked"),
+      done: profile.linkShared,
+      locked: !readiness.ready,
+    },
   ];
   const extras: SetupItem[] = [
+    { key: "bakong", icon: Wallet, title: t("setupBakongExtra"), href: `${base}/profile#payments`, done: khqrReady },
     { key: "logo", icon: ImagePlus, title: t("setupLogo"), href: `${base}/profile`, done: !!profile.logoDataUrl },
     {
       key: "verify",
@@ -93,7 +134,7 @@ export function SetupChecklist() {
 
   const doneCount = steps.filter((step) => step.done).length;
   if (doneCount === steps.length) return null;
-  const nextKey = steps.find((step) => !step.done)?.key;
+  const nextKey = steps.find((step) => !step.done && !step.locked)?.key;
   const shopUrl = () => `${window.location.origin}/s/${profile.slug}`;
 
   async function handleShare() {
@@ -104,6 +145,7 @@ export function SetupChecklist() {
 
   function row(item: SetupItem, position: number | null) {
     const isNext = item.key === nextKey;
+    const inactive = item.done || item.locked;
     const content = (
       <>
         <span
@@ -114,6 +156,8 @@ export function SetupChecklist() {
         >
           {item.done ? (
             <Check className="h-4 w-4" aria-hidden="true" />
+          ) : item.locked ? (
+            <Lock className="h-4 w-4" aria-hidden="true" />
           ) : position !== null ? (
             position
           ) : (
@@ -121,25 +165,27 @@ export function SetupChecklist() {
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={cn("block text-sm font-medium", item.done && "text-muted line-through")}>{item.title}</span>
+          <span className={cn("block text-sm font-medium", item.done && "text-muted line-through", item.locked && "text-muted")}>
+            {item.title}
+          </span>
           {item.hint && !item.done && <span className="block text-sm text-muted">{item.hint}</span>}
         </span>
-        {!item.done && <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />}
+        {!inactive && <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />}
       </>
     );
     const className = cn(
       "flex min-h-touch w-full items-center gap-3 rounded-DEFAULT px-2 py-2 text-left",
-      item.done ? "pointer-events-none" : "hover:bg-border/10",
+      inactive ? "pointer-events-none" : "hover:bg-border/10",
       isNext && "border border-brand/40 bg-brand/5",
     );
     return (
       <li key={item.key}>
         {item.href ? (
-          <Link href={item.href} aria-disabled={item.done} className={className}>
+          <Link href={item.href} aria-disabled={inactive} className={className}>
             {content}
           </Link>
         ) : (
-          <button type="button" onClick={handleShare} disabled={item.done} className={className}>
+          <button type="button" onClick={handleShare} disabled={inactive} className={className}>
             {content}
           </button>
         )}

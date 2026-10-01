@@ -239,10 +239,12 @@ export default function CartMockupPage() {
                     {/* Known only once the buyer picks delivery or pickup and where, at checkout. */}
                     <dd>{deliveryStatus === "ok" ? (deliveryFee === 0 ? tCheckout("free") : format(deliveryFee, currency)) : tCheckout("feeAfterChoice")}</dd>
                   </div>
-                  <div className="flex items-center justify-between text-muted">
-                    <dt>{tStore("vat", { percent: storeSettings.vatPercent })}</dt>
-                    <dd>{format(vat, currency)}</dd>
-                  </div>
+                  {storeSettings.vatPercent > 0 && (
+                    <div className="flex items-center justify-between text-muted">
+                      <dt>{tStore("vat", { percent: storeSettings.vatPercent })}</dt>
+                      <dd>{format(vat, currency)}</dd>
+                    </div>
+                  )}
                 </dl>
               )}
 

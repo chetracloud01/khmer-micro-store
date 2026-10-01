@@ -28,6 +28,8 @@ interface OrdersContextValue {
    * Returns false (and changes nothing) if the action isn't allowed right now.
    */
   act: (orderNumber: string, action: OrderAction, detail?: { dispatch?: OrderDispatch; cancellation?: OrderCancellation }) => boolean;
+  /** A new shop starts with no orders. */
+  startNewShop: () => void;
 }
 
 const OrdersContext = createContext<OrdersContextValue | null>(null);
@@ -140,7 +142,11 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
-  return <OrdersContext.Provider value={{ hydrated, orders, placeOrder, act }}>{children}</OrdersContext.Provider>;
+  function startNewShop() {
+    setOrders([]);
+  }
+
+  return <OrdersContext.Provider value={{ hydrated, orders, placeOrder, act, startNewShop }}>{children}</OrdersContext.Provider>;
 }
 
 export function useOrders(): OrdersContextValue {

@@ -24,6 +24,8 @@ interface MerchantInventoryContextValue {
   recordTransaction: (input: StockMovementInput) => void;
   /** Writes the out and in halves together, so a transfer can never be half-recorded. Validate with stockTransferInputSchema first. */
   recordTransfer: (input: StockTransferInput) => void;
+  /** A new shop has no stock history. */
+  startNewShop: () => void;
 }
 
 const MerchantInventoryContext = createContext<MerchantInventoryContextValue | null>(null);
@@ -118,9 +120,13 @@ export function MerchantInventoryProvider({ children }: { children: ReactNode })
     ]);
   }
 
+  function startNewShop() {
+    setTransactions([]);
+  }
+
   return (
     <MerchantInventoryContext.Provider
-      value={{ hydrated, warehouses, addWarehouse, branches, addBranch, transactions, recordTransaction, recordTransfer }}
+      value={{ hydrated, warehouses, addWarehouse, branches, addBranch, transactions, recordTransaction, recordTransfer, startNewShop }}
     >
       {children}
     </MerchantInventoryContext.Provider>

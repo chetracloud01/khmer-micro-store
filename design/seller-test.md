@@ -33,9 +33,9 @@ phone."* Then keep these in mind yourself:
 | In the mockup | What to do during the test |
 | --- | --- |
 | Login does not open Telegram. With a phone number, no SMS is sent: any 6 digits work, except `000000` | Tell them "pretend you got the code, type any 6 numbers" |
-| The shop already contains sample coffee products and sample orders | Tell them "ignore what is already there"; note if it confuses them |
-| KHQR is a picture, not a real payment, and only appears after the seller adds a Bakong ID | Use **cash** for the buyer task. If they try KHQR, you tap "Simulate payment" |
-| "Share your shop link" copies a link that does not open yet | Count it as done if they find and tap it |
+| A new shop starts empty, but the dashboard's sales chart shows sample numbers (it says "Sample data") | Tell them to ignore the chart |
+| KHQR is a picture, not a real payment, and only appears after the seller adds a Bakong ID (it is not required — cash on delivery is on by default) | Use **cash** for the buyer task. If they try KHQR, you tap "Simulate payment" |
+| "Share your shop link" stays locked until the shop has a product with a photo, a phone number and saved delivery; then it copies a link that does not open yet | Count it as done if they unlock it and tap it |
 | The Telegram button does nothing | Note whether they expected it to |
 | Everything lives on that one phone | Buyer and seller tasks are done on the same phone |
 
@@ -51,7 +51,7 @@ that you helped.
 | 1 | «សូមបង្កើតហាងរបស់អ្នក។» (Please set up your shop.) | `/km/mockup/merchant-login` | They reach the dashboard with their own shop name at the top |
 | 2 | «សូមដាក់ទំនិញមួយដែលអ្នកលក់ពិតប្រាកដ ជាមួយរូបថត និងតម្លៃ។» (Add one thing you really sell, with a photo and a price.) | The dashboard | The product shows in the products list |
 | 3 | «ឥឡូវអ្នកជាអ្នកទិញ។ សូមបញ្ជាទិញទំនិញនោះ ហើយបង់ប្រាក់ពេលទទួល។» (Now you are a buyer. Order that product and pay on delivery.) | `/km/mockup/storefront` | They see the "Order placed" page |
-| 4 | «អ្នកជាម្ចាស់ហាងវិញ។ មានការបញ្ជាទិញថ្មីមួយ។ សូមធ្វើរហូតដល់ប្រគល់ទំនិញរួច។» (You are the seller again. There is a new order. Take it all the way to delivered.) | `/km/mockup/dashboard` | The order shows "Delivered" or "Completed" |
+| 4 | «អ្នកជាម្ចាស់ហាងវិញ។ មានការបញ្ជាទិញថ្មីមួយ។ សូមធ្វើរហូតដល់ប្រគល់ទំនិញរួច។» (You are the seller again. There is a new order. Take it all the way to delivered.) | `/km/mockup/dashboard` | The order shows "Delivered" or "Completed". A new shop has no saved drivers, so they type a driver's name and phone when sending — note whether that confuses them |
 
 Let them use Khmer or English, whichever they choose — and write down
 which they chose.

@@ -214,7 +214,7 @@ function ProfileForm() {
       </nav>
 
       <Card className="flex flex-col p-4 md:p-6">
-        <FormSection stacked title={t("sectionShop")} description={t("sectionShopHelp")}>
+        <FormSection id="details" stacked title={t("sectionShop")} description={t("sectionShopHelp")}>
           <div className="flex items-center gap-4">
             {draft.logoDataUrl ? (
               <div className="relative shrink-0">

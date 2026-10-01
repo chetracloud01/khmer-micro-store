@@ -140,21 +140,24 @@ function OrderDetail({ order, listHref }: { order: OrderRecord; listHref: string
 
       {primary === "dispatch" && route === "driver" && (
         <div className="flex flex-col gap-3">
-          <Select
-            label={t("driver")}
-            value={driverId}
-            onChange={(e) => {
-              setDriverId(e.target.value);
-              setSendErrors({});
-            }}
-            options={[
-              ...delivery.drivers.map((driver) => ({
-                value: driver.id,
-                label: `${driver.name} · ${formatKhmerPhoneLocal(driver.phone)}`,
-              })),
-              { value: OTHER_DRIVER, label: t("otherDriver") },
-            ]}
-          />
+          {/* With no saved drivers, the only choice would be "another driver" — so go straight to the name and phone. */}
+          {delivery.drivers.length > 0 && (
+            <Select
+              label={t("driver")}
+              value={driverId}
+              onChange={(e) => {
+                setDriverId(e.target.value);
+                setSendErrors({});
+              }}
+              options={[
+                ...delivery.drivers.map((driver) => ({
+                  value: driver.id,
+                  label: `${driver.name} · ${formatKhmerPhoneLocal(driver.phone)}`,
+                })),
+                { value: OTHER_DRIVER, label: t("otherDriver") },
+              ]}
+            />
+          )}
           {driverId === OTHER_DRIVER && (
             <>
               <Input
@@ -290,10 +293,12 @@ function OrderDetail({ order, listHref }: { order: OrderRecord; listHref: string
                 {order.deliveryFee === 0 ? tCheckout("free") : formatMoney(order.deliveryFee, order.currency)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm text-muted">
-              <span>{tStore("vat", { percent: order.vatPercent })}</span>
-              <span className="tabular-nums">{formatMoney(order.vat, order.currency)}</span>
-            </div>
+            {order.vatPercent > 0 && (
+              <div className="flex items-center justify-between text-sm text-muted">
+                <span>{tStore("vat", { percent: order.vatPercent })}</span>
+                <span className="tabular-nums">{formatMoney(order.vat, order.currency)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between border-t border-border pt-2 font-semibold">
               <span>{t("total")}</span>
               <span className="text-lg tabular-nums">{formatMoney(order.total, order.currency)}</span>
