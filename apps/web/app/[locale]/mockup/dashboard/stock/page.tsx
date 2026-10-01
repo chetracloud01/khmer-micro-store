@@ -24,8 +24,8 @@ import { useMerchantInventory } from "../../merchant-inventory-context";
 import { useMerchantProducts } from "../../merchant-products-context";
 import { useMerchantSubscription } from "../../merchant-subscription-context";
 import { useOnlineStock } from "../../online-stock";
-import { DataGrid } from "../../data-grid";
-import { useFormErrorText } from "../../form-ui";
+import { DataGrid } from "@/components/data-grid";
+import { useFormErrorText } from "@/components/form-ui";
 import { UpgradePrompt } from "../upgrade-prompt";
 
 type SheetMode = "purchase" | "sale" | "transfer" | "adjust" | null;

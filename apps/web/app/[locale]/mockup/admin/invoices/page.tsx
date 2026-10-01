@@ -15,8 +15,8 @@ import { AlertTriangle, ChevronRight, CircleCheck, Clock, ReceiptText } from "lu
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
-import { useFormErrorText } from "../../form-ui";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
+import { useFormErrorText } from "@/components/form-ui";
 import { PageHeader, Pill, StatCard } from "../admin-ui";
 import { DetailList, formatSums, INVOICE_VIEW_STYLES, money, shortRef, sumByCurrency } from "../money-ui";
 import { useAdminInvoices, useDaysAgo, useDueText, type InvoiceRow } from "../use-admin-money";

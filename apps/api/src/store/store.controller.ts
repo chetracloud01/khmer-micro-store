@@ -5,10 +5,21 @@ import { APP_DB } from "../db";
 import { InvalidInputException } from "../errors";
 import { isStorePhotoKey } from "../files/photos";
 import { FILE_STORAGE, type FileStorage } from "../files/storage";
-import { assertStoreWritable } from "../merchant/plan";
+import { assertStoreWritable, storePlan } from "../merchant/plan";
 import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
 
-const storeSelect = { slug: true, name: true, businessType: true, phone: true, area: true, description: true, logoKey: true } as const;
+const storeSelect = {
+  slug: true,
+  name: true,
+  businessType: true,
+  phone: true,
+  area: true,
+  description: true,
+  logoKey: true,
+  usdToKhrRate: true,
+  allowCod: true,
+  deliveryConfiguredAt: true,
+} as const;
 
 /** The shop details page: name, business type, phone, area, description, logo and the (optional) Bakong ID. */
 @Controller("store")
@@ -54,11 +65,26 @@ export class StoreController {
     });
   }
 
+  /** The shop's details, plus what the dashboard needs around them: the plan in force and the setup checklist's facts. */
   private async details(tx: Parameters<Parameters<typeof withContext>[2]>[0], storeId: string) {
-    const [store, bakong] = await Promise.all([
+    const visible = { deletedAt: null, isVisible: true } as const;
+    const [{ usdToKhrRate, allowCod, deliveryConfiguredAt, ...store }, bakong, plan, visibleProducts, productsWithPhoto] = await Promise.all([
       tx.store.findUniqueOrThrow({ where: { id: storeId }, select: storeSelect }),
       tx.storePaymentConfig.findUnique({ where: { storeId_provider: { storeId, provider: "bakong_khqr" } }, select: { bakongAccountId: true } }),
+      storePlan(tx, storeId),
+      tx.product.count({ where: visible }),
+      tx.product.count({ where: { ...visible, photos: { some: {} } } }),
     ]);
-    return { ...store, logoUrl: store.logoKey ? this.storage.publicUrl(store.logoKey) : null, bakongId: bakong?.bakongAccountId ?? "" };
+    const bakongId = bakong?.bakongAccountId ?? "";
+    return {
+      ...store,
+      logoUrl: store.logoKey ? this.storage.publicUrl(store.logoKey) : null,
+      bakongId,
+      usdToKhrRate,
+      plan: plan.plan,
+      paused: plan.paused,
+      // The facts packages/shared shop-readiness.ts asks for.
+      readiness: { visibleProducts, productsWithPhoto, deliveryConfigured: deliveryConfiguredAt !== null, khqrReady: bakongId !== "", codEnabled: allowCod },
+    };
   }
 }

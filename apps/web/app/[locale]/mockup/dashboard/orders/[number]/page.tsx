@@ -21,7 +21,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { orderLineLabel, type OrderRecord } from "@/mock/mock-orders";
 import { useDeliverySettings } from "../../../delivery-settings-context";
-import { useFormErrorText } from "../../../form-ui";
+import { useFormErrorText } from "@/components/form-ui";
 import { useMerchantProducts } from "../../../merchant-products-context";
 import { formatMoney, OrderStatusPill, useOrderText } from "../../../order-ui";
 import { useOrders } from "../../../orders-context";

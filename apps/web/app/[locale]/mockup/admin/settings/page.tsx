@@ -12,7 +12,7 @@ import { Card, Input } from "@khmer-micro-store/ui";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useAdmin } from "../../admin-context";
-import { FormActions, FormSection, ReadOnlyField } from "../../form-ui";
+import { FormActions, FormSection, ReadOnlyField } from "@/components/form-ui";
 import { PageHeader } from "../admin-ui";
 
 type Field = keyof AdminSettings;

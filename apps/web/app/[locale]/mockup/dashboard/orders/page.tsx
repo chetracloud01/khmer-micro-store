@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { OrderRecord } from "@/mock/mock-orders";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { getNextAction, OrderNextButton, sellerOrderHref } from "../../order-next-button";
 import { formatMoney, OrderStatusPill, useOrderText } from "../../order-ui";
 import { useOrders } from "../../orders-context";

@@ -14,7 +14,7 @@ import { ChevronRight, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "../../form-ui";
+import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { useMerchantInventory } from "../../merchant-inventory-context";
 import { useMerchantSubscription } from "../../merchant-subscription-context";
 import { useStoreSettings } from "../../store-settings-context";

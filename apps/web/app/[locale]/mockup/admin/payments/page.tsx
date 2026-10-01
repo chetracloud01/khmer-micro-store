@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { mockPaymentAttempts, type MockPaymentAttempt } from "@/mock/mock-admin-billing";
 import { useAdmin } from "../../admin-context";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { adminHref } from "../admin-nav";
 import { PageHeader, Pill, StatCard } from "../admin-ui";
 import { ATTEMPT_STATUS_STYLES, DetailList, formatSums, money, shortRef, sumByCurrency } from "../money-ui";

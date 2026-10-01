@@ -27,7 +27,7 @@ import { mockPaymentMethods, type MockPaymentMethodCode } from "@/mock/mock-data
 import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "../buyer-shell";
 import { useCart } from "../cart-context";
 import { useDeliverySettings } from "../delivery-settings-context";
-import { focusFirstInvalidField, useFormErrorText } from "../form-ui";
+import { focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { useClampCartToStock } from "../online-stock";
 import { useOrders } from "../orders-context";
 import { useStorePayments, useStoreSettings } from "../store-settings-context";

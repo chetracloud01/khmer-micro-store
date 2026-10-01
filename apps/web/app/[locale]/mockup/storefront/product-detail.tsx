@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
 import { getDiscountedUnitAmount, getUnitKhr, getUnitUsdCents, lineKey, type MockProduct } from "@/mock/mock-data";
 import { useCart } from "../cart-context";
 import { useOnlineStock } from "../online-stock";
-import { shareOrCopyLink } from "../share-link";
+import { shareOrCopyLink } from "@/components/share-link";
 import { Stepper, StockNote } from "../shared-ui";
 import { useStoreSettings } from "../store-settings-context";
 

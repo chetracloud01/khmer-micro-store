@@ -11,7 +11,7 @@ import { BottomSheet, Button, Card, Input, Select } from "@khmer-micro-store/ui"
 import { IdCard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useFormErrorText } from "../../form-ui";
+import { useFormErrorText } from "@/components/form-ui";
 import { EmptyState, PageHeader, Pill, STATUS_STYLES } from "../admin-ui";
 import { useAdminData, useTimeAgo, type AdminRow } from "../use-admin-data";
 

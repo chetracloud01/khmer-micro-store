@@ -13,8 +13,8 @@ import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useAdmin } from "../../admin-context";
-import { ACCEPTED_IMAGE_TYPES, compressImage } from "../../compress-image";
-import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "../../form-ui";
+import { ACCEPTED_IMAGE_TYPES, compressImage } from "@/components/compress-image";
+import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 
 interface Draft {
   idType: KycIdType;

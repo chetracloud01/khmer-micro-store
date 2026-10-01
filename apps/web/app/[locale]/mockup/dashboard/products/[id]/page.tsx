@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "../../../form-ui";
+import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { mockBusinessTypeDefaults, slugify, type MockProduct, type MockVariant } from "@/mock/mock-data";
 import { useMerchantProducts } from "../../../merchant-products-context";
 import { useMerchantProfile } from "../../../merchant-profile-context";

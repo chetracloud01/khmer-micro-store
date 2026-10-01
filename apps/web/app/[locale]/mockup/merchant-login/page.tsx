@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { mockMerchant } from "@/mock/mock-data";
-import { useFormErrorText } from "../form-ui";
+import { useFormErrorText } from "@/components/form-ui";
 import { useMerchantAccount } from "../merchant-account-context";
 import { useMerchantProfile } from "../merchant-profile-context";
 

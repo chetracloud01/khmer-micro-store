@@ -4,7 +4,7 @@ import { cn } from "@khmer-micro-store/ui";
 import { BadgeCheck, CalendarPlus, CreditCard, Layers, ReceiptText, ShieldX, UserCog } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AdminAuditEntry } from "../../admin-context";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { PageHeader } from "../admin-ui";
 import { useAdminData, useAuditText, useTimeAgo } from "../use-admin-data";
 

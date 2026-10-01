@@ -6,7 +6,7 @@ import { BadgeCheck, ChevronRight, CirclePause, Clock, Wallet } from "lucide-rea
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { adminHref } from "../admin-nav";
 import { PageHeader, Pill, StatCard, STATUS_STYLES } from "../admin-ui";
 import { INVOICE_VIEW_STYLES, money } from "../money-ui";

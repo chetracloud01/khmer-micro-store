@@ -13,7 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { DataGrid, type DataGridColumn } from "../../data-grid";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { adminHref } from "../admin-nav";
 import { KYC_STYLES, PageHeader, Pill, STATUS_STYLES } from "../admin-ui";
 import { useAdminData, type AdminRow } from "../use-admin-data";

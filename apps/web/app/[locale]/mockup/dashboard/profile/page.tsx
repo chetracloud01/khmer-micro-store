@@ -33,7 +33,7 @@ import { mockMerchant } from "@/mock/mock-data";
 import { useAdmin } from "../../admin-context";
 import { useMerchantAccount } from "../../merchant-account-context";
 import { LoginMethods } from "./login-methods";
-import { FormActions, FormSection, ReadOnlyField, focusFirstInvalidField, useFormErrorText } from "../../form-ui";
+import { FormActions, FormSection, ReadOnlyField, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { useMerchantProfile } from "../../merchant-profile-context";
 import { useMerchantSubscription } from "../../merchant-subscription-context";
 

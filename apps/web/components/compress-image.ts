@@ -34,3 +34,17 @@ export function compressImage(file: File, maxSide = 1600, quality = 0.8): Promis
     image.src = url;
   });
 }
+
+/**
+ * The same shrink, as a JPEG file ready to upload (the API takes at most
+ * 2 MB). A photo that would still be too big is tried again smaller.
+ */
+export async function compressImageToBlob(file: File, maxSide = 1600, quality = 0.8): Promise<Blob> {
+  const dataUrl = await compressImage(file, maxSide, quality);
+  const blob = await (await fetch(dataUrl)).blob();
+  if (blob.size <= MAX_UPLOAD_BYTES || maxSide <= 640) return blob;
+  return compressImageToBlob(file, Math.round(maxSide * 0.75), quality);
+}
+
+/** The API's limit (apps/api files/photos.ts MAX_PHOTO_BYTES). */
+const MAX_UPLOAD_BYTES = 2_000_000;

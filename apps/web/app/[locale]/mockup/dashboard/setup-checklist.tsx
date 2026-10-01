@@ -25,7 +25,7 @@ import { useMerchantAccount } from "../merchant-account-context";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useShopReadiness } from "../new-shop";
 import { useOrders } from "../orders-context";
-import { shareOrCopyLink } from "../share-link";
+import { shareOrCopyLink } from "@/components/share-link";
 import { useStorePayments } from "../store-settings-context";
 
 interface SetupItem {

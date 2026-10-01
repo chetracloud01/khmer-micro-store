@@ -18,7 +18,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { useDeliverySettings } from "../../delivery-settings-context";
 import { useMerchantProfile } from "../../merchant-profile-context";
-import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "../../form-ui";
+import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 
 interface ZoneDraft {
   id: string;

@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { mockMerchant } from "@/mock/mock-data";
-import { useFormErrorText } from "../../form-ui";
+import { useFormErrorText } from "@/components/form-ui";
 import { useMerchantAccount } from "../../merchant-account-context";
 
 const METHOD_ICONS: Record<LoginMethod, typeof Phone> = { telegram: Send, phone: Phone, google: KeyRound };

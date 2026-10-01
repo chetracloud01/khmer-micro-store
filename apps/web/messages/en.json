@@ -1279,7 +1279,19 @@
     "planLabel": "Plan",
     "planTrial": "Free trial · {count, plural, one {# day} other {# days}} left",
     "previewTitle": "The rest of your dashboard is coming",
-    "previewBody": "Products, orders and delivery are being connected step by step. You can look at the preview meanwhile — it uses sample data, not your shop.",
-    "openPreview": "Open the preview dashboard"
+    "previewBody": "Orders, delivery and payments are being connected step by step. You can look at the preview meanwhile — it uses sample data, not your shop.",
+    "openPreview": "Open the preview dashboard",
+    "navShop": "My shop",
+    "viewShop": "Open my shop page",
+    "comingNextStep": "Coming in an update soon",
+    "storePaused": "Your shop is paused, so changes can't be saved. Everything you added is kept.",
+    "saving": "Saving…",
+    "photoUploading": "Uploading photo…",
+    "photoFailedShort": "Failed",
+    "photoUploadFailed": "A photo didn't upload. Remove it and try again.",
+    "productLimit": "You have {count} products — the most your plan allows. Everything you added stays.",
+    "productLimitSave": "Your plan's product limit is reached, so this product wasn't added.",
+    "shopDetailsTitle": "Shop details",
+    "orderingSoon": "Ordering online opens soon. For now, call the shop to order."
   }
 }
