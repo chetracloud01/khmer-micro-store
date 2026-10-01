@@ -1,12 +1,297 @@
-// Real schema (merchants, stores, products, orders, payments, ...) lands in
-// Stage C per docs/blueprint.md. This placeholder only wires up the
-// generator/datasource so `pnpm db:migrate` and `prisma generate` run.
+// The database, following docs/blueprint.md "Database schema". Each roadmap
+// step adds its own tables in a new migration; old migrations are never edited.
+// Step 2 (data and login): people, login, stores, the trial subscription,
+// categories and units, sessions, platform settings and the audit log.
+//
+// Row-level security (in the migration SQL, which Prisma can't express) keeps
+// every shop to its own rows for the API's everyday user, khmer_micro_store_app.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // The API's everyday user: row-level security applies.
+  url       = env("DATABASE_URL")
+  // The owner: migrations run as this user.
+  directUrl = env("DATABASE_OWNER_URL")
+}
+
+// ---------------------------------------------------------------- value lists
+// Same names as packages/shared, so a value means the same thing everywhere.
+
+enum KycStatus {
+  not_submitted
+  pending
+  approved
+  rejected
+}
+
+enum LoginMethod {
+  telegram
+  phone
+  google
+}
+
+enum StoreRole {
+  owner
+  staff
+}
+
+enum BusinessType {
+  shop
+  restaurant
+  service
+  other
+}
+
+enum DeliveryArea {
+  phnom_penh
+  province
+}
+
+enum Currency {
+  USD
+  KHR
+}
+
+enum PaymentProvider {
+  bakong_khqr
+  aba_payway
+}
+
+enum PlanId {
+  free
+  basic
+  pro
+  advance
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  grace
+  paused
+}
+
+enum ActorType {
+  admin
+  merchant
+  system
+}
+
+// ---------------------------------------------------------- people and login
+
+/// A person who owns or works in stores.
+model Merchant {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName String    @map("first_name")
+  lastName  String    @default("") @map("last_name")
+  kycStatus KycStatus @default(not_submitted) @map("kyc_status")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  identities  MerchantIdentity[]
+  memberships StoreMember[]
+  sessions    Session[]
+
+  @@map("merchants")
+}
+
+/// How a merchant logs in — one row per method. A merchant always keeps at least one.
+model MerchantIdentity {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  merchantId       String      @map("merchant_id") @db.Uuid
+  method           LoginMethod
+  /// Telegram user ID, or the phone as 855…
+  providerUserId   String      @map("provider_user_id")
+  telegramUsername String?     @map("telegram_username")
+  verifiedAt       DateTime    @default(now()) @map("verified_at") @db.Timestamptz(6)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([method, providerUserId])
+  @@index([merchantId])
+  @@map("merchant_identities")
+}
+
+/// A signed-in device. The cookie holds a random token; only its SHA-256 is stored.
+model Session {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  merchantId String    @map("merchant_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@map("sessions")
+}
+
+/// Who can manage a store.
+model StoreMember {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId    String    @map("store_id") @db.Uuid
+  merchantId String    @map("merchant_id") @db.Uuid
+  role       StoreRole @default(owner)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, merchantId])
+  @@index([merchantId])
+  @@map("store_members")
+}
+
+// ----------------------------------------------------------------------- shop
+
+/// A shop. The plan is not here — it lives on subscriptions only.
+model Store {
+  id                      String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                    String       @unique
+  name                    String
+  businessType            BusinessType @map("business_type")
+  /// 855…; empty until the seller adds it (needed before sharing the shop link).
+  phone                   String       @default("")
+  area                    DeliveryArea @default(phnom_penh)
+  description             String       @default("")
+  logoKey                 String?      @map("logo_key")
+  languages               String[]     @default(["km", "en"])
+  defaultCurrency         Currency     @default(USD) @map("default_currency")
+  usdToKhrRate            Int          @default(4100) @map("usd_to_khr_rate")
+  allowCod                Boolean      @default(true) @map("allow_cod")
+  /// Most small sellers don't charge VAT, so a new store starts at 0%.
+  vatPercent              Int          @default(0) @map("vat_percent")
+  onlineStockLocationId   String?      @map("online_stock_location_id") @db.Uuid
+  pickupEnabled           Boolean      @default(false) @map("pickup_enabled")
+  pickupAddress           String       @default("") @map("pickup_address")
+  pickupHours             String       @default("") @map("pickup_hours")
+  provinceDeliveryEnabled Boolean      @default(false) @map("province_delivery_enabled")
+  provinceFeeUsdCents     Int?         @map("province_fee_usd_cents")
+  provinceFeeKhr          Int?         @map("province_fee_khr")
+  provinceNote            String       @default("") @map("province_note")
+  deliveryConfiguredAt    DateTime?    @map("delivery_configured_at") @db.Timestamptz(6)
+  linkSharedAt            DateTime?    @map("link_shared_at") @db.Timestamptz(6)
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  members        StoreMember[]
+  paymentConfigs StorePaymentConfig[]
+  subscription   Subscription?
+  categories     Category[]
+  units          Unit[]
+
+  @@map("stores")
+}
+
+/// Provider settings per store. PayWay's keys join this table in Release 3, encrypted.
+model StorePaymentConfig {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId         String          @map("store_id") @db.Uuid
+  provider        PaymentProvider
+  bakongAccountId String?         @map("bakong_account_id")
+  enabled         Boolean         @default(true)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, provider])
+  @@map("store_payment_configs")
+}
+
+// ------------------------------------------------------------ plan and billing
+
+/// A store's current plan and period — the only place the plan is stored.
+model Subscription {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId            String             @unique @map("store_id") @db.Uuid
+  plan               PlanId             @default(free)
+  status             SubscriptionStatus @default(trialing)
+  currentPeriodStart DateTime           @default(now()) @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd   DateTime?          @map("current_period_end") @db.Timestamptz(6)
+  trialEndsAt        DateTime?          @map("trial_ends_at") @db.Timestamptz(6)
+  pendingPlan        PlanId?            @map("pending_plan")
+  billingCurrency    Currency           @default(USD) @map("billing_currency")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// --------------------------------------------------------------------- catalog
+
+/// A store's product groups. Products arrive in roadmap step 3.
+model Category {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  nameKm    String   @map("name_km")
+  nameEn    String   @map("name_en")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@map("categories")
+}
+
+/// Units of measure (piece, cup, kg).
+model Unit {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  /// The shared key it was seeded from ("piece"), so the business type's default can be found.
+  key       String?
+  nameKm    String   @map("name_km")
+  nameEn    String   @map("name_en")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@map("units")
+}
+
+// -------------------------------------------------------------------- platform
+
+/// One row of platform-wide settings (id is always 1).
+model PlatformSettings {
+  id              Int      @id @default(1)
+  platformName    String   @map("platform_name")
+  supportTelegram String   @map("support_telegram")
+  usdToKhrMin     Int      @map("usd_to_khr_min")
+  usdToKhrMax     Int      @map("usd_to_khr_max")
+  alertChatId     String   @default("") @map("alert_chat_id")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("platform_settings")
+}
+
+/// Who changed what. Never edited or deleted.
+model AuditLog {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorType ActorType @map("actor_type")
+  actorId   String?   @map("actor_id") @db.Uuid
+  storeId   String?   @map("store_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?   @map("entity_id")
+  before    Json?
+  after     Json?
+  at        DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([storeId, at])
+  @@map("audit_logs")
 }

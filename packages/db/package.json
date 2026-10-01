@@ -9,10 +9,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "prisma": "node --env-file-if-exists=../../.env ./node_modules/prisma/build/index.js",
     "generate": "prisma generate",
+    "postinstall": "prisma generate",
+    "migrate:dev": "pnpm prisma migrate dev",
+    "migrate:deploy": "pnpm prisma migrate deploy",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "node --env-file-if-exists=../../.env ./node_modules/vitest/vitest.mjs run --passWithNoTests"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"

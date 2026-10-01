@@ -6,6 +6,7 @@
 // all ask this one function.
 
 import type { BusinessType } from "./business";
+import { slugify } from "./store";
 
 export const SHARE_REQUIREMENTS = ["products", "phone", "delivery", "payment"] as const;
 export type ShareRequirement = (typeof SHARE_REQUIREMENTS)[number];
@@ -49,12 +50,8 @@ export function canShareShop(facts: ShopReadinessFacts): boolean {
  * "shop-" and the last 4 digits of their phone, else nothing.
  */
 export function suggestShopSlug(login: { telegramUsername?: string; phone?: string }): string {
-  const fromTelegram = (login.telegramUsername ?? "")
-    .replace(/^@/, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  if (fromTelegram.length >= 3) return fromTelegram.slice(0, 40).replace(/-+$/, "");
+  const fromTelegram = slugify((login.telegramUsername ?? "").replace(/^@/, ""));
+  if (fromTelegram.length >= 3) return fromTelegram;
   const digits = (login.phone ?? "").replace(/\D/g, "");
   return digits.length >= 4 ? `shop-${digits.slice(-4)}` : "";
 }

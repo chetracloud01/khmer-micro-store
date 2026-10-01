@@ -32,7 +32,8 @@ async function main() {
   };
 
   // Its own schema keeps pg-boss's tables apart from the app's.
-  const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: "pgboss" });
+  // The worker sees every shop (payment checks, expiring orders), so it uses the owner user.
+  const boss = new PgBoss({ connectionString: env.DATABASE_OWNER_URL, schema: "pgboss" });
   boss.on("error", (error) => report(error, "job queue error"));
   await boss.start();
   await registerHeartbeat(boss, logger);

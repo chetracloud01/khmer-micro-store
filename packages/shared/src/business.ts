@@ -7,3 +7,51 @@ export const businessTypeSchema = z.enum(["shop", "restaurant", "service", "othe
 export type BusinessType = z.infer<typeof businessTypeSchema>;
 
 export const BUSINESS_TYPES: readonly BusinessType[] = businessTypeSchema.options;
+
+export interface NamedDefault {
+  /** Stable id within a store, e.g. "piece" or "new-arrivals". */
+  key: string;
+  nameKm: string;
+  nameEn: string;
+}
+
+/** Every new store gets all of these units; the business type only picks which one new products start with. */
+export const DEFAULT_UNITS: readonly NamedDefault[] = [
+  { key: "piece", nameKm: "ដុំ", nameEn: "Piece" },
+  { key: "cup", nameKm: "កែវ", nameEn: "Cup" },
+  { key: "kg", nameKm: "គីឡូក្រាម", nameEn: "Kilogram" },
+  { key: "box", nameKm: "ប្រអប់", nameEn: "Box" },
+  { key: "carton", nameKm: "កេស", nameEn: "Carton" },
+  { key: "plate", nameKm: "ចាន", nameEn: "Plate" },
+  { key: "service", nameKm: "សេវា", nameEn: "Service" },
+];
+
+/** What a new store starts with, by business type: its categories and the unit new products default to. */
+export const BUSINESS_TYPE_DEFAULTS: Record<BusinessType, { unitKey: string; categories: readonly NamedDefault[] }> = {
+  shop: {
+    unitKey: "piece",
+    categories: [
+      { key: "new-arrivals", nameKm: "ទំនិញថ្មី", nameEn: "New arrivals" },
+      { key: "best-sellers", nameKm: "លក់ដាច់", nameEn: "Best sellers" },
+    ],
+  },
+  restaurant: {
+    unitKey: "plate",
+    categories: [
+      { key: "food", nameKm: "ម្ហូប", nameEn: "Food" },
+      { key: "drinks", nameKm: "ភេសជ្ជៈ", nameEn: "Drinks" },
+      { key: "desserts", nameKm: "បង្អែម", nameEn: "Desserts" },
+    ],
+  },
+  service: {
+    unitKey: "service",
+    categories: [
+      { key: "services", nameKm: "សេវាកម្ម", nameEn: "Services" },
+      { key: "packages", nameKm: "កញ្ចប់", nameEn: "Packages" },
+    ],
+  },
+  other: {
+    unitKey: "piece",
+    categories: [{ key: "general", nameKm: "ទូទៅ", nameEn: "General" }],
+  },
+};

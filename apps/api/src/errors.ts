@@ -22,7 +22,17 @@ const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input"
   429: "too_many_requests",
 };
 
+/** Bad input found after the schema check (e.g. a link someone else just took), with the same field codes. */
+export class InvalidInputException extends Error {
+  constructor(public readonly fields: Record<string, FormErrorCode>) {
+    super("invalid input");
+  }
+}
+
 export function toErrorResponse(error: unknown): { status: number; body: ErrorBody } {
+  if (error instanceof InvalidInputException) {
+    return { status: 400, body: { error: "invalid_input", fields: error.fields } };
+  }
   if (error instanceof ZodError) {
     return { status: 400, body: { error: "invalid_input", fields: toFieldErrors(error) } };
   }

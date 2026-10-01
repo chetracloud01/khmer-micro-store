@@ -35,6 +35,7 @@ export const FORM_ERROR_CODES = [
   "delivery_required",
   "telegram_invalid",
   "telegram_taken",
+  "slug_taken",
 ] as const;
 
 export type FormErrorCode = (typeof FORM_ERROR_CODES)[number];

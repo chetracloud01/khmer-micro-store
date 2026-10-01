@@ -19,10 +19,13 @@ packages/shared Zod schemas. packages/db Prisma + PostgreSQL.
 packages/payments provider adapters. Local database: PostgreSQL 16 installed on
 Windows (one-time setup: infra/setup-local-db.cmd), or `pnpm db:up` with Docker.
 NestJS injection uses explicit tokens (@Inject(TOKEN)), never constructor types.
+Shop data goes through packages/db AppDb + withContext() (row-level security);
+SystemDb only for login, sessions, creating a store, the worker and admin.
+Every new table with store_id must enable RLS in its migration.
 
 ## Commands
 pnpm db:up (start Postgres) | pnpm dev | pnpm lint | pnpm typecheck | pnpm test |
-pnpm db:migrate
+pnpm db:migrate (new migration) | pnpm db:deploy (apply migrations)
 
 ## Rules
 - Prices are integers: price_usd_cents, price_khr (riel). A product may have

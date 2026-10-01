@@ -18,6 +18,32 @@ export const shopSlugSchema = z
   .max(40, "too_long")
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "slug_invalid");
 
+/** A shop link from any text: lowercase English letters and digits joined by dashes. Khmer letters give "". */
+export function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/, "");
+}
+
+/** Links the platform keeps for itself (its own pages), so no shop can take them. */
+export const RESERVED_SLUGS: readonly string[] = ["admin", "api", "app", "auth", "dashboard", "help", "login", "m", "s", "shop", "support", "www"];
+
+export function isReservedSlug(slug: string): boolean {
+  return RESERVED_SLUGS.includes(slug);
+}
+
+/** What onboarding sends to create a store: the two questions. */
+export const createStoreInputSchema = z.object({
+  businessType: businessTypeSchema,
+  shopName: shopNameSchema,
+  slug: shopSlugSchema.refine((slug) => !isReservedSlug(slug), "slug_invalid"),
+});
+export type CreateStoreInput = z.infer<typeof createStoreInputSchema>;
+
 /** A Bakong account ID, e.g. `sokha@aclb`. The API also checks it exists with Bakong. */
 export const bakongAccountIdSchema = z
   .string()

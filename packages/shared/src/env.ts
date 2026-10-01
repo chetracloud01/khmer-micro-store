@@ -16,7 +16,11 @@ const postgresUrl = z.preprocess(
 
 const shared = {
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  DATABASE_URL: postgresUrl,
+  /**
+   * The database user that owns the tables (khmer_micro_store): migrations,
+   * the worker, and the few API paths that must see across shops (login, sessions).
+   */
+  DATABASE_OWNER_URL: postgresUrl,
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   /** Errors go to Sentry only when this is set. */
   SENTRY_DSN: optional(z.string().url("must be a URL")),
@@ -24,6 +28,10 @@ const shared = {
 
 export const apiEnvSchema = z.object({
   ...shared,
+  /** The API's everyday database user (khmer_micro_store_app): row-level security keeps each shop to its own rows. */
+  DATABASE_URL: postgresUrl,
+  /** From @BotFather. Without it, Telegram login is off (the development login still works). */
+  TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
   PORT: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(65535).default(4000),
   /** The web app's address: the only origin allowed to call the API from a browser. */
   WEB_ORIGIN: z.string().url("must be a URL").default("http://localhost:3000"),

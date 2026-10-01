@@ -26,6 +26,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@khmer-micro-store/db':
+        specifier: workspace:^
+        version: link:../../packages/db
       '@khmer-micro-store/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -38,12 +41,12 @@ importers:
       '@nestjs/platform-express':
         specifier: ^10.4.6
         version: 10.4.22(@nestjs/common@10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)
+      '@prisma/client':
+        specifier: 5.22.0
+        version: 5.22.0(prisma@5.22.0)
       '@sentry/node':
         specifier: ^8
         version: 8.55.2
-      pg:
-        specifier: ^8
-        version: 8.23.1
       pino:
         specifier: ^9
         version: 9.14.0
@@ -63,9 +66,6 @@ importers:
       '@types/node':
         specifier: ^22.9.0
         version: 22.20.4
-      '@types/pg':
-        specifier: ^8
-        version: 8.6.1
       eslint:
         specifier: ^8.57.0
         version: 8.57.1

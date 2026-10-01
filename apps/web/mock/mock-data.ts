@@ -4,8 +4,11 @@
 // here rather than in messages/*.json.
 
 import {
+  BUSINESS_TYPE_DEFAULTS,
+  BUSINESS_TYPES,
   convertKhrToUsdCents,
   convertUsdCentsToKhr,
+  DEFAULT_UNITS,
   stockMovementSign,
   type BusinessType,
   type Currency,
@@ -201,46 +204,19 @@ export const mockCategories: MockCategory[] = [
 
 export const mockBrands: MockBrand[] = [{ id: "own-brand", nameKm: "ម៉ាកផ្ទាល់ខ្លួន", nameEn: "Own brand" }];
 
-export const mockUoms: MockUom[] = [
-  { id: "piece", labelKm: "ដុំ", labelEn: "Piece" },
-  { id: "cup", labelKm: "កែវ", labelEn: "Cup" },
-  { id: "kg", labelKm: "គីឡូក្រាម", labelEn: "Kilogram" },
-  { id: "box", labelKm: "ប្រអប់", labelEn: "Box" },
-  { id: "carton", labelKm: "កេស", labelEn: "Carton" },
-  { id: "plate", labelKm: "ចាន", labelEn: "Plate" },
-  { id: "service", labelKm: "សេវា", labelEn: "Service" },
-];
+export const mockUoms: MockUom[] = DEFAULT_UNITS.map((unit) => ({ id: unit.key, labelKm: unit.nameKm, labelEn: unit.nameEn }));
 
 // Starting defaults per business type, applied once at the end of
 // onboarding. The real version seeds these server-side when a store is created.
-export const mockBusinessTypeDefaults: Record<BusinessType, { uomId: string; categories: MockCategory[] }> = {
-  shop: {
-    uomId: "piece",
-    categories: [
-      { id: "new-arrivals", labelKm: "ទំនិញថ្មី", labelEn: "New arrivals" },
-      { id: "best-sellers", labelKm: "លក់ដាច់", labelEn: "Best sellers" },
-    ],
-  },
-  restaurant: {
-    uomId: "plate",
-    categories: [
-      { id: "food", labelKm: "ម្ហូប", labelEn: "Food" },
-      { id: "drinks", labelKm: "ភេសជ្ជៈ", labelEn: "Drinks" },
-      { id: "desserts", labelKm: "បង្អែម", labelEn: "Desserts" },
-    ],
-  },
-  service: {
-    uomId: "service",
-    categories: [
-      { id: "services", labelKm: "សេវាកម្ម", labelEn: "Services" },
-      { id: "packages", labelKm: "កញ្ចប់", labelEn: "Packages" },
-    ],
-  },
-  other: {
-    uomId: "piece",
-    categories: [{ id: "general", labelKm: "ទូទៅ", labelEn: "General" }],
-  },
-};
+export const mockBusinessTypeDefaults = Object.fromEntries(
+  BUSINESS_TYPES.map((type) => [
+    type,
+    {
+      uomId: BUSINESS_TYPE_DEFAULTS[type].unitKey,
+      categories: BUSINESS_TYPE_DEFAULTS[type].categories.map((category) => ({ id: category.key, labelKm: category.nameKm, labelEn: category.nameEn })),
+    },
+  ]),
+) as Record<BusinessType, { uomId: string; categories: MockCategory[] }>;
 
 export const mockWarehouses: MockWarehouse[] = [{ id: "main-wh", nameKm: "ឃ្លាំងសំខាន់", nameEn: "Main warehouse" }];
 

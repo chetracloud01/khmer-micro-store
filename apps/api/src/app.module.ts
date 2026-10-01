@@ -1,9 +1,12 @@
 import { Module } from "@nestjs/common";
-import { DbShutdown, dbPoolProvider } from "./db";
+import { AuthController } from "./auth/auth.controller";
+import { SessionGuard } from "./auth/session.guard";
+import { DbShutdown, dbProviders } from "./db";
 import { HealthController } from "./health/health.controller";
+import { StoresController } from "./stores/stores.controller";
 
 @Module({
-  controllers: [HealthController],
-  providers: [dbPoolProvider, DbShutdown],
+  controllers: [HealthController, AuthController, StoresController],
+  providers: [...dbProviders, DbShutdown, SessionGuard],
 })
 export class AppModule {}

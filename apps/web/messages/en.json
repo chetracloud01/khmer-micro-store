@@ -922,7 +922,8 @@
     "delivery_required": "Turn on at least one: a Phnom Penh zone, pickup, or provinces.",
     "zone_empty": "Choose at least one district for this zone.",
     "telegram_invalid": "Enter a Telegram username: 5–32 letters, numbers or underscores.",
-    "telegram_taken": "This Telegram account is already an admin."
+    "telegram_taken": "This Telegram account is already an admin.",
+    "slug_taken": "This link is already taken — try another."
   },
   "Theme": {
     "button": "Theme and colours",
@@ -1258,5 +1259,27 @@
     "shareLocked": "Unlocks when steps 1–4 are done",
     "req_products_service": "Add a service with a price",
     "hint_delivery_service": "Turn on \"pickup\" and add your shop's address, so buyers know where to come"
+  },
+  "App": {
+    "loading": "Loading…",
+    "offlineTitle": "Can't reach the server",
+    "offlineBody": "Check your internet connection and try again.",
+    "retry": "Try again",
+    "loginTitle": "Sell online in minutes",
+    "loginSubtitle": "New or returning — one button. No password.",
+    "telegramNotSetUp": "Log in with Telegram isn't set up on this server yet.",
+    "loginFailed": "That didn't work. Please try again.",
+    "devLoginTitle": "Development login",
+    "devLoginHint": "Only on a developer's computer. Signs in as a test merchant without Telegram.",
+    "devLoginAs": "Test merchant {name}",
+    "saveFailed": "Couldn't save. Please try again.",
+    "signOut": "Sign out",
+    "homeGreeting": "Hello, {name}",
+    "shopLinkLabel": "Your shop link",
+    "planLabel": "Plan",
+    "planTrial": "Free trial · {count, plural, one {# day} other {# days}} left",
+    "previewTitle": "The rest of your dashboard is coming",
+    "previewBody": "Products, orders and delivery are being connected step by step. You can look at the preview meanwhile — it uses sample data, not your shop.",
+    "openPreview": "Open the preview dashboard"
   }
 }

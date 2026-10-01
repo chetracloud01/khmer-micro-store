@@ -1,6 +1,6 @@
+import type { AppDb } from "@khmer-micro-store/db";
 import { Controller, Get, Inject, Res } from "@nestjs/common";
-import type { Pool } from "pg";
-import { DB_POOL } from "../db";
+import { APP_DB } from "../db";
 
 interface StatusResponse {
   status(code: number): unknown;
@@ -8,16 +8,15 @@ interface StatusResponse {
 
 /**
  * For the host's health check and uptime alerts: 200 when the API can reach
- * the database, 503 when it can't. Says nothing else about the system.
+ * the database as its everyday user, 503 when it can't. Says nothing else.
  */
 @Controller("health")
 export class HealthController {
-  constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
+  constructor(@Inject(APP_DB) private readonly db: AppDb) {}
 
   @Get()
   async check(@Res({ passthrough: true }) res: StatusResponse) {
-    const database = await this.pool
-      .query("select 1")
+    const database = await this.db.$queryRaw`SELECT 1`
       .then(() => "up" as const)
       .catch(() => "down" as const);
     if (database === "down") res.status(503);
