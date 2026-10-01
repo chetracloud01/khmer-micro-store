@@ -24,7 +24,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { mockPaymentMethods, type MockPaymentMethodCode } from "@/mock/mock-data";
-import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "../buyer-shell";
+import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "@/components/buyer-shell";
 import { useCart } from "../cart-context";
 import { useDeliverySettings } from "../delivery-settings-context";
 import { focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";

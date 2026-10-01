@@ -5,7 +5,7 @@ import { Button } from "@khmer-micro-store/ui";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { OrderRecord } from "@/mock/mock-orders";
-import { useOrderText } from "./order-ui";
+import { useOrderText } from "@/components/order-ui";
 import { useOrders } from "./orders-context";
 
 /** Actions that need nothing more than one tap. Sending and cancelling ask for details, so they open the order. */

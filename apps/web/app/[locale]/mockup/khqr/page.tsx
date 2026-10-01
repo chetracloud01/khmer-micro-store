@@ -9,9 +9,9 @@ import QRCode from "qrcode";
 import { Suspense, useEffect, useState } from "react";
 import { mockStore } from "@/mock/mock-data";
 import type { OrderRecord } from "@/mock/mock-orders";
-import { BuyerShell, BuyerSteps, BuyerTopBar } from "../buyer-shell";
+import { BuyerShell, BuyerSteps, BuyerTopBar } from "@/components/buyer-shell";
 import { useMerchantProfile } from "../merchant-profile-context";
-import { formatMoney } from "../order-ui";
+import { formatMoney } from "@/components/order-ui";
 import { useOrders } from "../orders-context";
 import { KhqrCard } from "./khqr-card";
 

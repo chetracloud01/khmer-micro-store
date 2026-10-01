@@ -12,8 +12,9 @@ import {
   type FormErrorCode,
 } from "@khmer-micro-store/shared";
 import { Button, Card, Input, SegmentedControl, Select } from "@khmer-micro-store/ui";
-import { Loader2, LogOut, Upload, Wallet, X } from "lucide-react";
+import { ChevronRight, Loader2, LogOut, SlidersHorizontal, Truck, Upload, Wallet, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -147,6 +148,27 @@ export default function ShopSettingsPage() {
   return (
     <div ref={formRef} className="flex flex-col gap-5 p-4">
       <h1 className="text-lg font-semibold">{tApp("shopDetailsTitle")}</h1>
+
+      {/* Delivery and store settings: their own pages, reached from here on a phone. */}
+      <nav aria-label={t("moreSettings")} className="overflow-hidden rounded-DEFAULT border border-border bg-bg shadow-card">
+        {[
+          { href: "delivery", icon: Truck, title: t("delivery"), detail: t("deliveryDetail") },
+          { href: "store-settings", icon: SlidersHorizontal, title: t("storeSettings"), detail: t("storeSettingsDetail") },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={`/${locale}/m/${item.href}`}
+            className="flex min-h-touch items-center gap-3 border-b border-border p-4 last:border-b-0 hover:bg-border/10"
+          >
+            <item.icon className="h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">{item.title}</p>
+              <p className="truncate text-xs text-muted">{item.detail}</p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden="true" />
+          </Link>
+        ))}
+      </nav>
 
       <Card className="flex flex-col p-4">
         <FormSection id="details" stacked title={t("sectionShop")} description={t("sectionShopHelp")}>

@@ -138,3 +138,31 @@ export function deliveryFeeIn(fee: DeliveryFee, currency: Currency, usdToKhrRate
 export function getDeliverableDistrictIds(settings: DeliverySettings): string[] {
   return settings.zones.flatMap((zone) => zone.districtIds);
 }
+
+/**
+ * What a new shop's delivery page starts from, for the seller to review and
+ * save (saving is what ticks "delivery" on the setup checklist): the central
+ * districts and the outer ones as two zones, provinces by bus. Pickup starts
+ * off and there are no drivers — those are the shop's own details.
+ */
+export const SUGGESTED_DELIVERY_SETTINGS: DeliverySettings = {
+  zones: [
+    {
+      id: "suggested-central",
+      name: "Central",
+      districtIds: ["daun-penh", "chamkar-mon", "prampir-makara", "boeng-keng-kang", "tuol-kouk"],
+      feeUsdCents: 100,
+      feeKhr: 4000,
+    },
+    {
+      id: "suggested-outer",
+      name: "Outer",
+      districtIds: ["sen-sok", "russey-keo", "chroy-changvar", "mean-chey", "chbar-ampov", "pou-senchey"],
+      feeUsdCents: 150,
+      feeKhr: 6000,
+    },
+  ],
+  pickup: { enabled: false, address: "", hours: "" },
+  province: { enabled: true, note: "", feeUsdCents: 200, feeKhr: 8000 },
+  drivers: [],
+};

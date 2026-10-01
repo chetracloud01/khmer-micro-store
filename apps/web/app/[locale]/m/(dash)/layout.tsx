@@ -1,7 +1,7 @@
 "use client";
 
 import { SegmentedControl } from "@khmer-micro-store/ui";
-import { LayoutDashboard, Package, Store } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -57,9 +57,13 @@ function DashboardFrame({ store, children }: { store: StoreDetails; children: Re
   const tabs = [
     { href: base, label: tDash("navHome"), icon: LayoutDashboard },
     { href: `${base}/products`, label: tDash("navProducts"), icon: Package },
+    { href: `${base}/orders`, label: tDash("navOrders"), icon: ShoppingBag },
     { href: `${base}/settings`, label: t("navShop"), icon: Store },
   ];
-  const isActive = (href: string) => (href === base ? pathname === href : pathname.startsWith(href));
+  // Delivery and store settings are reached from "My shop", so that tab stays lit there.
+  const shopPages = [`${base}/settings`, `${base}/delivery`, `${base}/store-settings`];
+  const isActive = (href: string) =>
+    href === base ? pathname === href : href === `${base}/settings` ? shopPages.some((page) => pathname.startsWith(page)) : pathname.startsWith(href);
 
   return (
     <div className="min-h-dvh bg-canvas text-fg">

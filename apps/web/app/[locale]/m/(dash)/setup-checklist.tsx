@@ -45,12 +45,13 @@ export function SetupChecklist() {
   const requirementHref: Partial<Record<ShareRequirement, string>> = {
     products: `${base}/products/new`,
     phone: `${base}/settings#details`,
-    payment: `${base}/settings#payments`,
+    delivery: `${base}/delivery`,
+    payment: `${base}/store-settings`,
   };
   const requirementHint: Record<ShareRequirement, string | undefined> = {
     products: tReady("hint_products"),
     phone: undefined,
-    delivery: tApp("comingNextStep"),
+    delivery: tReady(isService ? "hint_delivery_service" : "hint_delivery"),
     payment: tReady("hint_payment"),
   };
   const steps: SetupItem[] = [

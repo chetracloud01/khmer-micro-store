@@ -31,7 +31,8 @@ Updated at the end of every roadmap step.
 | Step 1. Foundations | Done — CI runs lint, typecheck, tests, build and a built-API health check. Staging and preview links move to step 8, when hosting is bought |
 | Step 2. Data and login | Done — schema, row-level security with two database users, Telegram login, 2-question onboarding |
 | Step 3. Catalog | Done — products with options and photos, shop details, setup checklist, read-only shop page |
-| **Next: Step 4. Shop and checkout** | Not started |
+| Step 4. Shop and checkout | Done — delivery and store settings, cart, one-page checkout, cash orders priced by the API, buyer order page, seller order list (read-only) |
+| **Next: Step 5. KHQR** | Waits for gate G3 (Bakong from the real host) |
 
 ## Overview
 
@@ -754,8 +755,8 @@ A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets 
 | 1. Foundations | CI (lint, types, tests, build) on every pull request; staging environment; error tracking | A pull request shows a preview link and CI is green | Done: CI green, plus a built-API health check. Preview links and staging move to step 8 (no hosting bought yet) |
 | 2. Data and login | Prisma schema and first migration from "Database schema" (Release 1 tables only), Row-Level Security, Telegram login, 2-question onboarding | A test proves merchant A cannot read merchant B's data; you can sign up and reach the dashboard | Done |
 | 3. Catalog | Categories, products with options, photos, description, show/hide; shop details; the setup checklist; a read-only shop page | On a phone, a product with 3 photos is added in under a minute and appears in the shop | Done: 44 seconds measured at 360 px |
-| 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order | **Next** |
-| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted | Waits for gate G3 |
+| 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order | Done: three copies sent at once made one order; totals recalculated by the API |
+| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted | **Next** — waits for gate G3 |
 | 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page | — |
 | 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database | — |
 | 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test; buy the domain and hosting; staging and preview links; photo storage moves to Cloudflare R2; deploy | The launch checklist below is ticked; a real KHQR order completes on the live site | — |

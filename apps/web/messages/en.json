@@ -1296,6 +1296,12 @@
     "productLimit": "You have {count} products — the most your plan allows. Everything you added stays.",
     "productLimitSave": "Your plan's product limit is reached, so this product wasn't added.",
     "shopDetailsTitle": "Shop details",
-    "orderingSoon": "Ordering online opens soon. For now, call the shop to order."
+    "orderingSoon": "Ordering online opens soon. For now, call the shop to order.",
+    "deliverySuggested": "We suggested zones and fees for Phnom Penh and the provinces. Check them, change anything you like, then save — buyers can order once delivery is saved.",
+    "codOffWarning": "With cash on delivery off, buyers can't order until KHQR is available. Keep it on to take orders now.",
+    "ordersReadOnly": "Every order from your shop, newest first. Confirming, packing and sending orders — and Telegram alerts — are coming in the next update.",
+    "shopNotFound": "This shop link doesn't exist.",
+    "orderFailed": "Your order wasn't sent. Check your connection and try again — you won't be charged twice.",
+    "payCashOnDelivery": "Cash on delivery"
   }
 }

@@ -12,7 +12,7 @@ import { mockDailyStats } from "@/mock/mock-data";
 import type { OrderRecord } from "@/mock/mock-orders";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { OrderNextButton, sellerOrderHref } from "../order-next-button";
-import { formatMoney, OrderStatusPill, useOrderText } from "../order-ui";
+import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
 import { useOrders } from "../orders-context";
 import { useStoreSettings } from "../store-settings-context";
 import { SetupChecklist } from "./setup-checklist";

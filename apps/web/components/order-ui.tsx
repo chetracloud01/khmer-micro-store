@@ -7,16 +7,28 @@ import {
   placeName,
   PROVINCES,
   type Currency,
+  type DeliveryArea,
   type DispatchRoute,
+  type Fulfilment,
   type OrderAction,
   type OrderStatus,
+  type PaymentMethod,
 } from "@khmer-micro-store/shared";
 import { cn } from "@khmer-micro-store/ui";
 import { useLocale, useTranslations } from "next-intl";
-import type { OrderRecord } from "@/mock/mock-orders";
 
 // One wording and one colour per order status, for the buyer's order page,
 // the seller's dashboard and (later) Telegram — design/design-standard.md §7.
+
+/** The parts of an order these helpers read; the mockup's sample orders and the API's orders both fit. */
+export interface OrderFactsForText {
+  status: OrderStatus;
+  fulfilment: Fulfilment;
+  paymentMethod: PaymentMethod;
+  area: DeliveryArea;
+  districtId?: string | null;
+  provinceId?: string | null;
+}
 
 export const ORDER_STATUS_TONE: Record<OrderStatus, string> = {
   awaiting_payment: "bg-warning/10 text-warning",
@@ -43,14 +55,14 @@ export function useOrderText() {
   const locale = useLocale();
 
   /** A pickup order is never "out for delivery": at that point it's waiting at the shop. */
-  function statusLabel(order: Pick<OrderRecord, "status" | "fulfilment">): string {
+  function statusLabel(order: Pick<OrderFactsForText, "status" | "fulfilment">): string {
     if (order.status === "out_for_delivery" && order.fulfilment === "pickup") return t("status_ready_for_pickup");
     if (order.status === "failed_delivery" && order.fulfilment === "pickup") return t("status_not_collected");
     return t(`status_${order.status}`);
   }
 
   /** A seller's button. Pass the route to name how the order is sent ("Send to driver"); without it, "Send order". */
-  function actionLabel(order: Pick<OrderRecord, "fulfilment">, action: OrderAction, route?: DispatchRoute): string {
+  function actionLabel(order: Pick<OrderFactsForText, "fulfilment">, action: OrderAction, route?: DispatchRoute): string {
     const pickup = order.fulfilment === "pickup";
     if (action === "dispatch") return pickup ? t("action_dispatch_pickup") : route ? t(`action_dispatch_${route}`) : t("action_dispatch");
     if (action === "mark_delivered" && pickup) return t("action_handed_over");
@@ -59,13 +71,13 @@ export function useOrderText() {
     return t(`action_${action}`);
   }
 
-  function paymentLabel(order: Pick<OrderRecord, "paymentMethod" | "status" | "fulfilment">): string {
+  function paymentLabel(order: Pick<OrderFactsForText, "paymentMethod" | "status" | "fulfilment">): string {
     if (order.paymentMethod === "cod") return order.fulfilment === "pickup" ? t("payAtPickup") : t("payCod");
     return order.status === "awaiting_payment" ? t("payOnlinePending") : t("payOnlinePaid");
   }
 
   /** "Daun Penh, Phnom Penh", "Kampot", or "Pickup". */
-  function placeLabel(order: Pick<OrderRecord, "fulfilment" | "area" | "districtId" | "provinceId">): string {
+  function placeLabel(order: Pick<OrderFactsForText, "fulfilment" | "area" | "districtId" | "provinceId">): string {
     if (order.fulfilment === "pickup") return tCheckout("pickup");
     const district = PHNOM_PENH_DISTRICTS.find((place) => place.id === order.districtId);
     if (district) return `${placeName(district, locale)}, ${tCheckout("phnomPenh")}`;
@@ -97,7 +109,7 @@ export function useOrderText() {
   return { statusLabel, actionLabel, paymentLabel, placeLabel, timeAgo, clockTime };
 }
 
-export function OrderStatusPill({ order, className }: { order: Pick<OrderRecord, "status" | "fulfilment">; className?: string }) {
+export function OrderStatusPill({ order, className }: { order: Pick<OrderFactsForText, "status" | "fulfilment">; className?: string }) {
   const { statusLabel } = useOrderText();
   return (
     <span

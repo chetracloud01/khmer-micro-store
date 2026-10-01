@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { mockPromoCodes, parseLineKey } from "@/mock/mock-data";
-import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "../buyer-shell";
+import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "@/components/buyer-shell";
 import { useCart } from "../cart-context";
 import { useClampCartToStock, useOnlineStock } from "../online-stock";
 import { useShopIdentity } from "../shop-identity";

@@ -1,20 +1,24 @@
 "use client";
 
-import { formatKhmerPhoneLocal } from "@khmer-micro-store/shared";
+import { formatKhmerPhoneLocal, type Currency } from "@khmer-micro-store/shared";
 import { Button, Card, cn, DiscountBadge, PriceTag, SearchInput, SegmentedControl } from "@khmer-micro-store/ui";
-import { ChevronLeft, ChevronRight, ImageOff, Phone, SearchX, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, Phone, SearchX, ShoppingBag, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { Product, PublicShop } from "@/lib/api";
+import { formatMoney } from "@/components/order-ui";
+import type { Product, ProductVariant, PublicShop } from "@/lib/api";
+import { cartLines, cartTotal, useShopCart } from "@/lib/cart";
 import { discounted, startingVariant } from "@/lib/product-price";
+import { isTakingOrders } from "@/lib/shop-ordering";
 
 // What a buyer sees at /s/<link>: the shop, its categories and its visible
-// products, with a product's own page for photos, description and options.
-// Read-only for now — the cart and checkout arrive with roadmap step 4.
+// products, a product's own page for photos, description and options, and
+// the cart (kept on the buyer's phone) once the shop takes orders.
 export function ShopView({ shop }: { shop: PublicShop }) {
   const t = useTranslations("Storefront");
-  const tApp = useTranslations("App");
+  const tCheckout = useTranslations("Checkout");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -22,6 +26,9 @@ export function ShopView({ shop }: { shop: PublicShop }) {
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Product | null>(null);
+  const cart = useShopCart(store.slug);
+  const ordering = isTakingOrders(shop);
+  const currency: Currency = cart.currency ?? store.defaultCurrency;
 
   const text = (km: string, en: string) => (locale === "km" ? km || en : en || km);
   // Only categories with something to buy get a chip.
@@ -34,6 +41,9 @@ export function ShopView({ shop }: { shop: PublicShop }) {
     );
   }, [products, category, query]);
 
+  const lines = cart.ready ? cartLines(shop, cart.quantities) : [];
+  const goods = lines.length ? cartTotal(shop, lines, currency, null) : null;
+
   const logo = store.logoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element -- the shop's own uploaded logo
     <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />
@@ -43,7 +53,7 @@ export function ShopView({ shop }: { shop: PublicShop }) {
 
   return (
     <div className="min-h-dvh bg-canvas text-fg">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1100px] flex-col bg-bg pb-16 md:border-x md:border-border">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1100px] flex-col bg-bg pb-32 md:border-x md:border-border">
         <header className="flex flex-col gap-3 border-b border-border p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -62,16 +72,13 @@ export function ShopView({ shop }: { shop: PublicShop }) {
               ]}
             />
           </div>
-          {/* Until checkout arrives (step 4), the phone is how a buyer orders. */}
           {store.phone && (
-            <>
-              <a href={`tel:+${store.phone}`} className="flex min-h-touch items-center gap-2 self-start text-sm font-medium text-brand">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                {t("callShop", { phone: formatKhmerPhoneLocal(store.phone) })}
-              </a>
-              <p className="rounded-DEFAULT bg-info/5 p-3 text-sm text-muted">{tApp("orderingSoon")}</p>
-            </>
+            <a href={`tel:+${store.phone}`} className="flex min-h-touch items-center gap-2 self-start text-sm font-medium text-brand">
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              {t("callShop", { phone: formatKhmerPhoneLocal(store.phone) })}
+            </a>
           )}
+          {!ordering && <p className="rounded-DEFAULT bg-info/5 p-3 text-sm text-muted">{tCheckout("noPaymentMethods")}</p>}
         </header>
 
         <div className="sticky top-0 z-20 flex flex-col gap-2 border-b border-border bg-bg py-2">
@@ -108,7 +115,20 @@ export function ShopView({ shop }: { shop: PublicShop }) {
         {shown.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
             {shown.map((product) => (
-              <ProductCard key={product.id} product={product} title={text(product.titleKm, product.titleEn)} rate={store.usdToKhrRate} currency={store.defaultCurrency} startingFromLabel={t("startingFrom")} onOpen={() => setOpen(product)} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                title={text(product.titleKm, product.titleEn)}
+                shop={shop}
+                currency={currency}
+                ordering={ordering}
+                quantity={product.variants.reduce((sum, variant) => sum + (cart.quantities[variant.id] ?? 0), 0)}
+                onOpen={() => setOpen(product)}
+                onAdjust={(delta) => {
+                  const variant = product.variants[0];
+                  if (variant) cart.setQuantity(variant.id, (cart.quantities[variant.id] ?? 0) + delta);
+                }}
+              />
             ))}
           </div>
         ) : (
@@ -132,7 +152,83 @@ export function ShopView({ shop }: { shop: PublicShop }) {
         )}
       </div>
 
-      {open && <ProductSheet product={open} title={text(open.titleKm, open.titleEn)} description={text(open.descriptionKm, open.descriptionEn)} shop={shop} onClose={() => setOpen(null)} />}
+      {open && (
+        <ProductSheet
+          product={open}
+          title={text(open.titleKm, open.titleEn)}
+          description={text(open.descriptionKm, open.descriptionEn)}
+          shop={shop}
+          ordering={ordering}
+          quantities={cart.quantities}
+          onSetQuantity={cart.setQuantity}
+          onClose={() => setOpen(null)}
+        />
+      )}
+
+      {ordering && goods && goods.itemCount > 0 && !open && (
+        <div className="pb-safe pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pt-3">
+          <Link
+            key={goods.itemCount}
+            href={`/${locale}/s/${store.slug}/cart`}
+            className="pointer-events-auto mx-auto flex min-h-[56px] w-full max-w-[520px] animate-bump items-center justify-between gap-3 rounded-2xl bg-brand px-4 py-2 text-on-brand shadow-raised motion-reduce:animate-none"
+          >
+            <span className="flex items-center gap-3">
+              <span className="relative">
+                <ShoppingBag className="h-6 w-6" aria-hidden="true" />
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-bg px-1 text-xs font-bold text-brand">{goods.itemCount}</span>
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-xs opacity-90">{t("itemCount", { count: goods.itemCount })}</span>
+                <span className="text-base font-semibold">{formatMoney(goods.goods, currency)}</span>
+              </span>
+            </span>
+            <span className="flex items-center gap-1 text-sm font-semibold">
+              {t("viewCart")}
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VariantPrice({ product, variant, currency }: { product: Product; variant: ProductVariant; currency: Currency }) {
+  return (
+    <PriceTag
+      primary={currency}
+      usdCents={variant.priceUsdCents != null ? discounted(variant.priceUsdCents, product.discountPercent) : undefined}
+      khr={variant.priceKhr != null ? discounted(variant.priceKhr, product.discountPercent) : undefined}
+      originalUsdCents={product.discountPercent ? (variant.priceUsdCents ?? undefined) : undefined}
+      originalKhr={product.discountPercent ? (variant.priceKhr ?? undefined) : undefined}
+    />
+  );
+}
+
+/** − 2 + : the buyer's quantity, 44px buttons. */
+function Stepper({ quantity, title, onAdjust }: { quantity: number; title: string; onAdjust: (delta: number) => void }) {
+  const t = useTranslations("Storefront");
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        aria-label={t("decrease", { title })}
+        onClick={() => onAdjust(-1)}
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-lg font-bold text-muted transition-transform active:scale-95"
+      >
+        −
+      </button>
+      <span className="min-w-6 text-center text-sm font-semibold tabular-nums" aria-live="polite">
+        {quantity}
+      </span>
+      <button
+        type="button"
+        aria-label={t("increase", { title })}
+        onClick={() => onAdjust(1)}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-lg font-bold text-on-brand transition-transform active:scale-95"
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -140,19 +236,24 @@ export function ShopView({ shop }: { shop: PublicShop }) {
 function ProductCard({
   product,
   title,
-  rate,
+  shop,
   currency,
-  startingFromLabel,
+  ordering,
+  quantity,
   onOpen,
+  onAdjust,
 }: {
   product: Product;
   title: string;
-  rate: number;
-  currency: PublicShop["store"]["defaultCurrency"];
-  startingFromLabel: string;
+  shop: PublicShop;
+  currency: Currency;
+  ordering: boolean;
+  quantity: number;
   onOpen: () => void;
+  onAdjust: (delta: number) => void;
 }) {
-  const variant = startingVariant(product, rate);
+  const t = useTranslations("Storefront");
+  const variant = startingVariant(product, shop.store.usdToKhrRate);
   return (
     <Card className="flex h-full flex-col gap-2 p-2">
       <button type="button" onClick={onOpen} className="flex flex-1 flex-col gap-2 text-left">
@@ -168,27 +269,52 @@ function ProductCard({
           {product.discountPercent ? <DiscountBadge percent={product.discountPercent} className="absolute left-1 top-1" /> : null}
         </span>
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
-        {product.hasOptions && <span className="text-xs text-muted">{startingFromLabel}</span>}
-        {variant && (
-          <PriceTag
-            primary={currency}
-            usdCents={variant.priceUsdCents != null ? discounted(variant.priceUsdCents, product.discountPercent) : undefined}
-            khr={variant.priceKhr != null ? discounted(variant.priceKhr, product.discountPercent) : undefined}
-            originalUsdCents={product.discountPercent ? (variant.priceUsdCents ?? undefined) : undefined}
-            originalKhr={product.discountPercent ? (variant.priceKhr ?? undefined) : undefined}
-          />
-        )}
+        {product.hasOptions && <span className="text-xs text-muted">{t("startingFrom")}</span>}
+        {variant && <VariantPrice product={product} variant={variant} currency={currency} />}
       </button>
+      {ordering &&
+        (product.hasOptions ? (
+          <Button variant={quantity > 0 ? "secondary" : "primary"} className="w-full" onClick={onOpen}>
+            {quantity > 0 ? t("inCart", { count: quantity }) : t("chooseOption")}
+          </Button>
+        ) : quantity > 0 ? (
+          <div className="flex justify-center">
+            <Stepper quantity={quantity} title={title} onAdjust={onAdjust} />
+          </div>
+        ) : (
+          <Button variant="primary" className="w-full" onClick={() => onAdjust(1)}>
+            {t("add")}
+          </Button>
+        ))}
     </Card>
   );
 }
 
-/** The product's own page, as a sheet over the shop: photos, description and each option's price. */
-function ProductSheet({ product, title, description, shop, onClose }: { product: Product; title: string; description: string; shop: PublicShop; onClose: () => void }) {
+/** The product's own page, as a sheet over the shop: photos, description, and each option with its own quantity. */
+function ProductSheet({
+  product,
+  title,
+  description,
+  shop,
+  ordering,
+  quantities,
+  onSetQuantity,
+  onClose,
+}: {
+  product: Product;
+  title: string;
+  description: string;
+  shop: PublicShop;
+  ordering: boolean;
+  quantities: Record<string, number>;
+  onSetQuantity: (variantId: string, quantity: number) => void;
+  onClose: () => void;
+}) {
   const t = useTranslations("Storefront");
   const locale = useLocale();
   const [photo, setPhoto] = useState(0);
   const count = product.photos.length;
+  const currency = shop.store.defaultCurrency;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
@@ -233,19 +359,32 @@ function ProductSheet({ product, title, description, shop, onClose }: { product:
           <h2 className="text-lg font-semibold leading-normal">{title}</h2>
           {description && <p className="whitespace-pre-line text-sm text-muted">{description}</p>}
           <ul className="flex flex-col gap-2">
-            {product.variants.map((variant) => (
-              <li key={variant.id} className="flex min-h-touch items-center justify-between gap-3 rounded-DEFAULT border border-border px-3 py-2">
-                <span className="text-sm font-medium">{product.hasOptions ? (locale === "km" ? variant.labelKm || variant.labelEn : variant.labelEn || variant.labelKm) : title}</span>
-                <PriceTag
-                  primary={shop.store.defaultCurrency}
-                  usdCents={variant.priceUsdCents != null ? discounted(variant.priceUsdCents, product.discountPercent) : undefined}
-                  khr={variant.priceKhr != null ? discounted(variant.priceKhr, product.discountPercent) : undefined}
-                  originalUsdCents={product.discountPercent ? (variant.priceUsdCents ?? undefined) : undefined}
-                  originalKhr={product.discountPercent ? (variant.priceKhr ?? undefined) : undefined}
-                />
-              </li>
-            ))}
+            {product.variants.map((variant) => {
+              const label = product.hasOptions ? (locale === "km" ? variant.labelKm || variant.labelEn : variant.labelEn || variant.labelKm) : title;
+              const quantity = quantities[variant.id] ?? 0;
+              return (
+                <li key={variant.id} className="flex min-h-touch items-center justify-between gap-3 rounded-DEFAULT border border-border px-3 py-2">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{label}</span>
+                    <VariantPrice product={product} variant={variant} currency={currency} />
+                  </span>
+                  {ordering &&
+                    (quantity > 0 ? (
+                      <Stepper quantity={quantity} title={label} onAdjust={(delta) => onSetQuantity(variant.id, quantity + delta)} />
+                    ) : (
+                      <Button variant="primary" onClick={() => onSetQuantity(variant.id, 1)}>
+                        {t("add")}
+                      </Button>
+                    ))}
+                </li>
+              );
+            })}
           </ul>
+          {ordering && product.variants.some((variant) => (quantities[variant.id] ?? 0) > 0) && (
+            <Button variant="secondary" className="w-full" onClick={onClose}>
+              {t("close")}
+            </Button>
+          )}
         </div>
       </div>
     </div>

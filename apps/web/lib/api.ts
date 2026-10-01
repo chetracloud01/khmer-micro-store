@@ -1,4 +1,16 @@
-import type { BusinessType, Currency, DeliveryArea, FormErrorCode, PlanId, SubscriptionStatus } from "@khmer-micro-store/shared";
+import type {
+  BusinessType,
+  Currency,
+  DeliveryArea,
+  DeliverySettings,
+  FormErrorCode,
+  Fulfilment,
+  OrderCancelReason,
+  OrderStatus,
+  PaymentMethod,
+  PlanId,
+  SubscriptionStatus,
+} from "@khmer-micro-store/shared";
 
 // The browser's way to the API (apps/api). The session lives in an HttpOnly
 // cookie the API sets, so every call sends cookies; page scripts never see it.
@@ -149,7 +161,82 @@ export interface PublicShop {
     logoUrl: string | null;
     defaultCurrency: Currency;
     usdToKhrRate: number;
+    allowCod: boolean;
+    vatPercent: number;
   };
   categories: CatalogName[];
   products: Product[];
+  /** Zones, pickup and provinces — never the drivers. */
+  delivery: Omit<DeliverySettings, "drivers">;
+  /** Orders need delivery saved at least once; KHQR joins in step 5. */
+  ordering: { deliveryConfigured: boolean; khqrReady: boolean };
+}
+
+/** GET/PUT /delivery. */
+export interface DeliveryResponse {
+  settings: DeliverySettings;
+  /** Saved at least once (the setup checklist's "delivery" step). */
+  configured: boolean;
+}
+
+/** GET/PUT /store/settings. */
+export interface StoreSettingsResponse {
+  defaultCurrency: Currency;
+  usdToKhrRate: number;
+  allowCod: boolean;
+  vatPercent: number;
+  /** The USD to KHR band the platform allows today. */
+  rateBand: { min: number; max: number };
+}
+
+/** POST /public/stores/:slug/orders. */
+export interface PlacedOrder {
+  token: string;
+  orderNumber: number;
+}
+
+/** GET /public/orders/:token: the buyer's order page. */
+export interface PublicOrder {
+  orderNumber: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  currency: Currency;
+  subtotalMinor: number;
+  discountMinor: number;
+  deliveryFeeMinor: number;
+  vatPercent: number;
+  vatMinor: number;
+  totalMinor: number;
+  exchangeRateUsed: number;
+  fulfilment: Fulfilment;
+  area: DeliveryArea;
+  districtId: string | null;
+  provinceId: string | null;
+  landmark: string;
+  pickupAddress: string;
+  pickupHours: string;
+  buyerName: string;
+  cancelReason: OrderCancelReason | null;
+  createdAt: string;
+  items: { titleKm: string; titleEn: string; variantLabelKm: string; variantLabelEn: string; unitPriceMinor: number; quantity: number; lineTotalMinor: number }[];
+  events: { status: OrderStatus; at: string }[];
+  store: { slug: string; name: string; phone: string; logoUrl: string | null };
+}
+
+/** GET /orders: one row of the seller's order list. */
+export interface SellerOrder {
+  id: string;
+  orderNumber: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  currency: Currency;
+  totalMinor: number;
+  buyerName: string;
+  buyerPhone: string;
+  fulfilment: Fulfilment;
+  area: DeliveryArea;
+  districtId: string | null;
+  provinceId: string | null;
+  createdAt: string;
+  itemCount: number;
 }

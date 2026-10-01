@@ -30,11 +30,11 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { mockStore } from "@/mock/mock-data";
 import { orderLineLabel, type OrderRecord } from "@/mock/mock-orders";
-import { BuyerBottomBar, BuyerShell } from "../../buyer-shell";
+import { BuyerBottomBar, BuyerShell } from "@/components/buyer-shell";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useMerchantProducts } from "../../merchant-products-context";
 import { useMerchantProfile } from "../../merchant-profile-context";
-import { formatMoney, ORDER_STATUS_TONE, useOrderText } from "../../order-ui";
+import { formatMoney, ORDER_STATUS_TONE, useOrderText } from "@/components/order-ui";
 import { useOrders } from "../../orders-context";
 
 const STATUS_ICON: Record<OrderStatus, LucideIcon> = {
