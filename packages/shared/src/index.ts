@@ -10,6 +10,7 @@ export * from "./locations";
 export * from "./form-errors";
 export * from "./kyc";
 export * from "./money";
+export * from "./order-total";
 export * from "./orders";
 export * from "./payment-attempts";
 export * from "./phone";

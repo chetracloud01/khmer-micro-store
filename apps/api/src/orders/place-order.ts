@@ -1,0 +1,187 @@
+import { randomBytes } from "node:crypto";
+import { asOrderBuyer, Prisma, withPublicStore, type AppDb, type Tx } from "@khmer-micro-store/db";
+import {
+  checkoutInputSchema,
+  computeOrderTotal,
+  getAvailablePaymentMethods,
+  getDeliveryQuote,
+  getInitialOrderStatus,
+  placeOrderRequestSchema,
+  toFieldErrors,
+  type CheckoutInput,
+  type FormErrorCode,
+  type PlaceOrderRequest,
+} from "@khmer-micro-store/shared";
+import { readDeliverySettings } from "../delivery/delivery";
+import { AppException, InvalidInputException } from "../errors";
+
+// Placing an order (roadmap step 4), as the buyer of one shop — no login.
+// The API recalculates every amount from the database; it never trusts a
+// total from the browser. The same checkout key twice gives back the same
+// order. Until step 5, cash on delivery is the only way to pay.
+
+export interface PlacedOrder {
+  token: string;
+  orderNumber: number;
+  /** false = this checkout key had already placed the order; this is it again. */
+  created: boolean;
+}
+
+/** The buyer's order link: 32 random characters, never the order number. */
+export function newOrderToken(): string {
+  return randomBytes(24).toString("base64url");
+}
+
+export const ORDER_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
+
+/** Checks the request's shape; the checkout form is checked later, with the store's own settings. */
+export function parsePlaceOrder(body: unknown): PlaceOrderRequest {
+  const result = placeOrderRequestSchema.safeParse(body);
+  if (!result.success) throw new InvalidInputException(toFieldErrors(result.error));
+  return result.data;
+}
+
+/** Places the order, or returns null when no shop has this link. */
+export async function placeOrder(db: AppDb, slug: string, request: PlaceOrderRequest): Promise<PlacedOrder | null> {
+  try {
+    return await withPublicStore(db, slug, (tx, storeId) => placeInStore(tx, storeId, request));
+  } catch (error) {
+    // Two copies of the same checkout arrived together and the other one won: answer with its order.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const again = await withPublicStore(db, slug, (tx) => findByKey(tx, request.idempotencyKey));
+      if (again) return again;
+    }
+    throw error;
+  }
+}
+
+async function findByKey(tx: Tx, key: string): Promise<PlacedOrder | null> {
+  const [row] = await tx.$queryRaw<{ token: string | null }[]>`SELECT app_order_token_by_key(${key}::uuid) AS token`;
+  if (!row?.token) return null;
+  await asOrderBuyer(tx, row.token);
+  const order = await tx.order.findFirst({ select: { orderNumber: true } });
+  return order ? { token: row.token, orderNumber: order.orderNumber, created: false } : null;
+}
+
+async function placeInStore(tx: Tx, storeId: string, request: PlaceOrderRequest): Promise<PlacedOrder> {
+  const existing = await findByKey(tx, request.idempotencyKey);
+  if (existing) return existing;
+
+  const store = await tx.store.findUniqueOrThrow({
+    where: { id: storeId },
+    select: { allowCod: true, usdToKhrRate: true, vatPercent: true, pickupAddress: true, pickupHours: true },
+  });
+  const { settings: delivery, configured } = await readDeliverySettings(tx, storeId);
+  // No delivery saved, or no way at all to pay (cash off, and KHQR only arrives in step 5): the shop isn't open for orders.
+  if (!configured || !store.allowCod) throw new AppException(409, "not_accepting_orders");
+
+  const checkout = parseCheckout(request.checkout, store.allowCod);
+  const errors: Record<string, FormErrorCode> = {};
+
+  // Cash only until KHQR (step 5): a Bakong ID doesn't make KHQR available yet.
+  const methods = getAvailablePaymentMethods({
+    khqrReady: false,
+    payWayReady: false,
+    storeAllowsCod: store.allowCod,
+    area: checkout.area,
+    fulfilment: checkout.fulfilment,
+  });
+  if (methods.length === 0) throw new AppException(409, "not_accepting_orders");
+  if (!methods.includes(checkout.paymentMethod)) errors.paymentMethod = "payment_unavailable";
+
+  const choice = {
+    fulfilment: checkout.fulfilment,
+    area: checkout.area,
+    districtId: checkout.fulfilment === "delivery" && checkout.area === "phnom_penh" ? checkout.districtId : undefined,
+    provinceId: checkout.fulfilment === "delivery" && checkout.area === "province" ? checkout.provinceId : undefined,
+  };
+  const quote = getDeliveryQuote(delivery, choice);
+  if (quote.status !== "ok") {
+    errors[checkout.fulfilment === "pickup" ? "fulfilment" : checkout.area === "province" ? "provinceId" : "districtId"] = "delivery_unavailable";
+  }
+
+  // The buyer can only see visible, not-deleted products (step 3 public read), so anything else is simply missing.
+  const variants = await tx.productVariant.findMany({
+    where: { id: { in: request.lines.map((line) => line.variantId) } },
+    include: { product: { select: { titleKm: true, titleEn: true, discountPercent: true } } },
+  });
+  const byId = new Map(variants.map((variant) => [variant.id, variant]));
+  request.lines.forEach((line, index) => {
+    if (!byId.has(line.variantId)) errors[`lines.${index}`] = "product_unavailable";
+  });
+  if (Object.keys(errors).length > 0) throw new InvalidInputException(errors);
+
+  const total = computeOrderTotal({
+    lines: request.lines.map((line) => {
+      const variant = byId.get(line.variantId)!;
+      return { key: line.variantId, quantity: line.quantity, priceUsdCents: variant.priceUsdCents, priceKhr: variant.priceKhr, discountPercent: variant.product.discountPercent };
+    }),
+    currency: checkout.currency,
+    usdToKhrRate: store.usdToKhrRate,
+    vatPercent: store.vatPercent,
+    deliveryFee: quote.status === "ok" ? quote.fee : null,
+  });
+
+  const token = newOrderToken();
+  await asOrderBuyer(tx, token);
+  const [customer] = await tx.$queryRaw<{ id: string }[]>`
+    SELECT app_save_customer(${checkout.phone}, ${checkout.name}, ${checkout.area}::"DeliveryArea",
+      ${choice.districtId ?? null}, ${choice.provinceId ?? null}, ${checkout.landmark}) AS id`;
+  const [number] = await tx.$queryRaw<{ n: number }[]>`SELECT app_next_order_number() AS n`;
+  const status = getInitialOrderStatus(checkout.paymentMethod);
+  const order = await tx.order.create({
+    data: {
+      storeId,
+      customerId: customer!.id,
+      orderNumber: number!.n,
+      publicToken: token,
+      status,
+      paymentMethod: checkout.paymentMethod,
+      currency: checkout.currency,
+      subtotalMinor: total.subtotal,
+      discountMinor: total.discount,
+      deliveryFeeMinor: total.deliveryFee,
+      vatPercent: store.vatPercent,
+      vatMinor: total.vat,
+      totalMinor: total.total,
+      exchangeRateUsed: store.usdToKhrRate,
+      fulfilment: checkout.fulfilment,
+      area: checkout.area,
+      districtId: choice.districtId ?? null,
+      provinceId: choice.provinceId ?? null,
+      landmark: checkout.landmark,
+      pickupAddress: checkout.fulfilment === "pickup" ? store.pickupAddress : "",
+      pickupHours: checkout.fulfilment === "pickup" ? store.pickupHours : "",
+      buyerName: checkout.name,
+      buyerPhone: checkout.phone,
+      idempotencyKey: request.idempotencyKey,
+    },
+    select: { id: true, orderNumber: true },
+  });
+  await tx.orderItem.createMany({
+    data: total.lines.map((line) => {
+      const variant = byId.get(line.key)!;
+      return {
+        storeId,
+        orderId: order.id,
+        variantId: variant.id,
+        titleKm: variant.product.titleKm,
+        titleEn: variant.product.titleEn,
+        variantLabelKm: variant.isDefault ? "" : variant.labelKm,
+        variantLabelEn: variant.isDefault ? "" : variant.labelEn,
+        unitPriceMinor: line.unitPrice,
+        quantity: line.quantity,
+        lineTotalMinor: line.lineTotal,
+      };
+    }),
+  });
+  await tx.orderStatusEvent.createMany({ data: [{ storeId, orderId: order.id, status, actor: "buyer" }] });
+  return { token, orderNumber: order.orderNumber, created: true };
+}
+
+/** The buyer's form, checked with the store's own cash-on-delivery setting added. Field names come back as the form's own. */
+function parseCheckout(form: Record<string, unknown>, storeAllowsCod: boolean): CheckoutInput {
+  const result = checkoutInputSchema.safeParse({ ...form, storeAllowsCod });
+  if (!result.success) throw new InvalidInputException(toFieldErrors(result.error));
+  return result.data;
+}

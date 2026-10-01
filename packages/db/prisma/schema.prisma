@@ -2,6 +2,8 @@
 // step adds its own tables in a new migration; old migrations are never edited.
 // Step 2 (data and login): people, login, stores, the trial subscription,
 // categories and units, sessions, platform settings and the audit log.
+// Step 3 (catalog): brands, products, variants, photos.
+// Step 4 (shop and checkout): delivery zones and drivers, customers, orders.
 //
 // Row-level security (in the migration SQL, which Prisma can't express) keeps
 // every shop to its own rows for the API's everyday user, khmer_micro_store_app.
@@ -77,6 +79,50 @@ enum SubscriptionStatus {
 
 enum ActorType {
   admin
+  merchant
+  system
+}
+
+enum OrderStatus {
+  awaiting_payment
+  paid
+  cod_pending
+  confirmed
+  packing
+  waiting_for_driver
+  out_for_delivery
+  delivered
+  completed
+  cancelled
+  failed_delivery
+}
+
+enum PaymentMethod {
+  khqr
+  aba_payway
+  cod
+}
+
+enum Fulfilment {
+  delivery
+  pickup
+}
+
+enum DriverKind {
+  own
+  partner
+}
+
+enum OrderCancelReason {
+  payment_timeout
+  buyer_cancelled
+  out_of_stock
+  cannot_deliver
+  other
+}
+
+enum OrderActor {
+  buyer
   merchant
   system
 }
@@ -180,6 +226,8 @@ model Store {
   provinceNote            String       @default("") @map("province_note")
   deliveryConfiguredAt    DateTime?    @map("delivery_configured_at") @db.Timestamptz(6)
   linkSharedAt            DateTime?    @map("link_shared_at") @db.Timestamptz(6)
+  /// The last order number given out; the next order takes this + 1 (app_next_order_number()).
+  lastOrderNumber         Int          @default(0) @map("last_order_number")
   createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -190,6 +238,10 @@ model Store {
   units          Unit[]
   brands         Brand[]
   products       Product[]
+  deliveryZones  DeliveryZone[]
+  drivers        StoreDriver[]
+  customers      Customer[]
+  orders         Order[]
 
   @@map("stores")
 }
@@ -353,6 +405,174 @@ model ProductPhoto {
 
   @@index([productId])
   @@map("product_photos")
+}
+
+// -------------------------------------------------------------------- delivery
+
+/// A group of Phnom Penh districts with one fee. Both fees empty = free.
+model DeliveryZone {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  /// The seller's own label ("Central"); buyers see the district and the fee.
+  name        String
+  feeUsdCents Int?     @map("fee_usd_cents")
+  feeKhr      Int?     @map("fee_khr")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store     Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  districts DeliveryZoneDistrict[]
+
+  @@index([storeId])
+  @@map("delivery_zones")
+}
+
+/// Which districts a zone covers. A district is in one zone only.
+model DeliveryZoneDistrict {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  zoneId     String   @map("zone_id") @db.Uuid
+  storeId    String   @map("store_id") @db.Uuid
+  /// From packages/shared locations.ts PHNOM_PENH_DISTRICTS.
+  districtId String   @map("district_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  zone DeliveryZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, districtId])
+  @@index([zoneId])
+  @@map("delivery_zone_districts")
+}
+
+/// Drivers an order can be handed to (dispatch arrives in step 6). Never shown to buyers.
+model StoreDriver {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String     @map("store_id") @db.Uuid
+  name      String
+  /// 855...
+  phone     String
+  kind      DriverKind
+  sortOrder Int        @default(0) @map("sort_order")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@map("store_drivers")
+}
+
+// ------------------------------------------------------- orders and payments
+
+/// A buyer, per store, found by phone. Written only through app_save_customer() when a buyer orders.
+model Customer {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId    String        @map("store_id") @db.Uuid
+  /// 855...
+  phone      String
+  name       String
+  telegramId String?       @map("telegram_id")
+  /// The last delivery choice, to fill the next checkout.
+  area       DeliveryArea?
+  districtId String?       @map("district_id")
+  provinceId String?       @map("province_id")
+  landmark   String        @default("")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store  Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@unique([storeId, phone])
+  @@map("customers")
+}
+
+/// An order. Every amount is in `currency`, as whole cents or riel, frozen when it was placed.
+model Order {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId          String             @map("store_id") @db.Uuid
+  customerId       String             @map("customer_id") @db.Uuid
+  orderNumber      Int                @map("order_number")
+  /// Random and long: the buyer's order page link. Never the order number.
+  publicToken      String             @unique @map("public_token")
+  status           OrderStatus
+  paymentMethod    PaymentMethod      @map("payment_method")
+  currency         Currency
+  subtotalMinor    Int                @map("subtotal_minor")
+  discountMinor    Int                @map("discount_minor")
+  deliveryFeeMinor Int                @map("delivery_fee_minor")
+  vatPercent       Int                @map("vat_percent")
+  vatMinor         Int                @map("vat_minor")
+  totalMinor       Int                @map("total_minor")
+  /// The store's USD to KHR rate when the order was placed; old orders are never recomputed.
+  exchangeRateUsed Int                @map("exchange_rate_used")
+  fulfilment       Fulfilment
+  area             DeliveryArea
+  districtId       String?            @map("district_id")
+  provinceId       String?            @map("province_id")
+  landmark         String             @default("")
+  /// Copied from the store at order time, for pickup orders.
+  pickupAddress    String             @default("") @map("pickup_address")
+  pickupHours      String             @default("") @map("pickup_hours")
+  /// Copied from the checkout, so the order keeps them whatever happens to the customer row.
+  buyerName        String             @map("buyer_name")
+  buyerPhone       String             @map("buyer_phone")
+  cancelReason     OrderCancelReason? @map("cancel_reason")
+  cancelNote       String             @default("") @map("cancel_note")
+  /// Pro and Advance: stock was taken for this order.
+  stockTaken       Boolean            @default(false) @map("stock_taken")
+  /// Made once per checkout by the shop page; the same key twice = the same order.
+  idempotencyKey   String             @map("idempotency_key") @db.Uuid
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store    Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
+  events   OrderStatusEvent[]
+
+  @@unique([storeId, orderNumber])
+  @@unique([storeId, idempotencyKey])
+  @@index([storeId, createdAt])
+  @@map("orders")
+}
+
+/// An order line: a snapshot, so a later rename or price change never alters an old order.
+model OrderItem {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId        String   @map("store_id") @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  variantId      String   @map("variant_id") @db.Uuid
+  titleKm        String   @map("title_km")
+  titleEn        String   @map("title_en")
+  variantLabelKm String   @default("") @map("variant_label_km")
+  variantLabelEn String   @default("") @map("variant_label_en")
+  /// One unit after the product's discount, in the order's currency.
+  unitPriceMinor Int      @map("unit_price_minor")
+  quantity       Int
+  lineTotalMinor Int      @map("line_total_minor")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// The order's history: one row per status it reached. Never edited.
+model OrderStatusEvent {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId         String      @map("store_id") @db.Uuid
+  orderId         String      @map("order_id") @db.Uuid
+  status          OrderStatus
+  actor           OrderActor
+  actorMerchantId String?     @map("actor_merchant_id") @db.Uuid
+  at              DateTime    @default(now()) @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_status_events")
 }
 
 // -------------------------------------------------------------------- platform

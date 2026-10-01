@@ -1,5 +1,5 @@
 import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { storeDetailsSaveSchema } from "@khmer-micro-store/shared";
+import { storeDetailsSaveSchema, storeSettingsSchema } from "@khmer-micro-store/shared";
 import { Body, Controller, Get, Inject, Put, UseGuards } from "@nestjs/common";
 import { APP_DB } from "../db";
 import { InvalidInputException } from "../errors";
@@ -35,6 +35,26 @@ export class StoreController {
     return withContext(this.app, context, async (tx) => this.details(tx, context.storeId));
   }
 
+  /** Store settings: the currency buyers see first, the USD to KHR rate, cash on delivery, VAT. */
+  @Get("settings")
+  async getSettings(@CurrentStore() context: MerchantStore) {
+    return withContext(this.app, context, (tx) => this.settings(tx, context.storeId));
+  }
+
+  @Put("settings")
+  async saveSettings(@CurrentStore() context: MerchantStore, @Body() body: unknown) {
+    return withContext(this.app, context, async (tx) => {
+      await assertStoreWritable(tx, context.storeId);
+      // The rate must sit inside the band the platform allows today — refused on save, never silently clamped at checkout.
+      const input = storeSettingsSchema(await this.rateBand(tx)).omit({ onlineStockLocation: true }).parse(body);
+      await tx.store.update({ where: { id: context.storeId }, data: input });
+      await tx.auditLog.create({
+        data: { actorType: "merchant", actorId: context.merchantId, storeId: context.storeId, action: "store.settings_saved", entity: "store", entityId: context.storeId },
+      });
+      return this.settings(tx, context.storeId);
+    });
+  }
+
   @Put()
   async save(@CurrentStore() context: MerchantStore, @Body() body: unknown) {
     const input = storeDetailsSaveSchema.parse(body);
@@ -63,6 +83,19 @@ export class StoreController {
       });
       return this.details(tx, context.storeId);
     });
+  }
+
+  private async rateBand(tx: Parameters<Parameters<typeof withContext>[2]>[0]) {
+    const platform = await tx.platformSettings.findUniqueOrThrow({ where: { id: 1 }, select: { usdToKhrMin: true, usdToKhrMax: true } });
+    return { min: platform.usdToKhrMin, max: platform.usdToKhrMax };
+  }
+
+  private async settings(tx: Parameters<Parameters<typeof withContext>[2]>[0], storeId: string) {
+    const [store, band] = await Promise.all([
+      tx.store.findUniqueOrThrow({ where: { id: storeId }, select: { defaultCurrency: true, usdToKhrRate: true, allowCod: true, vatPercent: true } }),
+      this.rateBand(tx),
+    ]);
+    return { ...store, rateBand: band };
   }
 
   /** The shop's details, plus what the dashboard needs around them: the plan in force and the setup checklist's facts. */

@@ -923,7 +923,11 @@
     "zone_empty": "Choose at least one district for this zone.",
     "telegram_invalid": "Enter a Telegram username: 5–32 letters, numbers or underscores.",
     "telegram_taken": "This Telegram account is already an admin.",
-    "slug_taken": "This link is already taken — try another."
+    "slug_taken": "This link is already taken — try another.",
+    "cart_empty": "Your cart is empty.",
+    "product_unavailable": "This item is no longer available. Remove it to continue.",
+    "delivery_unavailable": "The shop doesn't deliver here. Choose another place or pick up.",
+    "payment_unavailable": "This way to pay isn't available for this order."
   },
   "Theme": {
     "button": "Theme and colours",

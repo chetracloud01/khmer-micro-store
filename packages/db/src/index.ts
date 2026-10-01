@@ -64,3 +64,28 @@ export async function withPublicStore<T>(db: AppDb, slug: string, work: (tx: Tx,
     return work(tx, storeId);
   });
 }
+
+/**
+ * Inside withPublicStore: lets this buyer add one order — the one carrying
+ * `token` — with its lines and first status, and read it back. Nothing else
+ * becomes visible (step 4 migration, "The buyer").
+ */
+export async function asOrderBuyer(tx: Tx, token: string): Promise<void> {
+  await tx.$executeRaw`SELECT set_config('app.order_token', ${token}, true)`;
+}
+
+/**
+ * Runs `work` as the buyer holding an order link: the database shows that one
+ * order, its lines and its history, plus its store's public face. Returns null
+ * when no order has this token.
+ */
+export async function withPublicOrder<T>(db: AppDb, token: string, work: (tx: Tx, storeId: string) => Promise<T>): Promise<T | null> {
+  return db.$transaction(async (tx) => {
+    const [row] = await tx.$queryRaw<{ id: string | null }[]>`SELECT app_store_id_by_order_token(${token}) AS id`;
+    const storeId = row?.id;
+    if (!storeId) return null;
+    await tx.$executeRaw`SELECT set_config('app.public_store_id', ${storeId}, true)`;
+    await asOrderBuyer(tx, token);
+    return work(tx, storeId);
+  });
+}

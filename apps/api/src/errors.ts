@@ -26,7 +26,9 @@ export type ErrorBody =
         // The plan's limit is reached (packages/shared plans.ts).
         | "plan_limit"
         // The store is paused: everything stays readable, nothing can be changed.
-        | "store_paused";
+        | "store_paused"
+        // The shop can't take orders yet (no delivery saved, or no way for this buyer to pay).
+        | "not_accepting_orders";
     };
 
 const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input">> = {
@@ -50,7 +52,7 @@ export class InvalidInputException extends Error {
 export class AppException extends Error {
   constructor(
     public readonly status: number,
-    public readonly code: "no_store" | "plan_limit" | "store_paused",
+    public readonly code: "no_store" | "plan_limit" | "store_paused" | "not_accepting_orders",
   ) {
     super(code);
   }
