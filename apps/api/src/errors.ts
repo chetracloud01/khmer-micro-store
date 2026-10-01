@@ -11,7 +11,23 @@ import { captureError } from "./sentry";
  */
 export type ErrorBody =
   | { error: "invalid_input"; fields: Record<string, FormErrorCode> }
-  | { error: "bad_request" | "unauthorized" | "forbidden" | "not_found" | "conflict" | "too_many_requests" | "internal" };
+  | {
+      error:
+        | "bad_request"
+        | "unauthorized"
+        | "forbidden"
+        | "not_found"
+        | "conflict"
+        | "too_large"
+        | "too_many_requests"
+        | "internal"
+        // The merchant has no store yet (onboarding not finished).
+        | "no_store"
+        // The plan's limit is reached (packages/shared plans.ts).
+        | "plan_limit"
+        // The store is paused: everything stays readable, nothing can be changed.
+        | "store_paused";
+    };
 
 const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input">> = {
   400: "bad_request",
@@ -19,6 +35,7 @@ const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input"
   403: "forbidden",
   404: "not_found",
   409: "conflict",
+  413: "too_large",
   429: "too_many_requests",
 };
 
@@ -29,7 +46,20 @@ export class InvalidInputException extends Error {
   }
 }
 
+/** A refusal with its own short code, e.g. 403 "plan_limit". */
+export class AppException extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: "no_store" | "plan_limit" | "store_paused",
+  ) {
+    super(code);
+  }
+}
+
 export function toErrorResponse(error: unknown): { status: number; body: ErrorBody } {
+  if (error instanceof AppException) {
+    return { status: error.status, body: { error: error.code } };
+  }
   if (error instanceof InvalidInputException) {
     return { status: 400, body: { error: "invalid_input", fields: error.fields } };
   }

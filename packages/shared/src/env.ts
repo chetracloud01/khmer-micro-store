@@ -30,6 +30,10 @@ export const apiEnvSchema = z.object({
   ...shared,
   /** The API's everyday database user (khmer_micro_store_app): row-level security keeps each shop to its own rows. */
   DATABASE_URL: postgresUrl,
+  /** Where uploaded photos are kept on this machine (development). Production uses Cloudflare R2 from roadmap step 8. */
+  FILES_DIR: z.string().min(1).default(".uploads"),
+  /** The address photos are served from. Unset = this API's own /files. */
+  FILES_PUBLIC_URL: optional(z.string().url("must be a URL")),
   /** From @BotFather. Without it, Telegram login is off (the development login still works). */
   TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
   PORT: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(65535).default(4000),

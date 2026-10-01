@@ -1,18 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  applyAdminOverride,
-  canAddProduct,
-  canChangePlan,
-  getAmountDueForPlanChange,
-  getMinimumPlanFor,
-  getMinimumPlanForProductCount,
-  getPlanPrice,
-  getUpgradeProrationAmount,
-  isStorefrontOpen,
-  isUpgrade,
-  planHasFeature,
-  planIdSchema,
-} from "./plans";
+import { applyAdminOverride, canAddProduct, canChangePlan, effectivePlan, getAmountDueForPlanChange, getMinimumPlanFor, getMinimumPlanForProductCount, getPlanPrice, getUpgradeProrationAmount, isStorefrontOpen, isUpgrade, planHasFeature, planIdSchema } from "./plans";
 
 describe("plan features", () => {
   it("matches the blueprint tier table", () => {
@@ -155,5 +142,22 @@ describe("storefront", () => {
   it("closes only when the subscription is paused", () => {
     expect(isStorefrontOpen("grace")).toBe(true);
     expect(isStorefrontOpen("paused")).toBe(false);
+  });
+});
+
+describe("Release 1 beta", () => {
+  it("treats a Free trial shop as Basic while the beta setting is on", () => {
+    expect(effectivePlan("free", true)).toBe("basic");
+    expect(canAddProduct(effectivePlan("free", true), 500)).toBe(true);
+  });
+
+  it("goes back to the plan's own limits when the setting is off", () => {
+    expect(effectivePlan("free", false)).toBe("free");
+    expect(canAddProduct(effectivePlan("free", false), 10)).toBe(false);
+  });
+
+  it("never lowers a paid plan", () => {
+    expect(effectivePlan("pro", true)).toBe("pro");
+    expect(effectivePlan("advance", false)).toBe("advance");
   });
 });

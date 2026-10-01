@@ -99,6 +99,15 @@ describe.skipIf(!appUrl || !ownerUrl)("row-level security", () => {
     expect(categoryB?.nameEn).toBe("Category b");
   });
 
+  it("has row-level security on every table that holds a store's data", async () => {
+    // A new table with store_id that forgets RLS would leak across shops: this catches it in CI.
+    const missing = await system.$queryRaw<{ table_name: string }[]>`
+      SELECT c.table_name FROM information_schema.columns c
+      JOIN pg_tables t ON t.tablename = c.table_name AND t.schemaname = 'public'
+      WHERE c.table_schema = 'public' AND c.column_name = 'store_id' AND NOT t.rowsecurity`;
+    expect(missing.map((row) => row.table_name)).toEqual([]);
+  });
+
   it("keeps sessions, plans and migrations out of the everyday user's reach", async () => {
     await expect(app.session.findMany()).rejects.toThrow();
     await expect(app.$queryRaw`SELECT * FROM "_prisma_migrations" LIMIT 1`).rejects.toThrow();

@@ -103,6 +103,27 @@ export const productInputSchema = z
   });
 
 export type ProductInput = z.infer<typeof productInputSchema>;
+
+/** Photos per product (design/screens.md S7). */
+export const MAX_PRODUCT_PHOTOS = 6;
+
+/**
+ * What the product form sends to the API: the product, plus its photos as
+ * keys returned by the upload, in display order (the first one is the cover).
+ */
+export const productSaveSchema = z.object({
+  product: productInputSchema,
+  photoKeys: z.array(z.string().min(1).max(200)).max(MAX_PRODUCT_PHOTOS, "too_long"),
+});
+export type ProductSave = z.infer<typeof productSaveSchema>;
+export type ProductSaveInput = z.input<typeof productSaveSchema>;
+
+/** A category, brand or unit the seller adds from the product form. */
+export const catalogNameSchema = z.object({
+  nameKm: z.string().trim().min(1, "required").max(40, "too_long"),
+  nameEn: z.string().trim().min(1, "required").max(40, "too_long"),
+});
+export type CatalogName = z.infer<typeof catalogNameSchema>;
 /** What a form hands to the schema: description and visibility may be left out. */
 export type ProductFormInput = z.input<typeof productInputSchema>;
 export type ProductOptionInput = z.infer<typeof productOptionInputSchema>;

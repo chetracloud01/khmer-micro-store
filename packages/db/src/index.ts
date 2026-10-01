@@ -49,3 +49,18 @@ export async function withContext<T>(db: AppDb, context: RequestContext, work: (
     return work(tx);
   });
 }
+
+/**
+ * Runs `work` as a buyer looking at one shop (no signed-in merchant): the
+ * database shows only that store's name, categories and visible products.
+ * Returns null when no store has this link.
+ */
+export async function withPublicStore<T>(db: AppDb, slug: string, work: (tx: Tx, storeId: string) => Promise<T>): Promise<T | null> {
+  return db.$transaction(async (tx) => {
+    const [row] = await tx.$queryRaw<{ id: string | null }[]>`SELECT app_store_id_by_slug(${slug}) AS id`;
+    const storeId = row?.id;
+    if (!storeId) return null;
+    await tx.$executeRaw`SELECT set_config('app.public_store_id', ${storeId}, true)`;
+    return work(tx, storeId);
+  });
+}

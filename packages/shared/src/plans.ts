@@ -74,6 +74,15 @@ export function getMinimumPlanFor(feature: PlanFeature): PlanId {
   return plan;
 }
 
+/**
+ * The plan whose features and limits apply. During the Release 1 beta the
+ * platform setting "every shop counts as Basic" is on, so a Free trial shop
+ * gets Basic's limits; it is switched off at Release 2, when billing starts.
+ */
+export function effectivePlan(plan: PlanId, betaAllBasic: boolean): PlanId {
+  return betaAllBasic && plan === "free" ? "basic" : plan;
+}
+
 export function canAddProduct(plan: PlanId, currentProductCount: number): boolean {
   const max = PLANS[plan].maxProducts;
   return max === null || currentProductCount < max;

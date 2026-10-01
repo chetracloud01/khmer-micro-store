@@ -438,6 +438,8 @@ On payment (or when a cash order is placed), take the reserved amount out of `on
 
 **Multi-tenant safety:** every tenant table carries `store_id`, and PostgreSQL Row-Level Security allows a query only for stores the logged-in merchant belongs to. A test in CI proves merchant A cannot read merchant B's orders.
 
+How it's built (packages/db): the API reads shop data as `khmer_micro_store_app`, a database user that doesn't own the tables and can't bypass the rules. Each request sets who it acts for inside its own transaction (`withContext`): the merchant, and the store — honoured only if the merchant is a member. The shop page reads as a buyer (`withPublicStore`): one store's name, categories and **visible, not-deleted** products, and nothing else. The owner user (`khmer_micro_store`) runs migrations, the worker, login and sign-up. Every new table with `store_id` turns on RLS in its own migration; CI checks none is missed.
+
 ## Security
 
 The three things that matter most: nobody can fake a payment, no merchant can see another's data, and you can restore the database if something breaks.

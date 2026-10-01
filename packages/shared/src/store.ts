@@ -83,6 +83,12 @@ export const storeProfileSchema = z.object({
 });
 
 export type StoreProfileInput = z.input<typeof storeProfileSchema>;
+
+/** The shop details page sends the profile plus the logo (an uploaded photo's key, or null to remove it). */
+export const storeDetailsSaveSchema = storeProfileSchema.extend({
+  logoKey: z.string().min(1).max(200).nullable(),
+});
+export type StoreDetailsSave = z.infer<typeof storeDetailsSaveSchema>;
 export type StoreProfile = z.output<typeof storeProfileSchema>;
 
 /** The band the super admin allows a store's USD→KHR rate in (admin Settings). */
