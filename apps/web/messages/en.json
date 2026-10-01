@@ -1283,7 +1283,7 @@
     "planLabel": "Plan",
     "planTrial": "Free trial · {count, plural, one {# day} other {# days}} left",
     "previewTitle": "The rest of your dashboard is coming",
-    "previewBody": "Orders, delivery and payments are being connected step by step. You can look at the preview meanwhile — it uses sample data, not your shop.",
+    "previewBody": "KHQR payments, plans and more are being connected step by step. You can look at the preview meanwhile — it uses sample data, not your shop.",
     "openPreview": "Open the preview dashboard",
     "navShop": "My shop",
     "viewShop": "Open my shop page",
@@ -1299,9 +1299,10 @@
     "orderingSoon": "Ordering online opens soon. For now, call the shop to order.",
     "deliverySuggested": "We suggested zones and fees for Phnom Penh and the provinces. Check them, change anything you like, then save — buyers can order once delivery is saved.",
     "codOffWarning": "With cash on delivery off, buyers can't order until KHQR is available. Keep it on to take orders now.",
-    "ordersReadOnly": "Every order from your shop, newest first. Confirming, packing and sending orders — and Telegram alerts — are coming in the next update.",
     "shopNotFound": "This shop link doesn't exist.",
     "orderFailed": "Your order wasn't sent. Check your connection and try again — you won't be charged twice.",
-    "payCashOnDelivery": "Cash on delivery"
+    "payCashOnDelivery": "Cash on delivery",
+    "orderMovedOn": "This order changed meanwhile (maybe from Telegram or another phone). It's shown as it is now.",
+    "ordersWaiting": "{count, plural, one {# order needs you} other {# orders need you}}"
   }
 }

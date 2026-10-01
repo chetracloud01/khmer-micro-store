@@ -1,9 +1,12 @@
 "use client";
 
+import { needsSellerAction } from "@khmer-micro-store/shared";
 import { Card } from "@khmer-micro-store/ui";
-import { ChevronRight, Clock, ExternalLink, Link2 } from "lucide-react";
+import { ChevronRight, Clock, ExternalLink, Link2, ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { api, type SellerOrder } from "@/lib/api";
 import { useMerchant } from "./merchant-context";
 import { SetupChecklist } from "./setup-checklist";
 
@@ -51,6 +54,8 @@ export default function MerchantHomePage() {
         )}
       </Card>
 
+      <WaitingOrders />
+
       <SetupChecklist />
 
       <Card className="flex flex-col gap-2 border-dashed p-4">
@@ -62,5 +67,29 @@ export default function MerchantHomePage() {
         </Link>
       </Card>
     </div>
+  );
+}
+
+/** "3 orders need you": the orders whose next step is the seller's (packages/shared needsSellerAction). */
+function WaitingOrders() {
+  const t = useTranslations("App");
+  const locale = useLocale();
+  const [waiting, setWaiting] = useState<number | null>(null);
+  useEffect(() => {
+    api<SellerOrder[]>("/orders")
+      .then((orders) => setWaiting(orders.filter((order) => needsSellerAction(order.status)).length))
+      .catch(() => setWaiting(null));
+  }, []);
+  if (!waiting) return null;
+  return (
+    <Link href={`/${locale}/m/orders`} className="block">
+      <Card className="flex items-center gap-3 border-brand/40 bg-brand/5 p-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand">
+          <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1 font-semibold">{t("ordersWaiting", { count: waiting })}</span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden="true" />
+      </Card>
+    </Link>
   );
 }

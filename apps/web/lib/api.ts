@@ -9,6 +9,7 @@ import type {
   OrderStatus,
   PaymentMethod,
   PlanId,
+  SellerOrderAction,
   SubscriptionStatus,
 } from "@khmer-micro-store/shared";
 
@@ -220,6 +221,10 @@ export interface PublicOrder {
   createdAt: string;
   items: { titleKm: string; titleEn: string; variantLabelKm: string; variantLabelEn: string; unitPriceMinor: number; quantity: number; lineTotalMinor: number }[];
   events: { status: OrderStatus; at: string }[];
+  /** How it was sent: the driver's name or the bus ticket (never the driver's phone). */
+  dispatch: { route: "driver" | "bus" | "pickup"; driverName: string; busCompany: string; ticketNumber: string; dispatchedAt: string } | null;
+  /** The buyer may cancel by themselves right now (packages/shared canBuyerCancel). */
+  canCancel: boolean;
   store: { slug: string; name: string; phone: string; logoUrl: string | null };
 }
 
@@ -239,4 +244,27 @@ export interface SellerOrder {
   provinceId: string | null;
   createdAt: string;
   itemCount: number;
+}
+
+/** GET /orders/:id and POST /orders/:id/actions: one order in full, for the seller. */
+export interface SellerOrderDetail extends Omit<PublicOrder, "store" | "events" | "dispatch" | "canCancel"> {
+  id: string;
+  buyerPhone: string;
+  cancelNote: string;
+  events: { status: OrderStatus; actor: "buyer" | "merchant" | "system"; at: string }[];
+  dispatches: {
+    route: "driver" | "bus" | "pickup";
+    driverName: string;
+    driverPhone: string;
+    busCompany: string;
+    ticketNumber: string;
+    dispatchedAt: string;
+    pickedUpAt: string | null;
+    deliveredAt: string | null;
+    failedAt: string | null;
+  }[];
+  /** What the seller may do now (packages/shared getSellerActions), the main step first. */
+  actions: SellerOrderAction[];
+  /** How it must be sent (packages/shared getDispatchRoute). */
+  route: "driver" | "bus" | "pickup";
 }

@@ -18,5 +18,5 @@ async function loadOrder(token: string): Promise<PublicOrder | null> {
 
 export default async function OrderPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  return <OrderView order={await loadOrder(token)} />;
+  return <OrderView order={await loadOrder(token)} token={token} />;
 }

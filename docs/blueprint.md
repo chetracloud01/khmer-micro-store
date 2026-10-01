@@ -32,7 +32,9 @@ Updated at the end of every roadmap step.
 | Step 2. Data and login | Done — schema, row-level security with two database users, Telegram login, 2-question onboarding |
 | Step 3. Catalog | Done — products with options and photos, shop details, setup checklist, read-only shop page |
 | Step 4. Shop and checkout | Done — delivery and store settings, cart, one-page checkout, cash orders priced by the API, buyer order page, seller order list (read-only) |
-| **Next: Step 5. KHQR** | Waits for gate G3 (Bakong from the real host) |
+| Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes; it must be done before step 8 (go live). Until then shops take cash on delivery only |
+| Step 6. Orders and Telegram | Done — order actions (confirm → pack → send by driver, bus or pickup → delivered → cash collected; failed, rebook, cancel), the buyer cancels while allowed and their page refreshes itself, Telegram alerts through an outbox with a Confirm button. Telegram runs in dry run until a bot token is set: send one real alert then |
+| **Next: Step 7. Admin, the minimum** | Not started |
 
 ## Overview
 
@@ -756,9 +758,9 @@ A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets 
 | 2. Data and login | Prisma schema and first migration from "Database schema" (Release 1 tables only), Row-Level Security, Telegram login, 2-question onboarding | A test proves merchant A cannot read merchant B's data; you can sign up and reach the dashboard | Done |
 | 3. Catalog | Categories, products with options, photos, description, show/hide; shop details; the setup checklist; a read-only shop page | On a phone, a product with 3 photos is added in under a minute and appears in the shop | Done: 44 seconds measured at 360 px |
 | 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order | Done: three copies sent at once made one order; totals recalculated by the API |
-| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted | **Next** — waits for gate G3 |
-| 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page | — |
-| 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database | — |
+| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted | Postponed until a Bakong token and gate G3; required before step 8 |
+| 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page | Done (Telegram in dry run until a bot token is set) |
+| 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database | **Next** |
 | 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test; buy the domain and hosting; staging and preview links; photo storage moves to Cloudflare R2; deploy | The launch checklist below is ticked; a real KHQR order completes on the live site | — |
 | 9. Beta | 5–10 sellers you onboard yourself; a Telegram group; fix the top three complaints each week | Two weeks of real orders, and sellers say they would pay | — |
 
@@ -1042,6 +1044,7 @@ The steps and their "Done when" checks are in "Roadmap: zero to live" above — 
 - [ ] A real 100៛ and a real $0.10 payment tested end to end with KHQR
 - [ ] A payment for the wrong amount, and the same result delivered twice, both change nothing
 - [ ] Store isolation test passing in CI
+- [ ] With the production bot token set, a real new-order alert reaches a seller's Telegram and its Confirm button works
 - [ ] Backup restored into a fresh database
 - [ ] Sentry alerts reach your Telegram
 - [ ] Khmer text checked by a native reader on a cheap Android phone

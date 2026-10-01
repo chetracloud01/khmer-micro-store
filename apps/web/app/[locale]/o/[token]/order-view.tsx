@@ -2,19 +2,60 @@
 
 import { approximateIn, BUYER_ORDER_STEPS, formatKhmerPhoneLocal, getBuyerProgress } from "@khmer-micro-store/shared";
 import { Button, cn } from "@khmer-micro-store/ui";
-import { Check, Clock, MapPin, PackageX, Phone, Store, Truck } from "lucide-react";
+import { Bus, Check, Clock, MapPin, PackageX, Phone, Store, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BuyerShell } from "@/components/buyer-shell";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
-import type { PublicOrder } from "@/lib/api";
+import { api, ApiError, type PublicOrder } from "@/lib/api";
 
-export function OrderView({ order }: { order: PublicOrder | null }) {
+/** How often an open order page asks for news (weak signal friendly; stops once the order is finished). */
+const REFRESH_EVERY_MS = 20_000;
+
+export function OrderView({ order, token }: { order: PublicOrder | null; token: string }) {
   const t = useTranslations("Orders");
   const tStore = useTranslations("Storefront");
   const tCheckout = useTranslations("Checkout");
   const locale = useLocale();
+  const tApp = useTranslations("App");
   const { paymentLabel, placeLabel, clockTime } = useOrderText();
+  const router = useRouter();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelProblem, setCancelProblem] = useState<string | null>(null);
+  const finished = !order || order.status === "completed" || order.status === "cancelled";
+
+  // The seller works on the order meanwhile: read it again now and then, and when the buyer comes back to the tab.
+  useEffect(() => {
+    if (finished) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = window.setInterval(refresh, REFRESH_EVERY_MS);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [finished, router]);
+
+  async function cancelOrder() {
+    setCancelling(true);
+    setCancelProblem(null);
+    try {
+      await api(`/public/orders/${encodeURIComponent(token)}/cancel`, { method: "POST" });
+    } catch (failure) {
+      // Already moved on (the shop confirmed it meanwhile): the page shows why after the refresh.
+      setCancelProblem(failure instanceof ApiError && failure.code === "action_not_allowed" ? tApp("orderMovedOn") : tApp("saveFailed"));
+    } finally {
+      setCancelling(false);
+      setConfirmCancel(false);
+      router.refresh();
+    }
+  }
 
   if (!order) {
     return (
@@ -105,6 +146,24 @@ export function OrderView({ order }: { order: PublicOrder | null }) {
             </p>
           )}
           <p className="text-muted">{paymentLabel(order)}</p>
+          {order.dispatch && order.dispatch.route !== "pickup" && (
+            <p className="flex items-start gap-2 border-t border-border pt-2">
+              {order.dispatch.route === "driver" ? <Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden="true" /> : <Bus className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden="true" />}
+              <span>
+                {order.dispatch.route === "driver" ? (
+                  <>
+                    <span className="block font-medium">{t("driver")}</span>
+                    {order.dispatch.driverName}
+                  </>
+                ) : (
+                  <>
+                    <span className="block font-medium">{order.dispatch.busCompany}</span>
+                    {t("ticketNumber")}: {order.dispatch.ticketNumber}
+                  </>
+                )}
+              </span>
+            </p>
+          )}
         </section>
 
         <section className="flex flex-col gap-2">
@@ -174,8 +233,29 @@ export function OrderView({ order }: { order: PublicOrder | null }) {
               {t("backToShop")}
             </Button>
           </Link>
+          {cancelProblem && (
+            <p role="alert" className="rounded-DEFAULT border border-warning/40 bg-warning/5 p-3 text-sm">
+              {cancelProblem}
+            </p>
+          )}
+          {order.canCancel && (
+            <Button variant="secondary" className="w-full text-danger" loading={cancelling} onClick={() => setConfirmCancel(true)}>
+              {t("cancelOrder")}
+            </Button>
+          )}
         </div>
       </main>
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title={t("cancelConfirmTitle")}
+        body={t("cancelConfirmBody")}
+        confirmLabel={t("cancelOrder")}
+        cancelLabel={t("keepOrder")}
+        danger
+        onConfirm={() => void cancelOrder()}
+        onClose={() => setConfirmCancel(false)}
+      />
     </BuyerShell>
   );
 }
