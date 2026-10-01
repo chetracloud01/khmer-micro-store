@@ -1,6 +1,37 @@
 # Khmer Micro-Store — Project Blueprint
 
-As of 2026-09-23
+As of 2026-10-01 · the one document for the whole project, from the first idea to running the live platform
+
+## How to read this blueprint
+
+This is the only plan document. Everything about the project — why it exists, how each workflow runs, how it is built, the order it is built in, and how it is run after launch — lives here. `CLAUDE.md` holds the short rules for every coding session and points back to sections of this file; `design/screens.md` holds the text spec of each screen. When a decision changes, change it here first.
+
+The document follows the project from start to end:
+
+| Part | Sections | Answers |
+| --- | --- | --- |
+| 1. Why | Overview, Market and how we win | What problem, for whom, and why sellers will choose us |
+| 2. What | Subscription tiers, Workflows from start to end | What the platform does, step by step, for sellers, buyers and the admin |
+| 3. How it's built | System architecture, Tech stack, UX/UI principles, User-friendly data input, Payments, Database schema, Security | The technical design every step follows |
+| 4. Where it runs | Deployment, Budget | Hosting, environments, costs |
+| 5. In what order | Roadmap: zero to live | Gates and steps, each with a "Done when" check and its status |
+| 6. After launch | Running the platform after launch | The routine, support, incidents, numbers to watch, and what "finished" means |
+| 7. How we work | Working with Claude Code, Build guide, Launch checklist | The daily method, tools and final checks |
+
+### Where we are now
+
+Updated at the end of every roadmap step.
+
+| Stage | Status |
+| --- | --- |
+| Mockups of every screen (design/screens.md) | Done — approved, kept at `/mockup` as the reference |
+| Gate G1. Save the work | Done — one branch per step, merged to `main` when its checks pass |
+| Gate G2. Sellers try the mockups | Test sheet ready (`design/seller-test.md`); results not yet recorded here |
+| Gate G3. Bakong from the real host | Open — must pass before step 5 (KHQR) |
+| Step 1. Foundations | Done — CI runs lint, typecheck, tests, build and a built-API health check. Staging and preview links move to step 8, when hosting is bought |
+| Step 2. Data and login | Done — schema, row-level security with two database users, Telegram login, 2-question onboarding |
+| Step 3. Catalog | Done — products with options and photos, shop details, setup checklist, read-only shop page |
+| **Next: Step 4. Shop and checkout** | Not started |
 
 ## Overview
 
@@ -24,6 +55,57 @@ Khmer Micro-Store lets a Telegram or Facebook seller open a mobile shop in under
 3. 5–10 real Phnom Penh merchants use it for two weeks during beta.
 
 **Not in the MVP:** native iOS/Android apps, delivery-company APIs, marketplace search across stores, loyalty points.
+
+## Market and how we win
+
+Vendra and Angkoro already sell the same core — a shop link, KHQR, cash on delivery and an order dashboard — for $10–15 a month. Matching them is the entry ticket, not a reason to switch. We win by owning the step after payment, **delivery**, and by **proving payment** without screenshots.
+
+- **Match** their core at launch, with no product limit on paid plans and a lower entry price.
+- **Beat** them on delivery (send an order to a driver, bus or pickup from the order itself) and on payment proof (the system confirms every KHQR payment with Bakong).
+- **Remove switching pain:** we import their catalog, set the shop up for free, and run alongside their old shop while they test.
+- **Keep them** with things that grow in value: the customer list, repeat-buyer tools and sales history.
+
+In one line to sellers: *"Same price or less, Khmer first, and we confirm every payment and help send every order."*
+
+### Competitors
+
+Taken from their own feature and pricing pages on 2026-09-30. "Not described" means their pages don't mention it, not that it is proven missing.
+
+| | [Vendra](https://www.vendra.app/features) | [Angkoro](https://angkoro.com/features) | [KHQRPay](https://khqr.cc/) | Marketplaces (Khmer Mart, Niront) |
+| --- | --- | --- | --- | --- |
+| Shop | One link, Telegram mini app | Telegram mini app, subdomain or own domain | None | A page inside the marketplace |
+| Payments | KHQR, ABA PayWay, cards, COD | KHQR, ABA Pay, Wing, Pi Pay, COD | KHQR + ABA Pay, checked with Bakong | Khmer Mart none; Niront KHQR, Wing, COD |
+| Orders | Dashboard, statuses | Dashboard, statuses, notifications | A Telegram alert per payment | Basic |
+| Delivery | Delivery or pickup at checkout | Zones and fees, "coordinate with partners" | None | Khmer Mart none |
+| Catalog | Unlimited, variants, Google Sheets sync | Variants, bulk import; 400 / 1,000 / unlimited by plan | None | Listings |
+| Stock, team, reports | Roles; others not described | Stock alerts, roles, analytics | Merchant slots | None |
+| Language | Mostly English | Khmer option | English | Varies |
+| Price | $15/month | $10 / $29 / $69 a month | $3–5/month | Free or by approval |
+
+### Where they are weak, and what we do about it
+
+| Weakness | Who | What we do |
+| --- | --- | --- |
+| Delivery stops at settings; sellers still message drivers one by one | Vendra, Angkoro | Send to driver, bus or pickup from the order, with the buyer's status page updated (step 6); delivery-company APIs later |
+| Telegram-first, while most buyers find products on Facebook and TikTok | Vendra, Angkoro | A web shop link that works best in the Facebook and TikTok in-app browsers |
+| Price rises with staff and product count | Angkoro | No product limit on paid plans; staff included |
+| English-heavy sign-up | Vendra | Khmer by default; sign up with one Telegram tap and two questions |
+| A payment tool with no shop | KHQRPay | Verified KHQR built into the shop |
+| No payment or delivery at all | Khmer Mart | Full checkout, then delivery |
+| Weak proof (reused testimonials) | Angkoro | Real named shops from our beta, Khmer video demos |
+
+### Winning sellers from competitors
+
+Only after Release 2's launch, when the platform takes money:
+
+1. **Find them:** shop links on Vendra and Angkoro domains in Facebook and Telegram seller groups.
+2. **Offer a switch deal:** show a competitor invoice and get the months left on it free (up to 3), plus free setup.
+3. **Move their shop for them:** we import products, photos and prices within 24 hours; the seller checks and approves.
+4. **Run both side by side** for 1–2 weeks, so no order is lost.
+5. **Prove the win in week one:** their first orders confirmed and sent through us.
+6. **Keep them:** a monthly Telegram report of sales and repeat buyers; one free month for each seller they refer.
+
+The switch offers and prices are proposals to test with real sellers, not research findings. Later ideas from this analysis (the fake-slip checker, comment-to-order for Facebook lives, cash owed per driver, catalog import) are in Release 3 of the roadmap.
 
 ## Subscription tiers
 
@@ -82,6 +164,100 @@ New store → Free trial (14 days) → Active (paid plan) → Payment due → Gr
 ### Business types
 
 The platform serves any business with **one** product model (categories, variants, unit of measure, brand) — there is no separate code path for a café, a shop or a restaurant. During onboarding the merchant picks a business type (`shop`, `restaurant`, `service`, `other`), stored on `stores.business_type`. It only pre-fills starting defaults — for example, the default unit of measure (Piece for a shop, Cup/Plate for a restaurant) and suggested first categories. The merchant can change any of these afterwards, and every feature works the same way for every business type.
+
+## Workflows from start to end
+
+Everything the platform does is one of six workflows. Each one names the roadmap step that builds it; the screens for all of them already exist as approved mockups.
+
+| # | Workflow | Who starts it | Ends when | Built in |
+| --- | --- | --- | --- | --- |
+| 1 | Seller sign-up and shop setup | Seller | The shop link is shared | Steps 2–3 (done), 4 (delivery), 6 (alerts) |
+| 2 | Buyer order and payment | Buyer | Paid by KHQR, or cash order placed | Steps 4–5 |
+| 3 | Fulfilment and delivery | Seller | Delivered, and any cash collected | Step 6 |
+| 4 | Order statuses and messages | The system, on every change | Completed or cancelled | Step 6 |
+| 5 | Subscription billing | The system, monthly | Renewed, or paused until paid | Step 10 (Release 2) |
+| 6 | Platform admin | The super admin | — (ongoing) | Steps 7 and 11 |
+
+Neither side should have to chat to know what happens next: every change shows on the seller's dashboard and the buyer's order page, and the seller gets a Telegram message for anything that needs them.
+
+### 1. Seller sign-up and shop setup
+
+Goal: from first tap to a shop link worth sharing in under 15 minutes, in Khmer by default.
+
+1. **Sign in** with one Telegram tap (phone number by SMS code joins in Release 2). The first sign-in creates the account; Telegram sign-in also turns on order alerts in the seller's private chat with the bot.
+2. **Two questions:** business type, then shop name and link (suggested from the name, checked live). The shop exists from this moment, on the Free trial — during the beta every shop counts as Basic and nobody is charged (`platform_settings.beta_all_basic`).
+3. **"Your shop is ready"** shows the link and QR code, and lists what is still missing before sharing.
+4. **Required before the link is shared** (one rule, `getMissingForSharing` in `packages/shared/shop-readiness.ts`, used by the dashboard checklist, the ready screen and the API):
+   - at least one visible product with a photo and a price (a service shop needs a price, not a photo);
+   - the shop's phone number;
+   - delivery settings saved at least once (zones and fees, pickup, provinces — step 4);
+   - a way to get paid: cash on delivery on, or a Bakong ID for KHQR. A Bakong ID is never forced.
+5. **Good to have:** a Bakong ID, a logo, identity verification (Release 2), a Telegram group for staff.
+6. **Test order:** the seller orders from their own shop and sees the alert arrive (after step 6).
+7. **Share** the link on Facebook, TikTok and Telegram, and print the QR code. Sharing unlocks only when step 4 above is complete.
+
+### 2. Buyer order and payment
+
+The buyer never has to message the seller: they order and pay on the shop page, and a KHQR order reaches the seller only once Bakong confirms the money.
+
+1. The buyer opens the shop link (usually inside Facebook, TikTok or Telegram), browses, and opens a product for photos, description and options.
+2. **Cart**, then **one-page checkout**: name, phone, delivery or pickup, area (Phnom Penh district or province) and landmark, the order currency (USD or KHR, for the whole order), and the payment method.
+3. The API creates the order in one transaction: totals rounded per line then summed, the exchange rate frozen on the order, an idempotency key so a double tap makes one order, and stock reserved on Pro and Advance (see "Multi-currency pricing and totals" and "Stock without overselling").
+4. **Paying by KHQR:** the buyer sees the QR with the amount and a 10-minute countdown. The worker checks Bakong by MD5 every 5 seconds and marks the order **Paid** only on an exact match of currency and amount. Unpaid after 10 minutes → **Cancelled** (`payment_timeout`) and any reserved stock is released.
+5. **Cash on delivery:** available for pickup and Phnom Penh delivery when the shop allows it (`isCodAvailable`); provinces always prepay. The order goes straight to the seller as **COD pending**.
+6. The buyer lands on the order page, which shows the status from then on. ABA PayWay joins in Release 3, behind the same payment adapter.
+
+### 3. Fulfilment and delivery
+
+The route is decided by the buyer's choice at checkout (`getDispatchRoute`), not picked again by the seller:
+
+| Route | When | After packing | Then |
+| --- | --- | --- | --- |
+| Driver | Phnom Penh delivery | **Waiting for driver** (the seller's own or a partner driver) | Driver picks up → **Out for delivery** |
+| Bus | Province delivery | Bus company and ticket number recorded → **Out for delivery** | The buyer sees the ticket number |
+| Pickup | Buyer collects | **Out for delivery** (ready to collect) | The buyer collects it |
+
+- Marked delivered: an order paid online is **Completed** at once; a cash order stays **Delivered** until the seller has the cash from the driver, then **Completed**.
+- Buyer unreachable or refused the cash: **Failed delivery**. The seller rebooks it (back to Packing) or cancels it.
+- Partner drivers start as people the seller messages through our Telegram bot; delivery-company APIs replace that in Release 3, where companies offer them.
+
+### 4. Order statuses and messages
+
+Every order moves through these 11 statuses, and only through `applyOrderAction` in `packages/shared/src/orders.ts`. Every change is written to `order_status_events`.
+
+| Status | Reached when | Seller | Buyer |
+| --- | --- | --- | --- |
+| Awaiting payment | Buyer chose KHQR; QR shown | — | QR and pay-by time |
+| Paid | Bakong confirms the exact amount | Telegram alert with Confirm / Open | Receipt |
+| COD pending | Buyer chose cash on delivery | Telegram alert with Confirm / Open | Order summary |
+| Confirmed | Seller accepts | — | "Confirmed" |
+| Packing | Seller starts packing | — | "Packing" |
+| Waiting for driver | Seller sends it by driver | Reminder until picked up | — |
+| Out for delivery | Driver picked up, bus parcel handed over, or pickup ready | — | Driver, ticket number or pickup address |
+| Delivered | Cash order handed over, cash not yet settled | Reminder to settle the cash | Thank-you, reorder link |
+| Completed | Delivered and paid (online, or cash settled) | — | — |
+| Cancelled | Payment timed out, buyer or seller cancelled (with a reason) | Telegram message | Reason |
+| Failed delivery | Buyer unreachable or refused | Telegram message | Rebook notice |
+
+The buyer always sees the status on their order page; a Telegram message goes to buyers who opened the shop from the bot. A buyer may cancel alone only while no money has moved and nothing is packed (`canBuyerCancel`); after paying online they ask the shop.
+
+### 5. Subscription billing (Release 2)
+
+Sellers renew by paying a KHQR code each month — nothing is charged automatically, because card auto-billing doesn't fit how Cambodians pay. The full rules are in "Subscription life cycle" above; in short:
+
+1. Free trial (14 days) → the seller picks a plan and pays its first invoice.
+2. 7 days before the period ends, an invoice arrives in Telegram; paying moves the period 30 days.
+3. Unpaid at the end: 7 days of grace with a banner and a daily reminder.
+4. Still unpaid: the shop **pauses** — buyers see "temporarily closed", the seller still sees everything. Paying at any time reopens it with every product, order and customer intact. Nothing is ever deleted.
+
+### 6. Platform admin
+
+The super admin (you, later with support and finance staff) keeps the platform healthy:
+
+- **Every day:** look at failed payment checks and new shops; answer seller questions in the support Telegram.
+- **Merchants:** see every shop, extend a trial or a period, change a plan by hand — every change in the audit log (step 7).
+- **Money (Release 2):** subscriptions, invoices (mark paid by hand with a bank reference, or void), buyer payments, identity checks.
+- **Platform settings:** the allowed exchange-rate band, the support contact, the beta "every shop counts as Basic" switch.
 
 ## System architecture
 
@@ -184,13 +360,13 @@ The super-admin area (laptop-first, still usable on a phone) grows by adding pag
 
 - **Menu:** defined once in `admin/admin-nav.ts` — grouped sections, each item a label, icon, route and optional badge count. Adding a page = one entry there plus the page folder. Unbuilt entries set `comingSoon` and show a standard placeholder until built. Laptop: a sidebar that collapses to icons; phone/tablet: the same menu in a drawer (a bottom tab bar can't hold 10+ items). Groups fold open/closed (remembered per viewer; the group holding the current page always opens), one highlight slides to the current page, only the menu scrolls (logo and collapse button stay put) and keeps the current page in view, and pages fade in on change. All motion is off for viewers who ask for reduced motion.
 - **Every page** starts with a page header (title, one-line description, actions) and uses the shared blocks in `admin/admin-ui.tsx`: stat cards, status pills, data toolbar (search + filter chips), table on laptop / cards below, empty state, pagination, side detail panel, and a confirm dialog for risky actions.
-- **Every form** — admin, merchant and buyer — follows one standard (`mockup/form-ui.tsx`): form sections (title and help beside the fields on laptop, above them on narrow merchant forms), edits kept in a draft until Save, a sticky Save/Cancel bar that's only active once something changed, and a Zod schema from `packages/shared` (`product.ts`, `store.ts`, `checkout.ts`, `stock.ts`, `admin-settings.ts`) — the same schema the API validates with. Schemas report problems as error codes (`form-errors.ts`), never English text; the screen shows each code in the viewer's language from the `FormErrors` messages, and the API returns the same codes per field. Price and quantity boxes are read with `parseUsdInput` / `parseKhrInput` / `parseQuantityInput`, so a typo is rejected, never silently rounded. Values owned by code (like plan rules) are shown read-only, never edited in the UI.
+- **Every form** — admin, merchant and buyer — follows one standard (`apps/web/components/form-ui.tsx`): form sections (title and help beside the fields on laptop, above them on narrow merchant forms), edits kept in a draft until Save, a sticky Save/Cancel bar that's only active once something changed, and a Zod schema from `packages/shared` (`product.ts`, `store.ts`, `checkout.ts`, `stock.ts`, `admin-settings.ts`) — the same schema the API validates with. Schemas report problems as error codes (`form-errors.ts`), never English text; the screen shows each code in the viewer's language from the `FormErrors` messages, and the API returns the same codes per field. Price and quantity boxes are read with `parseUsdInput` / `parseKhrInput` / `parseQuantityInput`, so a typo is rejected, never silently rounded. Values owned by code (like plan rules) are shown read-only, never edited in the UI.
 - **Every admin change** is written to the audit log.
 
 ### Theme and lists (all screens)
 
 - **Colours only through tokens** (`brand`, `on-brand`, `success`, `warning`, `info`, `danger`, `bg`, `canvas`, `fg`, `muted`, `border`, `nav-*` in `packages/ui/src/globals.css`) — never raw Tailwind colours like `amber-500` or `text-white` on a brand background. That's what lets every viewer switch Light / Dark / Device mode and one of 5 accent colours (the palette button on every screen), saved per viewer and applied before first paint.
-- **Every list uses the shared data grid** (`mockup/data-grid.tsx`): search, quick-filter chips with counts, a filter panel, sortable columns, row selection with bulk actions, CSV export (UTF-8 with BOM so Excel reads Khmer), show/hide columns, row density and page size remembered per viewer. Laptop shows a table; phones and tablets show cards with a sort menu. Risky bulk actions go through the shared confirm dialog.
+- **Every list uses the shared data grid** (`apps/web/components/data-grid.tsx`): search, quick-filter chips with counts, a filter panel, sortable columns, row selection with bulk actions, CSV export (UTF-8 with BOM so Excel reads Khmer), show/hide columns, row density and page size remembered per viewer. Laptop shows a table; phones and tablets show cards with a sort menu. Risky bulk actions go through the shared confirm dialog.
 
 ## User-friendly data input
 
@@ -216,8 +392,8 @@ Sign-up and login are the same flow: the first verified login creates the accoun
 
 | Method | Status | Notes |
 | --- | --- | --- |
-| **Continue with Telegram** (main button) | Launch | One tap via the Telegram Login Widget (hash checked with the bot token, rejected if older than 24 hours). Also turns on order alerts in the merchant's private chat with the bot — no setup. |
-| **Continue with phone** (SMS code) | Launch | For sellers without Telegram. 6-digit code, valid 5 minutes, 5 wrong tries then a new code is needed, resend after 60 seconds, limits per phone and per device, bot check (Turnstile) before any SMS is sent to stop SMS-pumping fraud. One code box with `autocomplete="one-time-code"` so phones fill it from the SMS. |
+| **Continue with Telegram** (main button) | Release 1 (built in step 2) | One tap via the Telegram Login Widget (hash checked with the bot token, rejected if older than 24 hours). Also turns on order alerts in the merchant's private chat with the bot — no setup. |
+| **Continue with phone** (SMS code) | Release 2 (step 12) | For sellers without Telegram. 6-digit code, valid 5 minutes, 5 wrong tries then a new code is needed, resend after 60 seconds, limits per phone and per device, bot check (Turnstile) before any SMS is sent to stop SMS-pumping fraud. One code box with `autocomplete="one-time-code"` so phones fill it from the SMS. |
 | Continue with Google | Later | Free; handy on laptops. Add to `ENABLED_LOGIN_METHODS` when it ships. |
 | Facebook, email + password | Not planned | Facebook Login needs Meta business verification and app review; passwords mean forgotten passwords and reset emails. |
 
@@ -230,20 +406,22 @@ Sign-up and login are the same flow: the first verified login creates the accoun
 1. **Business type** — only pre-fills defaults (units, starting categories).
 2. **Shop name and link**, with an optional logo on the same screen — the link slug is suggested automatically (`sokha-coffee`) and checked live for availability.
 
-Then the "Your shop is ready" screen: shop QR code, copy/share link, and a reminder to add the Bakong ID. Nothing else blocks a new seller:
+Then the "Your shop is ready" screen: shop QR code, copy/share link, and what is still missing before the link should be shared. Nothing blocks a new seller from reaching the dashboard:
 
-- **Getting paid** (Bakong account ID, checked with Bakong's account-check API) is added from the dashboard. Until then the dashboard shows a banner, and checkout offers only the payment methods the shop has set up (`getAvailablePaymentMethods`): no KHQR without a Bakong ID, no ABA PayWay without PayWay keys; if cash on delivery isn't possible either, buyers see "This shop isn't taking orders online yet".
+- **Getting paid** (Bakong account ID, checked with Bakong's account-check API from step 5) is added from the dashboard and is optional: cash on delivery alone lets a shop take orders. Checkout offers only the payment methods the shop has set up (`getAvailablePaymentMethods`): no KHQR without a Bakong ID, no ABA PayWay without PayWay keys; if cash on delivery isn't possible either, buyers see "This shop isn't taking orders online yet".
 - **Order alerts** already work for Telegram sign-ins (private chat). Adding the bot to a staff group is optional, from Profile.
-- A **setup checklist** on the dashboard home tracks: Bakong ID (first, highlighted), first product, order alerts, logo, identity verification — and disappears when all are done.
+- A **setup checklist** on the dashboard home shows the four things a buyer needs before the link is shared — a product, the shop's phone, delivery, a way to get paid (`getMissingForSharing`) — then "Share your shop link", which unlocks once they're done. Bakong ID, logo and identity verification sit underneath as "Good to have". The checklist disappears when everything is done. Full flow: "Workflows from start to end", workflow 1.
 
 ### Adding a product (target: under 60 seconds)
 
-- Photos first: take or pick up to 6, compressed in the browser before upload.
-- Title in Khmer; English optional with an "Auto-translate" button the merchant can edit.
+- Photos first: take or pick up to 6, shrunk in the browser (longest side 1,600 px, JPEG) and uploaded in the background while the seller types. The API checks each file's bytes (JPEG, PNG or WebP only, 2 MB at most) and stores it under the shop's own folder; the database keeps only its key.
+- Title in Khmer; English optional (blank = the Khmer title is used). An "Auto-translate" button comes with the AI product writer (Release 3).
 - Two price boxes side by side: USD and KHR. The merchant can fill one or both. If only one is filled, the "Auto-fill" button suggests the other from the store's exchange rate, and the merchant can change it. Each variant (size, colour) has its own two prices.
 - Stock: a − / + stepper, not a blank box.
 - Variants hidden behind "Add sizes or colours"; when opened, type values as chips (S, M, L) and a price/stock grid is generated.
-- "Save as draft" is automatic every few seconds, so a dropped connection loses nothing.
+- A new product being typed is saved on the phone a moment after each change (photos included, as their uploaded keys), so a phone call or a closed tab loses nothing; reopening the form offers to continue or discard it.
+- New categories, brands and units are added from the form itself and saved at once. SKUs left blank are made from the title (`ICED-COFFEE-LARGE`), unique per store.
+- On a plan without wholesale prices the wholesale boxes are hidden; prices saved earlier stay untouched on the server and come back after an upgrade.
 
 ### Validation behaviour
 
@@ -447,14 +625,15 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 | Area | Rule |
 | --- | --- |
 | Merchant login | Telegram Login Widget; verify its hash with the bot token on the server and reject logins older than 24 hours |
-| Sessions | Access token 15 min, refresh token 30 days in an httpOnly, Secure, SameSite cookie; logout revokes it |
+| Sessions | A random session token in an HttpOnly, SameSite=Lax cookie (Secure in production), valid 30 days on that device; the database stores only its SHA-256 hash, so a leaked table can't sign anyone in; logout deletes it |
 | Super admin | Separate login with 2FA (TOTP); admin routes on their own path, IP-limited if possible |
 | Roles | Owner and staff per store; staff cannot change payment settings or delete products |
 | Payments | KHQR: trust only your own MD5 poll. PayWay: verify HMAC-SHA512 header, then Check Transaction API. Match amount and currency. Idempotent processing |
 | Telegram webhook | `secret_token` header checked on every request; button presses checked against store membership |
-| Input | Zod on every endpoint; Prisma parameterised queries; image uploads limited to JPEG/PNG/WebP, 5 MB, re-encoded |
+| Input | Zod on every endpoint; Prisma parameterised queries; image uploads checked by their bytes (JPEG/PNG/WebP only, whatever the file name says), 2 MB at most after the browser shrinks them, stored per shop and served with `nosniff` |
 | Abuse | Cloudflare WAF + Turnstile on checkout; limits per phone and device, not only per IP (mobile users share IPs) |
-| Secrets | Only in the hosting provider's environment settings; `.env` never in Git; PayWay keys encrypted at rest |
+| Secrets | Only in the hosting provider's environment settings; `.env` never in Git; PayWay keys encrypted at rest. Settings are checked at start-up (`packages/shared/env.ts`), and an error names the missing setting, never its value |
+| Development login | A "test merchant" login exists only in development and is refused in production |
 | Headers | HTTPS only, HSTS, CSP, no framing of admin pages |
 | Privacy | Buyer phone and address visible only to that store; masked in logs |
 | Backups | Daily automatic backups, kept 14 days, plus a monthly restore test |
@@ -482,7 +661,7 @@ Vercel's free Hobby plan is for personal, non-commercial use only, so a business
 
 | Environment | Branch | Payments | Purpose |
 | --- | --- | --- | --- |
-| Local | any | Sandbox | Your laptop, Docker Compose |
+| Local | any | Sandbox | Your PC: PostgreSQL 16 installed on Windows (`infra/setup-local-db.cmd`), or Docker Compose |
 | Preview | each pull request | Sandbox | Check a feature on your phone before merging |
 | Staging | `main` before release | Sandbox | Final test with real Telegram bot (test bot) |
 | Production | release tag or `main` | Live | Real merchants |
@@ -560,27 +739,29 @@ The screens are designed first as working mockups (design/screens.md). That part
 
 These cost days, not weeks, and each one can change what gets built.
 
-| Gate | Do | Done when |
-| --- | --- | --- |
-| G1. Save the work | Commit the mockups; from here on, one branch per step, merged when its check passes | Nothing uncommitted on `main` at the end of any day |
-| G2. Sellers try the mockups | Sit with 3–5 real sellers. On their own phone, each one: sets up a shop, adds a product, places an order as a buyer, then handles it as the seller. Watch; don't help | Every one finishes without getting stuck. Anything that stopped two or more of them is fixed in the mockup first |
-| G3. Bakong from the real host | Register the Bakong Open API token. From the server you plan to host on, create one KHQR and check it by MD5 after paying 100៛ | The check returns "paid" from that host. If Bakong refuses the host, choose Deployment Option B (or the small Cambodian checker) **now**, before payment code exists |
+| Gate | Do | Done when | Status |
+| --- | --- | --- | --- |
+| G1. Save the work | Commit the mockups; from here on, one branch per step, merged when its check passes | Nothing uncommitted on `main` at the end of any day | Done |
+| G2. Sellers try the mockups | Sit with 3–5 real sellers. On their own phone, each one: sets up a shop, adds a product, places an order as a buyer, then handles it as the seller. Watch; don't help (`design/seller-test.md`) | Every one finishes without getting stuck. Anything that stopped two or more of them is fixed in the mockup first | Sheet ready; record the results here |
+| G3. Bakong from the real host | Register the Bakong Open API token. From the server you plan to host on, create one KHQR and check it by MD5 after paying 100៛ | The check returns "paid" from that host. If Bakong refuses the host, choose Deployment Option B (or the small Cambodian checker) **now**, before payment code exists | Open — required before step 5 |
 
 ### Release 1 — First orders (free beta, 5–10 sellers)
 
 A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets a Telegram alert and moves the order to delivered. Every shop has the same features (the Basic plan's) and nobody is charged yet.
 
-| Step | Build | Done when |
-| --- | --- | --- |
-| 1. Foundations | CI (lint, types, tests, build) on every pull request; staging environment; error tracking | A pull request shows a preview link and CI is green |
-| 2. Data and login | Prisma schema and first migration from "Database schema" (Release 1 tables only), Row-Level Security, Telegram login, 2-question onboarding | A test proves merchant A cannot read merchant B's data; you can sign up and reach the dashboard |
-| 3. Catalog | Categories, products with options, photos, description, show/hide; the setup checklist | On a phone, a product with 3 photos is added in under a minute and appears in the shop |
-| 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order |
-| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted |
-| 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page |
-| 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database |
-| 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test, deploy | The launch checklist below is ticked; a real KHQR order completes on the live site |
-| 9. Beta | 5–10 sellers you onboard yourself; a Telegram group; fix the top three complaints each week | Two weeks of real orders, and sellers say they would pay |
+| Step | Build | Done when | Status |
+| --- | --- | --- | --- |
+| 1. Foundations | CI (lint, types, tests, build) on every pull request; staging environment; error tracking | A pull request shows a preview link and CI is green | Done: CI green, plus a built-API health check. Preview links and staging move to step 8 (no hosting bought yet) |
+| 2. Data and login | Prisma schema and first migration from "Database schema" (Release 1 tables only), Row-Level Security, Telegram login, 2-question onboarding | A test proves merchant A cannot read merchant B's data; you can sign up and reach the dashboard | Done |
+| 3. Catalog | Categories, products with options, photos, description, show/hide; shop details; the setup checklist; a read-only shop page | On a phone, a product with 3 photos is added in under a minute and appears in the shop | Done: 44 seconds measured at 360 px |
+| 4. Shop and checkout | Shop page, product page, cart, one-page checkout; delivery zones, pickup and province settings; orders created with frozen totals and an idempotency key | A cash order lands with the right total in the buyer's currency; sending the same checkout twice makes one order | **Next** |
+| 5. KHQR | `BakongKhqrProvider` in `packages/payments`; worker checks the MD5 every 5 seconds, confirms exact amount and currency, expires after 10 minutes; token renewal | Real 100៛ and $0.01 payments confirm by themselves; an unpaid code cancels the order; a wrong amount is not accepted | Waits for gate G3 |
+| 6. Orders and Telegram | Seller order list and detail with the 11 statuses; buyer order page; Telegram alerts to the seller with Confirm / Open buttons; status messages to the buyer; send by driver, bus or pickup | A seller runs a full day of test orders from their phone; every status change reaches the buyer's page | — |
+| 7. Admin, the minimum | Merchant list, extend a trial, audit log; failed payment checks alert the admin's Telegram | You can see every shop and unblock one without touching the database | — |
+| 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test; buy the domain and hosting; staging and preview links; photo storage moves to Cloudflare R2; deploy | The launch checklist below is ticked; a real KHQR order completes on the live site | — |
+| 9. Beta | 5–10 sellers you onboard yourself; a Telegram group; fix the top three complaints each week | Two weeks of real orders, and sellers say they would pay | — |
+
+Every step ends the same way before it is merged: lint, typecheck and all tests pass; a fresh database built from the migrations matches the schema and every `store_id` table has row-level security; the built API passes the step's end-to-end checks; the pages are checked on a 360 px phone in Khmer and English; and logs hold no secrets or phone numbers.
 
 Left out of Release 1 on purpose, although their screens exist: subscription billing, plan limits, KYC, stock, wholesale prices, ABA PayWay, phone-number login, admin roles.
 
@@ -600,7 +781,70 @@ Left out of Release 1 on purpose, although their screens exist: subscription bil
 
 Build in the order sellers ask for them, one at a time: stock with "Sold out" (Pro); wholesale prices; warehouses and branches (Advance); ABA PayWay; admin users and roles with 2FA; customers, discounts, staff and reports (screens S14–S17); link previews for Facebook and TikTok; CSV product import; cash owed per driver; delivery-company APIs; the AI product writer.
 
-**After launch, scale only when numbers say so:** add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb.
+Ideas from "Market and how we win", to test with sellers before building:
+
+| Idea | What it does | Why |
+| --- | --- | --- |
+| Fake-slip checker | A seller pastes payment details; the system asks Bakong whether it was really paid. A free stand-alone version brings sellers in | Fake payment screenshots are a daily pain no competitor solves |
+| Comment-to-order for Facebook lives | A buyer comments a product code during a live and gets a checkout link | Confirm first how common "CF" comments are in Cambodian lives |
+| Catalog import and "copy my shop" | From Google Sheets, Excel or a Vendra/Angkoro/Facebook shop | Removes the effort of switching |
+| Customer list and broadcasts | Buyer history; tell past buyers about new stock on Telegram | Grows repeat sales and keeps sellers with us |
+| Pre-orders and group buys | KHQR deposits for imported goods, sent when the batch arrives | Common for imported clothes and cosmetics |
+| Paid add-ons | Own domain, extra staff, SMS alerts, AI photo tools | Revenue beyond the plans |
+| Agent programme | Students or freelancers in provinces onboard sellers for a commission | Reach outside Phnom Penh |
+
+**After launch:** see "Running the platform after launch" for the routine, incidents, numbers to watch and when to scale.
+
+## Running the platform after launch
+
+Going live is the middle of the project, not the end. From step 8 on, the platform holds other people's shops and buyers' money moves through it every minute, so running it well matters as much as building it.
+
+### The routine
+
+| When | Do | Takes |
+| --- | --- | --- |
+| Every day | Read the admin alerts chat: failed payment checks, Bakong token renewal, errors from Sentry. Answer the seller support Telegram. Look at new shops and help any stuck on the setup checklist | 15–30 min |
+| Every week | Fix the top three seller complaints (one branch each). Check that the daily backup ran. Read the numbers below. Ship the week's changes to production | 2–4 hours |
+| Every month | Restore last night's backup into a fresh database and open a shop from it. Update dependencies (`pnpm audit`, Dependabot) on a branch. Check hosting costs against "Budget". Send sellers their monthly report (Release 3) | Half a day |
+| Every quarter | Review the Security section line by line against the code; renew anything that expires (domain, tokens); revisit prices and plans with real numbers | A day |
+
+### Support
+
+- One support Telegram for sellers (`platform_settings.support_telegram`), answered within the working day; a pinned message with Khmer video guides for the first steps.
+- Fix data through the admin panel, never by editing the database by hand. If the admin panel can't do something you need twice, it becomes a roadmap item.
+- Buyers contact the shop, not us; the shop's phone is on its page and the order page.
+
+### When something breaks
+
+| Problem | First move | Then |
+| --- | --- | --- |
+| A release broke something | Roll back: Vercel instant rollback, redeploy the previous tag on Railway | Fix on a branch, with a test that would have caught it |
+| Bakong unreachable or token renewal failed | Admin alert fires; orders keep waiting, nothing is marked paid by guesswork | Renew the token by hand; checks resume and catch up, because every pending MD5 is still checked until it expires |
+| A payment was taken but the order says unpaid | Find it in "Failed checks"; ask Bakong again from there | Never set an attempt to paid by hand. If the money truly arrived, Bakong's answer confirms it |
+| Database down or corrupted | Restore the latest backup into a new database and point the API at it | Write down what was lost and tell affected sellers the same day |
+| A seller reports someone else's data | Treat as a security incident: take the affected route offline | Find the missing `store_id` / row-level security gap; add a test; tell the seller |
+
+### Numbers to watch
+
+| Number | Healthy | Where |
+| --- | --- | --- |
+| Shops that finish the setup checklist within a day | More than half | Admin merchants |
+| Orders per active shop per week | Rising | Admin overview |
+| KHQR orders paid before the 10 minutes run out | Above 80% | Payments |
+| Failed payment checks | Near zero; every one explained | Failed checks |
+| Paying shops vs hosting cost | 10–15 paying shops cover hosting ("Budget") | Subscriptions |
+| Shops that pay again the next month | Above 80% | Subscriptions |
+
+Scale only when the numbers say so: add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb (see "When you grow" in Budget).
+
+### What "finished" means
+
+| Milestone | Finished when |
+| --- | --- |
+| Release 1 — first orders | Two weeks of real orders from 5–10 beta sellers, with KHQR and cash, and the sellers say they would pay |
+| Release 2 — getting paid | Shops pay their own invoices by KHQR every month without your help, and paying shops cover the hosting |
+| Release 3 — bigger shops | Built feature by feature, in the order sellers ask for them; it never "finishes", it is the routine |
+| The project as a whole | The platform pays for itself, the routine above runs in a few hours a week, and every decision still lives in this blueprint |
 
 ## Working with Claude Code
 
@@ -614,7 +858,7 @@ One small feature per session, on its own branch, reviewed by you before merge. 
 2. Review the plan; correct it.
 3. "Implement step 1 with tests. Run lint, typecheck and tests, and fix failures."
 4. Review the diff in VS Code's Source Control tab.
-5. "Commit with message `feat: …`, push the branch, open a pull request."
+5. "Run the full check for this step, then commit with message `feat: …` and push the branch." When it's reviewed: "merge it".
 
 The first prompt for each roadmap step is in "Build guide", Part 7.
 
@@ -624,35 +868,50 @@ The first prompt for each roadmap step is in "Build guide", Part 7.
 
 Follow these parts in order. Everything up to Part 7 runs on your own PC for free; you buy a domain and hosting only at roadmap step 8 (gate G3 needs a server for one afternoon).
 
+### The tools, in plain words
+
+| Part | Tool | In simple words |
+| --- | --- | --- |
+| Language | TypeScript | JavaScript with safety checks, so fewer bugs reach sellers |
+| Web app | Next.js | Builds the buyer shop, the seller dashboard and the admin in one project |
+| Design | Tailwind CSS + shadcn/ui | Ready-made, clean buttons, forms and cards |
+| API | NestJS | The server the web app talks to; it checks every request |
+| Database | PostgreSQL + Prisma | Stores shops, products and orders; Prisma lets the code talk to it safely |
+| Background jobs | pg-boss | Runs payment checks and reminders in the background, using the same database |
+| Telegram bot | Telegram Bot API | Sends order alerts and reminders |
+| Photos | Local folder now, Cloudflare R2 from step 8 | Cheap storage for product photos |
+| Hosting | Vercel + Railway, or one VPS (see Deployment) | Runs the app, worker and database online |
+
 ### Part 1: Install once (Day 1)
+
+This is the setup the project actually uses: a Windows 11 PC (8 GB of memory is enough if you close what you don't need), without WSL or Docker.
 
 | # | Tool | How | Check it works |
 | --- | --- | --- | --- |
-| 1 | WSL2 + Ubuntu (Windows only) | PowerShell as admin: `wsl --install`, restart | `wsl -l -v` shows Ubuntu, version 2 |
-| 2 | Node.js 22 LTS | Inside Ubuntu, install with nvm: `nvm install 22` | `node -v` shows v22 |
-| 3 | pnpm | `corepack enable` | `pnpm -v` |
-| 4 | Git | `sudo apt install git`, then set `user.name` and `user.email` | `git --version` |
-| 5 | Docker Desktop | Install on Windows; Settings → Resources → WSL integration → on for Ubuntu | `docker run hello-world` |
-| 6 | VS Code | Install on Windows, plus extensions: WSL, ESLint, Prettier, Prisma, Tailwind CSS IntelliSense, Docker | From Ubuntu, `code .` opens VS Code |
-| 7 | Claude Code | Follow the current official install guide at docs.claude.com | `claude` starts and asks you to log in |
-| 8 | GitHub CLI | `sudo apt install gh`, then `gh auth login` | `gh auth status` |
-| 9 | cloudflared (later, for ABA PayWay callbacks) | Install from Cloudflare's docs | `cloudflared --version` |
+| 1 | Node.js 22 LTS | Windows installer from nodejs.org | `node -v` shows v22 |
+| 2 | pnpm | `corepack enable` | `pnpm -v` |
+| 3 | Git for Windows | Installer from git-scm.com (includes Git Bash); set `user.name` and `user.email` | `git --version` |
+| 4 | PostgreSQL 16 | Windows installer from postgresql.org, then run `infra/setup-local-db.cmd` once: it creates the owner user, the everyday app user and the database | `pnpm db:deploy` applies the migrations |
+| 5 | VS Code | Installer, plus extensions: ESLint, Prettier, Prisma, Tailwind CSS IntelliSense | `code .` opens the project |
+| 6 | Claude Code | Follow the current official install guide | `claude` starts and asks you to log in |
+| 7 | cloudflared (later, for ABA PayWay callbacks and phone testing in Telegram) | Install from Cloudflare's docs | `cloudflared --version` |
 
-Work inside the Ubuntu (WSL) file system, for example `~/projects/`, not in `C:\Users`. It is much faster and avoids file-permission errors.
+Docker Desktop (`pnpm db:up`) works too on a PC that supports it; it isn't needed. Don't run the production build (`pnpm build`) while the web dev server is running — it overwrites the dev server's files; stop it first.
 
 ### Part 2: Create the project (Day 1)
 
-This starter kit already contains the folders and files. Copy the whole `khmer-micro-store` folder to `~/projects/`, then:
+The project lives at `D:\PROJECT\khmer-micro-store` and on GitHub at `github.com/chetracloud01/khmer-micro-store`. To set it up on a new PC:
 
 ```bash
-cd ~/projects/khmer-micro-store
-git init -b main
-git add . && git commit -m "initial commit: project context"
-gh repo create khmer-micro-store --private --source=. --push
-code .
+git clone https://github.com/chetracloud01/khmer-micro-store.git
+cd khmer-micro-store
+pnpm install
+copy .env.example .env      # then fill in the values; never commit .env
+pnpm db:deploy
+pnpm dev
 ```
 
-The repo must be **private**. In VS Code, open the terminal with Ctrl + backtick (the key under Esc). This is where you run `claude` every day.
+The repo should be **private**. In VS Code, open the terminal with Ctrl + backtick (the key under Esc). This is where you run `claude` every day.
 
 ### Part 3: Give Claude your workflow (Day 1–2)
 
@@ -719,17 +978,18 @@ flowchart LR
 
 ```bash
 git switch main && git pull
-git switch -c feat/checkout-screen
-pnpm db:up
+git switch -c feat/step4-checkout
 claude
 ```
+
+PostgreSQL installed on Windows runs by itself; with Docker, start it first with `pnpm db:up`.
 
 1. **Plan:** "Read CLAUDE.md. Today: build the checkout mockup from @design/screens.md. Propose a plan."
 2. **Correct the plan** if anything is wrong, then say "go".
 3. **Check it yourself** on your PC and on your phone (`http://<PC-IP>:3000` on the same Wi-Fi). Give feedback in words or with a marked-up screenshot.
 4. **Review the diff** in VS Code Source Control (Ctrl+Shift+G). Ask "explain this change" for anything unclear.
 5. **Save:** "Run lint, typecheck and tests, then commit with message 'feat: checkout mockup' and push."
-6. **Merge:** `gh pr create --fill`, wait for CI to pass on GitHub, then `gh pr merge --squash`.
+6. **Merge:** say "merge it". The branch is merged into `main` fast-forward (a straight history) and pushed; then check that GitHub Actions passes on `main`.
 7. **Reset:** `/clear` before the next feature.
 
 One branch = one feature = one day or less. Small tasks are where Claude works best.
@@ -766,7 +1026,9 @@ The steps and their "Done when" checks are in "Roadmap: zero to live" above — 
 | Claude forgets a rule | Add it to CLAUDE.md so every future session knows it |
 | You repeat the same instruction | Save it as a command in `.claude/commands/` |
 | Session feels slow or confused | `/compact`, or `/clear` and start the task again |
-| Docker database acting strange | `pnpm db:down` then `pnpm db:up`; reset data with `pnpm db:reset` (local only; created in roadmap step 2) |
+| Local database acting strange | Windows: restart the "postgresql-x64-16" service. Docker: `pnpm db:down` then `pnpm db:up` |
+| The PC runs out of memory | Close the browser tabs and apps you don't need; run either the dev servers or a production build, not both |
+| `prisma generate` fails with EPERM on Windows | The running API holds the database engine file: stop the API, run it again |
 | Not sure a change is safe | "Explain this diff line by line and list the risks" before merging |
 
 **Three rules keep this safe:** plan before coding, keep every task small, and review every diff yourself before committing, especially anything touching payments, login or migrations.
@@ -800,3 +1062,11 @@ The steps and their "Done when" checks are in "Roadmap: zero to live" above — 
 - [NBC Bakong Open API Document (PDF)](https://bakong.nbc.gov.kh/download/KHQR/integration/Bakong%20Open%20API%20Document.pdf)
 - [Vercel Hobby plan](https://vercel.com/docs/plans/hobby)
 - [Railway pricing plans](https://docs.railway.com/pricing/plans)
+
+Competitors (as of 2026-09-30, from their own pages):
+
+- [Vendra features](https://www.vendra.app/features), [Vendra delivery and pickup](https://www.vendra.app/features/delivery-pickup-management), [Vendra home and pricing](https://www.vendra.app/)
+- [Angkoro features](https://angkoro.com/features), [Angkoro home and pricing](https://angkoro.com/)
+- [KHQRPay](https://khqr.cc/)
+- [Khmer Mart on Google Play](https://play.google.com/store/apps/details?id=com.khmart24.app)
+- [Niront: selling online in Cambodia](https://niront.com/blogs/education/sell-online-in-cambodia-best-marketplace-platform-for-local-sellers)

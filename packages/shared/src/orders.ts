@@ -3,7 +3,7 @@ import type { PaymentMethod } from "./checkout";
 import type { Fulfilment } from "./delivery";
 import { khmerPhoneSchema } from "./phone";
 
-// The life of an order (docs/App Workflows "Order statuses"). One fixed set
+// The life of an order (docs/blueprint.md "Workflows from start to end", workflow 4). One fixed set
 // of statuses, and one place that says which step may follow which — the
 // buyer's order page, the seller's dashboard, the API and the Telegram
 // messages all read from here.
@@ -36,7 +36,7 @@ export type OrderAction =
   | "rebook"
   | "cancel";
 
-/** The three ways an order leaves the shop (docs/App Workflows "Fulfillment and delivery"). */
+/** The three ways an order leaves the shop (docs/blueprint.md "Workflows from start to end", workflow 3). */
 export type DispatchRoute = "driver" | "pickup" | "bus";
 
 /** The parts of an order the rules below need. */

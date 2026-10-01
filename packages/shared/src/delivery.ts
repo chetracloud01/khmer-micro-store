@@ -3,7 +3,7 @@ import { isPhnomPenhDistrict, PHNOM_PENH_DISTRICTS } from "./locations";
 import { convertKhrToUsdCents, convertUsdCentsToKhr, type Currency } from "./money";
 import { khmerPhoneSchema } from "./phone";
 
-// How a shop gets orders to buyers (docs/App Workflows "Set delivery"):
+// How a shop gets orders to buyers (docs/blueprint.md "Workflows from start to end", workflow 1):
 // Phnom Penh districts grouped into zones with a fee each, pickup at the
 // shop, provinces by bus, and the drivers an order can be handed to.
 

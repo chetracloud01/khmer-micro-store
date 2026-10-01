@@ -5,7 +5,7 @@ What each screen contains. How it must look and behave is in
 
 Status: **Built** = matches the docs · **Change** = exists, needs the
 changes listed · **New** = not built yet.
-Phase: from `docs/Winning Strategy` — L = launch, 2 = delivery and
+Phase: from `docs/blueprint.md` "Market and how we win" — L = launch, 2 = delivery and
 switching, 3 = growth.
 
 ## Buyer

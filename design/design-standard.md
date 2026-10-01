@@ -2,9 +2,8 @@
 
 The rules every screen follows. Read this before building or changing a
 screen; `design/screens.md` says *what* each screen contains, this file says
-*how* it must look and behave. Source documents: `docs/blueprint.md`,
-`docs/App Workflows Micro-Merchant Platform.md`,
-`docs/Winning Strategy Micro-Merchant Platform vs Competitors.md`.
+*how* it must look and behave. Source document: `docs/blueprint.md` (the
+one plan for the whole project).
 
 ## 1. What the app is for
 
@@ -192,7 +191,7 @@ has to message the seller.
 
 ## 7. Order statuses (one wording everywhere)
 
-From `docs/App Workflows`. The same names, colours and order on the
+From `docs/blueprint.md` "Workflows from start to end". The same names, colours and order on the
 buyer's order page, the seller's order list and Telegram messages.
 
 | Status | Colour | Buyer sees | Seller's next button |
