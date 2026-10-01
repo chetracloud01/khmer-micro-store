@@ -1,8 +1,15 @@
+import { createSystemDb } from "@khmer-micro-store/db";
 import { EnvError, loadEnv, workerEnvSchema, type WorkerEnv } from "@khmer-micro-store/shared";
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";
 import { registerHeartbeat } from "./jobs/heartbeat";
+import { deliverOutboxOnce } from "./jobs/outbox";
+import { pollButtons } from "./jobs/telegram-buttons";
+import { createTelegramClient } from "./telegram/client";
+
+/** How often waiting messages are looked for: an alert reaches the seller within a few seconds. */
+const OUTBOX_EVERY_MS = 3_000;
 
 // The background worker (docs/blueprint.md "System architecture"): payment
 // checks, Telegram messages and expiring unpaid orders run here, never inside
@@ -37,15 +44,35 @@ async function main() {
   boss.on("error", (error) => report(error, "job queue error"));
   await boss.start();
   await registerHeartbeat(boss, logger);
-  logger.info({ environment: env.NODE_ENV }, "worker started");
+
+  // Telegram alerts: the outbox is read with the owner user (the worker serves every shop).
+  const db = createSystemDb(env.DATABASE_OWNER_URL);
+  const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger);
+  let stopping = false;
+  const outboxLoop = (async () => {
+    while (!stopping) {
+      try {
+        // A full batch means more may be waiting: go again at once.
+        if ((await deliverOutboxOnce({ db, telegram, logger, webOrigin: env.WEB_ORIGIN })) > 0) continue;
+      } catch (error) {
+        report(error, "outbox round failed");
+      }
+      await new Promise((resolve) => setTimeout(resolve, OUTBOX_EVERY_MS));
+    }
+  })();
+  // Button presses need a real bot; in dry run there is nothing to listen to.
+  const buttonLoop = telegram.dryRun ? Promise.resolve() : pollButtons({ db, telegram, logger, stopped: () => stopping });
+  logger.info({ environment: env.NODE_ENV, telegram: telegram.dryRun ? "dry run (no TELEGRAM_BOT_TOKEN)" : "on" }, "worker started");
 
   // Finish the jobs in hand before stopping, so a deploy never cuts a payment check in half.
-  let stopping = false;
   const stop = async (signal: string) => {
     if (stopping) return;
     stopping = true;
     logger.info({ signal }, "worker stopping");
     await boss.stop({ graceful: true, wait: true });
+    // The outbox round in hand finishes; a long poll for buttons may wait up to its timeout.
+    await Promise.race([Promise.all([outboxLoop, buttonLoop]), new Promise((resolve) => setTimeout(resolve, 30_000))]);
+    await db.$disconnect();
     process.exit(0);
   };
   process.on("SIGINT", () => void stop("SIGINT"));

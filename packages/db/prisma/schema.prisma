@@ -4,6 +4,7 @@
 // categories and units, sessions, platform settings and the audit log.
 // Step 3 (catalog): brands, products, variants, photos.
 // Step 4 (shop and checkout): delivery zones and drivers, customers, orders.
+// Step 6 (orders and Telegram): how each order was sent, and the outbox of messages.
 //
 // Row-level security (in the migration SQL, which Prisma can't express) keeps
 // every shop to its own rows for the API's everyday user, khmer_micro_store_app.
@@ -125,6 +126,12 @@ enum OrderActor {
   buyer
   merchant
   system
+}
+
+enum DispatchRoute {
+  driver
+  bus
+  pickup
 }
 
 // ---------------------------------------------------------- people and login
@@ -456,7 +463,8 @@ model StoreDriver {
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store      Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  dispatches DeliveryDispatch[]
 
   @@index([storeId])
   @@map("store_drivers")
@@ -526,10 +534,11 @@ model Order {
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  store    Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  customer Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  items    OrderItem[]
-  events   OrderStatusEvent[]
+  store      Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer   Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items      OrderItem[]
+  events     OrderStatusEvent[]
+  dispatches DeliveryDispatch[]
 
   @@unique([storeId, orderNumber])
   @@unique([storeId, idempotencyKey])
@@ -575,7 +584,52 @@ model OrderStatusEvent {
   @@map("order_status_events")
 }
 
+/// How an order was sent. A rebooked order gets a new row; the old one keeps what happened.
+model DeliveryDispatch {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId      String        @map("store_id") @db.Uuid
+  orderId      String        @map("order_id") @db.Uuid
+  route        DispatchRoute
+  /// The saved driver, if one was picked; the name and phone are copied so the order keeps them.
+  driverId     String?       @map("driver_id") @db.Uuid
+  driverName   String        @default("") @map("driver_name")
+  driverPhone  String        @default("") @map("driver_phone")
+  busCompany   String        @default("") @map("bus_company")
+  ticketNumber String        @default("") @map("ticket_number")
+  dispatchedAt DateTime      @default(now()) @map("dispatched_at") @db.Timestamptz(6)
+  pickedUpAt   DateTime?     @map("picked_up_at") @db.Timestamptz(6)
+  deliveredAt  DateTime?     @map("delivered_at") @db.Timestamptz(6)
+  failedAt     DateTime?     @map("failed_at") @db.Timestamptz(6)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  order  Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver StoreDriver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("delivery_dispatches")
+}
+
 // -------------------------------------------------------------------- platform
+
+/// Messages to send (Telegram alerts), written in the same transaction as the change they report and sent by the worker.
+model OutboxEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId     String?   @map("store_id") @db.Uuid
+  /// order_placed, order_cancelled_by_buyer
+  kind        String
+  /// Ids only (the worker reads the rest when it sends): never a phone number or a name.
+  payload     Json
+  /// Not before: a failed send waits a little longer each time.
+  availableAt DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  sentAt      DateTime? @map("sent_at") @db.Timestamptz(6)
+  attempts    Int       @default(0)
+  lastError   String    @default("") @map("last_error")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([sentAt, availableAt])
+  @@map("outbox_events")
+}
 
 /// One row of platform-wide settings (id is always 1).
 model PlatformSettings {

@@ -8,10 +8,12 @@
     "start": "node --enable-source-maps dist/index.js",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "node --env-file-if-exists=../../.env ./node_modules/vitest/vitest.mjs run --passWithNoTests"
   },
   "dependencies": {
+    "@khmer-micro-store/db": "workspace:^",
     "@khmer-micro-store/shared": "workspace:*",
+    "@prisma/client": "5.22.0",
     "@sentry/node": "^8",
     "pg-boss": "^10",
     "pino": "^9"

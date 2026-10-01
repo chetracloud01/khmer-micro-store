@@ -24,6 +24,13 @@ const shared = {
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   /** Errors go to Sentry only when this is set. */
   SENTRY_DSN: optional(z.string().url("must be a URL")),
+  /**
+   * From @BotFather. Without it, Telegram login is off (the development login
+   * still works) and the worker only records the alerts it would send.
+   */
+  TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
+  /** The web app's address: the only browser origin the API accepts, and the base of links in Telegram messages. */
+  WEB_ORIGIN: z.string().url("must be a URL").default("http://localhost:3000"),
 };
 
 export const apiEnvSchema = z.object({
@@ -34,11 +41,7 @@ export const apiEnvSchema = z.object({
   FILES_DIR: z.string().min(1).default(".uploads"),
   /** The address photos are served from. Unset = this API's own /files. */
   FILES_PUBLIC_URL: optional(z.string().url("must be a URL")),
-  /** From @BotFather. Without it, Telegram login is off (the development login still works). */
-  TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
   PORT: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(65535).default(4000),
-  /** The web app's address: the only origin allowed to call the API from a browser. */
-  WEB_ORIGIN: z.string().url("must be a URL").default("http://localhost:3000"),
 });
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 

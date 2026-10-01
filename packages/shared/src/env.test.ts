@@ -22,7 +22,7 @@ describe("server settings", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(EnvError);
       const { problems } = error as EnvError;
-      expect(problems.map((problem) => problem.split(":")[0])).toEqual(["DATABASE_OWNER_URL", "DATABASE_URL", "PORT", "WEB_ORIGIN"]);
+      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["DATABASE_OWNER_URL", "DATABASE_URL", "PORT", "WEB_ORIGIN"]);
     }
   });
 

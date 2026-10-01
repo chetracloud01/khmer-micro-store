@@ -1,7 +1,8 @@
 import { withPublicOrder, withPublicStore, type AppDb } from "@khmer-micro-store/db";
-import { shopSlugSchema } from "@khmer-micro-store/shared";
+import { canBuyerCancel, shopSlugSchema } from "@khmer-micro-store/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, Post, Res } from "@nestjs/common";
 import { readDeliverySettings } from "../delivery/delivery";
+import { AppException } from "../errors";
 import { APP_DB } from "../db";
 import { FILE_STORAGE, type FileStorage } from "../files/storage";
 import { ORDER_TOKEN_PATTERN, parsePlaceOrder, placeOrder } from "../orders/place-order";
@@ -115,16 +116,42 @@ export class PublicController {
               orderBy: { createdAt: "asc" },
             },
             events: { select: { status: true, at: true }, orderBy: { at: "asc" } },
+            // How it was sent: the driver's name or the bus ticket — the driver's phone stays with the shop.
+            dispatches: { select: { route: true, driverName: true, busCompany: true, ticketNumber: true, dispatchedAt: true }, orderBy: { dispatchedAt: "desc" }, take: 1 },
           },
         }),
         tx.store.findUniqueOrThrow({ where: { id: storeId }, select: { slug: true, name: true, phone: true, logoKey: true } }),
       ]);
       if (!order) return null;
       const { logoKey, ...shop } = store;
+      const { dispatches, ...rest } = order;
       // The buyer's phone stays off this page: the link may be forwarded.
-      return { ...order, store: { ...shop, logoUrl: logoKey ? this.url(logoKey) : null } };
+      return {
+        ...rest,
+        dispatch: dispatches[0] ?? null,
+        canCancel: canBuyerCancel(order),
+        store: { ...shop, logoUrl: logoKey ? this.url(logoKey) : null },
+      };
     });
     if (!found) throw new NotFoundException();
     return found;
+  }
+
+  /** The buyer cancels their own order — only while no money has moved and nothing is packed (canBuyerCancel). */
+  @Post("orders/:token/cancel")
+  @HttpCode(200)
+  async cancel(@Param("token") token: string) {
+    if (!ORDER_TOKEN_PATTERN.test(token)) throw new NotFoundException();
+    const result = await withPublicOrder(this.app, token, async (tx) => {
+      const order = await tx.order.findFirst({ select: { status: true, paymentMethod: true, fulfilment: true, area: true } });
+      if (!order) return "missing" as const;
+      if (!canBuyerCancel(order)) return "refused" as const;
+      // The database function cancels only from the status read here, records the history and tells the seller.
+      const [row] = await tx.$queryRaw<{ cancelled: boolean }[]>`SELECT app_buyer_cancel_order(${order.status}::"OrderStatus") AS cancelled`;
+      return row?.cancelled ? ("cancelled" as const) : ("refused" as const);
+    });
+    if (!result || result === "missing") throw new NotFoundException();
+    if (result === "refused") throw new AppException(409, "action_not_allowed");
+    return { cancelled: true };
   }
 }

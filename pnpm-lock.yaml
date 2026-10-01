@@ -154,9 +154,15 @@ importers:
 
   apps/worker:
     dependencies:
+      '@khmer-micro-store/db':
+        specifier: workspace:^
+        version: link:../../packages/db
       '@khmer-micro-store/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@prisma/client':
+        specifier: 5.22.0
+        version: 5.22.0(prisma@5.22.0)
       '@sentry/node':
         specifier: ^8
         version: 8.55.2

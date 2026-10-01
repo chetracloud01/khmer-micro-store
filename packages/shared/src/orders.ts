@@ -228,3 +228,50 @@ export const orderCancellationSchema = z
     path: ["note"],
   });
 export type OrderCancellation = z.infer<typeof orderCancellationSchema>;
+
+/** The seller's actions in the dashboard and from a Telegram button ("pay" is the system's, after a confirmed payment). */
+export const SELLER_ORDER_ACTIONS = [
+  "confirm",
+  "start_packing",
+  "dispatch",
+  "driver_picked_up",
+  "mark_delivered",
+  "settle_cash",
+  "fail_delivery",
+  "rebook",
+  "cancel",
+] as const satisfies readonly OrderAction[];
+export type SellerOrderAction = (typeof SELLER_ORDER_ACTIONS)[number];
+
+/**
+ * What the dashboard sends to move an order on. Sending needs how it went
+ * (driver, bus or pickup); cancelling needs a reason the seller may give.
+ */
+export const orderActionRequestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.enum(["confirm", "start_packing", "driver_picked_up", "mark_delivered", "settle_cash", "fail_delivery", "rebook"]) }),
+  z.object({ action: z.literal("dispatch"), dispatch: dispatchInputSchema }),
+  z.object({
+    action: z.literal("cancel"),
+    cancellation: orderCancellationSchema.refine((cancellation) => SELLER_CANCEL_REASONS.includes(cancellation.reason), {
+      message: "reason_required",
+      path: ["reason"],
+    }),
+  }),
+]);
+export type OrderActionRequest = z.infer<typeof orderActionRequestSchema>;
+
+export type OrderActionRefusal =
+  /** This step doesn't follow the order's current status. */
+  | "not_allowed"
+  /** Sent another way than the buyer chose at checkout (getDispatchRoute). */
+  | "wrong_route";
+
+/**
+ * The status an action leads to, or why it can't happen — the one check the
+ * API runs for the dashboard and for Telegram buttons alike.
+ */
+export function decideOrderAction(order: OrderFacts, request: OrderActionRequest): { status: OrderStatus } | { refused: OrderActionRefusal } {
+  if (request.action === "dispatch" && request.dispatch.route !== getDispatchRoute(order)) return { refused: "wrong_route" };
+  const status = applyOrderAction(order, request.action);
+  return status ? { status } : { refused: "not_allowed" };
+}

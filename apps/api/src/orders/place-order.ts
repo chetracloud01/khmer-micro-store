@@ -176,6 +176,8 @@ async function placeInStore(tx: Tx, storeId: string, request: PlaceOrderRequest)
     }),
   });
   await tx.orderStatusEvent.createMany({ data: [{ storeId, orderId: order.id, status, actor: "buyer" }] });
+  // The seller's Telegram alert, sent by the worker — written with the order, so it can't be lost or sent for an order that failed.
+  await tx.outboxEvent.createMany({ data: [{ storeId, kind: "order_placed", payload: { orderId: order.id } }] });
   return { token, orderNumber: order.orderNumber, created: true };
 }
 
