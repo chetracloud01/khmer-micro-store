@@ -16,7 +16,8 @@ pnpm + Turborepo monorepo. apps/web Next.js App Router + Tailwind +
 shadcn/ui + next-intl (km default, en). apps/api NestJS. apps/worker pg-boss
 (jobs kept in PostgreSQL).
 packages/shared Zod schemas. packages/db Prisma + PostgreSQL.
-packages/payments provider adapters. Local: docker compose (Postgres 16).
+packages/payments provider adapters. Local database: PostgreSQL 16 installed on
+Windows (one-time setup: infra/setup-local-db.cmd), or `pnpm db:up` with Docker.
 NestJS injection uses explicit tokens (@Inject(TOKEN)), never constructor types.
 
 ## Commands
