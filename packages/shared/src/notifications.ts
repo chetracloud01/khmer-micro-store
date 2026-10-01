@@ -63,6 +63,9 @@ export function confirmButtonData(orderId: string): string {
   return `confirm:${orderId}`;
 }
 
+/** What the "Confirmed" button carries once an order is confirmed: pressing it again only says so. */
+export const CONFIRMED_BUTTON_DATA = "confirmed";
+
 export function parseButtonData(data: string): { action: "confirm"; orderId: string } | null {
   const match = /^confirm:([0-9a-f-]{36})$/.exec(data);
   return match ? { action: "confirm", orderId: match[1]! } : null;

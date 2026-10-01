@@ -3,8 +3,8 @@ import { createSystemDb, type SystemDb } from "@khmer-micro-store/db";
 import { confirmButtonData } from "@khmer-micro-store/shared";
 import pino from "pino";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { InlineButton, TelegramClient } from "../telegram/client";
-import { deliverOutboxOnce, MAX_ATTEMPTS, retryDelayMs } from "./outbox";
+import { TelegramError, type InlineButton, type TelegramClient } from "../telegram/client";
+import { deliverOutboxOnce, linksFromTelegram, MAX_ATTEMPTS, retryDelayMs } from "./outbox";
 import { handleButton } from "./telegram-buttons";
 
 // Step 6's Telegram alerts on the real database, with a pretend Telegram:
@@ -17,8 +17,11 @@ class FakeTelegram implements TelegramClient {
   readonly dryRun = false;
   sent: { chatId: string; text: string; buttons?: InlineButton[][] }[] = [];
   failing = false;
+  /** Chats Telegram refuses for good ("chat not found"). */
+  deadChats = new Set<string>();
   async sendMessage(chatId: string, text: string, buttons?: InlineButton[][]) {
     if (this.failing) throw new Error("telegram down");
+    if (this.deadChats.has(chatId)) throw new TelegramError("sendMessage", 400, "Bad Request: chat not found");
     this.sent.push({ chatId, text, buttons });
   }
   async getCallbackQueries(offset: number) {
@@ -33,6 +36,17 @@ describe("retryDelayMs", () => {
     expect(retryDelayMs(1)).toBe(10_000);
     expect(retryDelayMs(3)).toBe(40_000);
     expect(retryDelayMs(30)).toBe(60 * 60_000);
+  });
+});
+
+describe("linksFromTelegram", () => {
+  it("allows only a public https address in a button", () => {
+    expect(linksFromTelegram("https://shop.example")).toBe(true);
+    expect(linksFromTelegram("http://localhost:3000")).toBe(false);
+    expect(linksFromTelegram("https://localhost:3000")).toBe(false);
+    expect(linksFromTelegram("http://shop.example")).toBe(false);
+    expect(linksFromTelegram("https://192.168.40.39:3000")).toBe(false);
+    expect(linksFromTelegram("not a url")).toBe(false);
   });
 });
 
@@ -127,6 +141,31 @@ describe.skipIf(!ownerUrl)("Telegram alerts and buttons", () => {
     await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
     expect((await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } })).sentAt).toBeNull();
     expect(MAX_ATTEMPTS).toBeGreaterThan(1);
+  });
+
+  it("delivers to the chats that work, once, when another chat is gone for good", async () => {
+    const deadChat = `7${Date.now()}`.slice(0, 12);
+    await db.merchantIdentity.create({ data: { merchantId: owner, method: "telegram", providerUserId: deadChat } });
+    const event = await db.outboxEvent.create({ data: { storeId, kind: "order_placed", payload: { orderId } } });
+    const telegram = new FakeTelegram();
+    telegram.deadChats.add(deadChat);
+    await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
+    await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
+    expect(telegram.sent.filter((message) => message.chatId === ownerTelegramId && message.text.includes("50,800៛"))).toHaveLength(1);
+    const after = await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });
+    expect(after.sentAt).not.toBeNull();
+    expect(after.lastError).toContain("chat not found");
+    await db.merchantIdentity.deleteMany({ where: { providerUserId: deadChat } });
+  });
+
+  it("doesn't retry a message nobody can ever receive", async () => {
+    const event = await db.outboxEvent.create({ data: { storeId, kind: "order_placed", payload: { orderId } } });
+    const telegram = new FakeTelegram();
+    telegram.deadChats.add(ownerTelegramId);
+    await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
+    const after = await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });
+    expect(after.sentAt).not.toBeNull();
+    expect(after.attempts).toBe(0);
   });
 
   it("lets only a member of the order's shop confirm it from Telegram", async () => {

@@ -1,7 +1,7 @@
 import type { SystemDb } from "@khmer-micro-store/db";
 import { ALERT_BUTTONS, buyerCancelledAlert, confirmButtonData, newOrderAlert } from "@khmer-micro-store/shared";
 import type { Logger } from "pino";
-import type { InlineButton, TelegramClient } from "../telegram/client";
+import { TelegramError, type InlineButton, type TelegramClient } from "../telegram/client";
 
 // Sends the messages the API wrote to outbox_events, in the same transaction
 // as the change they report (docs/blueprint.md "Database schema", Platform).
@@ -52,8 +52,23 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
     try {
       const message = await buildMessage(deps, event.kind, event.payload);
       const chats = event.store_id ? await telegramChatsOf(db, event.store_id) : [];
-      for (const chat of chats) await deps.telegram.sendMessage(chat, message.text, message.buttons);
-      await db.outboxEvent.update({ where: { id: event.id }, data: { sentAt: new Date(), lastError: chats.length === 0 ? "no Telegram chat for this shop" : "" } });
+      // Each person separately: one chat that can't be reached must not hold back — or repeat — everyone else's message.
+      let delivered = 0;
+      let lastFailure: unknown = null;
+      let retryable = false;
+      for (const chat of chats) {
+        try {
+          await deps.telegram.sendMessage(chat, message.text, message.buttons);
+          delivered += 1;
+        } catch (error) {
+          lastFailure = error;
+          if (!isPermanentRefusal(error)) retryable = true;
+        }
+      }
+      // Try again later only if nobody got it and the reason may pass (Telegram down, rate limit).
+      if (delivered === 0 && retryable) throw lastFailure;
+      const note = chats.length === 0 ? "no Telegram chat for this shop" : lastFailure instanceof Error ? `not delivered to every chat: ${lastFailure.message.slice(0, 200)}` : "";
+      await db.outboxEvent.update({ where: { id: event.id }, data: { sentAt: new Date(), lastError: note } });
     } catch (error) {
       const attempts = event.attempts + 1;
       const reason = error instanceof Error ? error.message.slice(0, 300) : "unknown error";
@@ -62,6 +77,25 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
     }
   }
   return leased.length;
+}
+
+/** A public https address Telegram will open from a button — not localhost or a private network address. */
+export function linksFromTelegram(webOrigin: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(webOrigin);
+    if (protocol !== "https:") return false;
+    return !/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/.test(hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Telegram said no for good: the chat doesn't exist, or the person blocked
+ * the bot or never pressed Start (400/403). Trying again won't change that.
+ */
+export function isPermanentRefusal(error: unknown): boolean {
+  return error instanceof TelegramError && (error.status === 400 || error.status === 403);
 }
 
 /** The Telegram chats of a shop's people: a member who logs in with Telegram has a private chat with the bot. */
@@ -81,16 +115,17 @@ async function buildMessage(deps: OutboxDeps, kind: string, payload: { orderId?:
       })
     : null;
   if (!order) throw new Error(`order for ${kind} not found`);
-  const openUrl = `${deps.webOrigin}/km/m/orders/${order.id}`;
+  // Telegram refuses a button that links to a private address (localhost on a developer's PC): leave "Open" out there.
+  const open = linksFromTelegram(deps.webOrigin) ? [{ text: ALERT_BUTTONS.open, url: `${deps.webOrigin}/km/m/orders/${order.id}` }] : [];
   if (kind === "order_placed") {
     const text = newOrderAlert({ ...order, itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0) });
     // "Confirm" only while the order still waits for it (it may have been confirmed in the dashboard meanwhile).
     const canConfirm = order.status === "cod_pending" || order.status === "paid";
     return {
       text,
-      buttons: [[...(canConfirm ? [{ text: ALERT_BUTTONS.confirm, callbackData: confirmButtonData(order.id) }] : []), { text: ALERT_BUTTONS.open, url: openUrl }]],
+      buttons: [[...(canConfirm ? [{ text: ALERT_BUTTONS.confirm, callbackData: confirmButtonData(order.id) }] : []), ...open]],
     };
   }
-  if (kind === "order_cancelled_by_buyer") return { text: buyerCancelledAlert(order), buttons: [[{ text: ALERT_BUTTONS.open, url: openUrl }]] };
+  if (kind === "order_cancelled_by_buyer") return { text: buyerCancelledAlert(order), buttons: open.length ? [open] : undefined };
   throw new Error(`unknown message kind ${kind}`);
 }

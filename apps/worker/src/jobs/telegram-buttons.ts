@@ -1,5 +1,5 @@
 import type { SystemDb } from "@khmer-micro-store/db";
-import { ALERT_BUTTONS, decideOrderAction, parseButtonData } from "@khmer-micro-store/shared";
+import { ALERT_BUTTONS, CONFIRMED_BUTTON_DATA, decideOrderAction, parseButtonData } from "@khmer-micro-store/shared";
 import type { Logger } from "pino";
 import type { CallbackQuery, TelegramClient } from "../telegram/client";
 
@@ -69,10 +69,15 @@ export async function pollButtons(deps: { db: SystemDb; telegram: TelegramClient
       const { queries, nextOffset } = await deps.telegram.getCallbackQueries(offset, 25);
       offset = nextOffset;
       for (const query of queries) {
+        // The "Confirmed" button left after a confirm: pressing it again just says so.
+        if (query.data === CONFIRMED_BUTTON_DATA) {
+          await deps.telegram.answerCallback(query.id, ANSWER.confirmed);
+          continue;
+        }
         const outcome = await handleButton(deps.db, query);
         await deps.telegram.answerCallback(query.id, ANSWER[outcome]);
         if (outcome === "confirmed" && query.chatId && query.messageId !== null) {
-          await deps.telegram.editButtons(query.chatId, query.messageId, [[{ text: ALERT_BUTTONS.confirmed, callbackData: "noop" }]]);
+          await deps.telegram.editButtons(query.chatId, query.messageId, [[{ text: ALERT_BUTTONS.confirmed, callbackData: CONFIRMED_BUTTON_DATA }]]);
         }
         deps.logger.info({ outcome }, "telegram button");
       }
