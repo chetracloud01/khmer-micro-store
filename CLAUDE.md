@@ -13,12 +13,15 @@ Telegram alerts, Khmer/English. Full plan: docs/blueprint.md
 
 ## Stack
 pnpm + Turborepo monorepo. apps/web Next.js App Router + Tailwind +
-shadcn/ui + next-intl (km default, en). apps/api NestJS. apps/worker BullMQ.
+shadcn/ui + next-intl (km default, en). apps/api NestJS. apps/worker pg-boss
+(jobs kept in PostgreSQL).
 packages/shared Zod schemas. packages/db Prisma + PostgreSQL.
-packages/payments provider adapters. Local: docker compose (Postgres 16, Redis 7).
+packages/payments provider adapters. Local: docker compose (Postgres 16).
+NestJS injection uses explicit tokens (@Inject(TOKEN)), never constructor types.
 
 ## Commands
-pnpm dev | pnpm lint | pnpm typecheck | pnpm test | pnpm db:migrate
+pnpm db:up (start Postgres) | pnpm dev | pnpm lint | pnpm typecheck | pnpm test |
+pnpm db:migrate
 
 ## Rules
 - Prices are integers: price_usd_cents, price_khr (riel). A product may have

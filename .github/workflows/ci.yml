@@ -8,6 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # A real database for the tests that need one (from roadmap step 2:
+    # "merchant A cannot read merchant B's data").
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: khmer_micro_store
+          POSTGRES_PASSWORD: khmer_micro_store
+          POSTGRES_DB: khmer_micro_store
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U khmer_micro_store"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://khmer_micro_store:khmer_micro_store@localhost:5432/khmer_micro_store
+
     steps:
       - uses: actions/checkout@v4
 
@@ -34,3 +55,13 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # The built API must start and reach the database.
+      - name: API health check
+        run: |
+          PORT=4000 node apps/api/dist/main.js &
+          for i in $(seq 1 20); do
+            if curl -fs http://localhost:4000/health; then exit 0; fi
+            sleep 1
+          done
+          echo "API did not become healthy" && exit 1

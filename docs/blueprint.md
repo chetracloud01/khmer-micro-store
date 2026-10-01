@@ -94,8 +94,7 @@ flowchart LR
   A[Super admin<br/>Next.js] --> CF
   CF --> API[API<br/>NestJS]
   API --> DB[(PostgreSQL)]
-  API --> R[(Redis)]
-  R --> W[Worker<br/>BullMQ jobs]
+  DB --> W[Worker<br/>pg-boss jobs]
   W --> BK[Bakong Open API]
   PW[ABA PayWay] -- pushback --> API
   W --> TG[Telegram Bot API]
@@ -114,7 +113,7 @@ TypeScript everywhere, one monorepo. One language for frontend, backend and shar
 | Repo | pnpm workspaces + Turborepo | Web, API, worker and shared code in one place |
 | Web (buyer + merchant + admin) | Next.js App Router + Tailwind + shadcn/ui | Fast in in-app browsers, ready-made accessible components |
 | API | NestJS | Clear modules, built on Express, easy to extend |
-| Worker | BullMQ on Redis | Retries, schedules, never blocks checkout |
+| Worker | pg-boss (jobs kept in PostgreSQL) | Retries, schedules, never blocks checkout — and no extra service to run or pay for |
 | Database | PostgreSQL + Prisma | Typed queries, safe migrations |
 | Validation | Zod, shared by web and API | One rule set for every form field |
 | Forms | React Hook Form + Zod | Instant field errors, little re-rendering on cheap phones |
@@ -126,7 +125,7 @@ khmer-micro-store/
 ├── apps/
 │   ├── web/        # Next.js: /s/[slug] storefront, /m merchant, /admin
 │   ├── api/        # NestJS: modules below
-│   └── worker/     # BullMQ jobs
+│   └── worker/     # pg-boss jobs
 ├── packages/
 │   ├── shared/     # Zod schemas, money + phone helpers, types
 │   ├── payments/   # provider adapters: bakong-khqr, aba-payway
@@ -461,15 +460,15 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 
 ## Deployment
 
-Recommended: Next.js on Vercel Pro, and the API, worker, PostgreSQL and Redis on Railway. Both deploy automatically on every `git push`. Decide this finally after the Bakong test in roadmap gate G3: if Bakong blocks your server's location, use Option B.
+Recommended: Next.js on Vercel Pro, and the API, worker and PostgreSQL on Railway. Both deploy automatically on every `git push`. Decide this finally after the Bakong test in roadmap gate G3: if Bakong blocks your server's location, use Option B.
 
-Vercel alone cannot run the whole system. Its functions start per request and stop, so it cannot keep a BullMQ worker running to poll Bakong every few seconds. The worker needs an always-on host.
+Vercel alone cannot run the whole system. Its functions start per request and stop, so it cannot keep the job worker running to poll Bakong every few seconds. The worker needs an always-on host.
 
 ### Options compared
 
 | Option | Where things run | Update method | Approx. cost/month | Good | Watch out |
 | --- | --- | --- | --- | --- | --- |
-| A. Vercel + Railway (recommended) | Web on Vercel; API, worker, Postgres, Redis on Railway | Push to GitHub → both redeploy; preview link per pull request | Vercel Pro $20 + Railway ~$20–40 | Easiest, instant rollback, no server to maintain | Two dashboards; servers are outside Cambodia |
+| A. Vercel + Railway (recommended) | Web on Vercel; API, worker, Postgres on Railway | Push to GitHub → both redeploy; preview link per pull request | Vercel Pro $20 + Railway ~$20–40 | Easiest, instant rollback, no server to maintain | Two dashboards; servers are outside Cambodia |
 | B. One VPS + Coolify | Everything in Docker on one server (Cambodian provider or Singapore) | Coolify watches GitHub and redeploys on push | ~$12–30 | Cheapest, Cambodian IP works with Bakong, full control | You handle updates, backups, monitoring |
 | C. Render or DigitalOcean App Platform | Web, API, worker, managed DB in one place (Singapore region) | Push to GitHub | ~$40–70 | One dashboard | Fewer Next.js extras than Vercel |
 
@@ -486,7 +485,7 @@ Vercel's free Hobby plan is for personal, non-commercial use only, so a business
 | Staging | `main` before release | Sandbox | Final test with real Telegram bot (test bot) |
 | Production | release tag or `main` | Live | Real merchants |
 
-Each environment has its own database, Redis, Telegram bot token and payment keys. Never share keys between staging and production.
+Each environment has its own database, Telegram bot token and payment keys. Never share keys between staging and production.
 
 ### Git workflow for easy, safe updates
 
@@ -512,7 +511,7 @@ Expect about **$45–60 per month** with the recommended setup (Option A), or **
 | Item | Option A: Vercel + Railway | Option B: One VPS + Coolify | Notes |
 | --- | --- | --- | --- |
 | Web hosting (Next.js) | $20 (Vercel Pro, 1 seat) | included in VPS | Vercel Hobby is not allowed for business use |
-| API + worker + PostgreSQL + Redis | $20–35 (Railway Pro: $20 fee includes $20 of usage) | $12–30 (one 4 GB VPS) | Railway usage estimate: 4 small always-on services |
+| API + worker + PostgreSQL | $20–35 (Railway Pro: $20 fee includes $20 of usage) | $12–30 (one 4 GB VPS) | Railway usage estimate: 3 small always-on services |
 | Staging environment | $5–10 extra Railway usage | $0 (same VPS) | Can turn off staging when not testing |
 | Database backups storage | included in Railway | $0–2 (Cloudflare R2 or similar) | |
 | Cloudflare (DNS, WAF, Turnstile) | $0 (free plan) | $0 | Upgrade to Pro ($25) only if attacked often |
@@ -719,7 +718,7 @@ flowchart LR
 ```bash
 git switch main && git pull
 git switch -c feat/checkout-screen
-docker compose up -d
+pnpm db:up
 claude
 ```
 
@@ -765,7 +764,7 @@ The steps and their "Done when" checks are in "Roadmap: zero to live" above — 
 | Claude forgets a rule | Add it to CLAUDE.md so every future session knows it |
 | You repeat the same instruction | Save it as a command in `.claude/commands/` |
 | Session feels slow or confused | `/compact`, or `/clear` and start the task again |
-| Docker database acting strange | `docker compose down` then `docker compose up -d`; reset data with `pnpm db:reset` (local only; created in roadmap step 2) |
+| Docker database acting strange | `pnpm db:down` then `pnpm db:up`; reset data with `pnpm db:reset` (local only; created in roadmap step 2) |
 | Not sure a change is safe | "Explain this diff line by line and list the risks" before merging |
 
 **Three rules keep this safe:** plan before coding, keep every task small, and review every diff yourself before committing, especially anything touching payments, login or migrations.
