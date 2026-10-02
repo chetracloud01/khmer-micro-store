@@ -5,46 +5,10 @@ import { Button, Card } from "@khmer-micro-store/ui";
 import { FlaskConical, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { BOT_USERNAME, SHOW_DEV_LOGIN, TelegramButton } from "@/components/telegram-button";
 import { api, ApiError, getMe } from "@/lib/api";
 import { AppFrame, AppLoading, AppOffline } from "../app-frame";
-
-const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
-/** The API refuses the development login in production too; this only hides the buttons. */
-const SHOW_DEV_LOGIN = process.env.NODE_ENV !== "production";
-
-declare global {
-  interface Window {
-    onTelegramAuth?: (user: TelegramLoginPayload) => void;
-  }
-}
-
-/**
- * Telegram's own "Log in with Telegram" button. It only works on the web
- * address set for the bot in @BotFather (/setdomain) — not on localhost.
- */
-function TelegramButton({ onLogin }: { onLogin: (user: TelegramLoginPayload) => void }) {
-  const holder = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!BOT_USERNAME || !holder.current) return;
-    window.onTelegramAuth = onLogin;
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.async = true;
-    script.setAttribute("data-telegram-login", BOT_USERNAME);
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "12");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-onauth", "onTelegramAuth(user)");
-    holder.current.appendChild(script);
-    const current = holder.current;
-    return () => {
-      current.innerHTML = "";
-      delete window.onTelegramAuth;
-    };
-  }, [onLogin]);
-  return <div ref={holder} className="flex min-h-[48px] justify-center" />;
-}
 
 // Real merchant login (roadmap step 2). Sign-up and log-in are one flow:
 // the first login creates the account, then onboarding asks two questions.
