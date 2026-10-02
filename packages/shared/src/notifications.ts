@@ -70,3 +70,24 @@ export function parseButtonData(data: string): { action: "confirm"; orderId: str
   const match = /^confirm:([0-9a-f-]{36})$/.exec(data);
   return match ? { action: "confirm", orderId: match[1]! } : null;
 }
+
+/** Something only a person can fix, for the platform's alert chat (admin Settings). */
+export type AdminAlert =
+  | { reason: "message_gave_up"; kind: string; orderNumber: number | null; attempts: number }
+  | { reason: "worker_failing"; detail: string }
+  | { reason: "admin_locked"; adminName: string };
+
+export function adminAlertText(alert: AdminAlert): string {
+  switch (alert.reason) {
+    case "message_gave_up":
+      return [
+        `⚠️ សារមួយមិនអាចផ្ញើបានទេ បន្ទាប់ពីព្យាយាម ${alert.attempts} ដង`,
+        "",
+        `A message could not be sent after ${alert.attempts} tries (${alert.kind}${alert.orderNumber ? `, order #${alert.orderNumber}` : ""}). Check the bot and the shop's Telegram.`,
+      ].join("\n");
+    case "worker_failing":
+      return ["🔥 Worker មានបញ្ហា", "", `The worker is failing: ${alert.detail}`].join("\n");
+    case "admin_locked":
+      return ["🔒 គណនីអ្នកគ្រប់គ្រងត្រូវបានចាក់សោ ១៥ នាទី", "", `Admin login locked for 15 minutes after 5 wrong codes: ${alert.adminName}`].join("\n");
+  }
+}

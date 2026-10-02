@@ -168,6 +168,36 @@ describe.skipIf(!ownerUrl)("Telegram alerts and buttons", () => {
     expect(after.attempts).toBe(0);
   });
 
+  it("sends admin alerts to the platform's alert chat, and raises one when a message gives up", async () => {
+    const before = await db.platformSettings.findUniqueOrThrow({ where: { id: 1 }, select: { alertChatId: true } });
+    const alertChat = `6${Date.now()}`.slice(0, 12);
+    await db.platformSettings.update({ where: { id: 1 }, data: { alertChatId: alertChat } });
+    try {
+      // A message on its last try, failing for good reasons that may pass: it gives up and tells the admin.
+      const doomed = await db.outboxEvent.create({ data: { storeId, kind: "order_placed", payload: { orderId }, attempts: MAX_ATTEMPTS - 1 } });
+      const telegram = new FakeTelegram();
+      telegram.failing = true;
+      await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
+      expect((await db.outboxEvent.findUniqueOrThrow({ where: { id: doomed.id } })).attempts).toBe(MAX_ATTEMPTS);
+      const alert = await db.outboxEvent.findFirst({ where: { kind: "admin_alert", sentAt: null }, orderBy: { createdAt: "desc" } });
+      expect(alert?.payload).toMatchObject({ reason: "message_gave_up", kind: "order_placed", attempts: MAX_ATTEMPTS });
+
+      // The alert itself goes to the alert chat — not to the shop's people.
+      telegram.failing = false;
+      await deliverOutboxOnce({ db, telegram, logger, webOrigin: "https://shop.example" });
+      const toAdmin = telegram.sent.filter((message) => message.chatId === alertChat);
+      expect(toAdmin.some((message) => message.text.includes("could not be sent"))).toBe(true);
+      expect(telegram.sent.some((message) => message.chatId === ownerTelegramId && message.text.includes("could not be sent"))).toBe(false);
+      await db.outboxEvent.deleteMany({ where: { kind: "admin_alert", payload: { path: ["kind"], equals: "order_placed" } } });
+    } finally {
+      await db.platformSettings.update({ where: { id: 1 }, data: { alertChatId: before.alertChatId } });
+    }
+  });
+
+  it("keeps the give-up limit the admin overview counts with", () => {
+    expect(MAX_ATTEMPTS).toBe(8);
+  });
+
   it("lets only a member of the order's shop confirm it from Telegram", async () => {
     expect(await handleButton(db, { fromUserId: strangerTelegramId, data: confirmButtonData(orderId) })).toBe("not_member");
     expect((await db.order.findUniqueOrThrow({ where: { id: orderId } })).status).toBe("cod_pending");

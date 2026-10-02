@@ -41,6 +41,14 @@ export const apiEnvSchema = z.object({
   FILES_DIR: z.string().min(1).default(".uploads"),
   /** The address photos are served from. Unset = this API's own /files. */
   FILES_PUBLIC_URL: optional(z.string().url("must be a URL")),
+  /**
+   * 32 random bytes, base64: encrypts admins' authenticator secrets. Without
+   * it the admin login refuses to start (sellers and buyers are unaffected).
+   * Lost = every admin sets up two-step login again (pnpm admin:add-owner).
+   */
+  ADMIN_SECRETS_KEY: optional(
+    z.string().regex(/^[A-Za-z0-9+/]{43}=$/, "must be 32 random bytes in base64 (openssl rand -base64 32)"),
+  ),
   PORT: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(65535).default(4000),
 });
 export type ApiEnv = z.infer<typeof apiEnvSchema>;

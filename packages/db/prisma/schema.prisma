@@ -5,6 +5,7 @@
 // Step 3 (catalog): brands, products, variants, photos.
 // Step 4 (shop and checkout): delivery zones and drivers, customers, orders.
 // Step 6 (orders and Telegram): how each order was sent, and the outbox of messages.
+// Step 7 (admin): admin users with two-step login, their backup codes and sessions.
 //
 // Row-level security (in the migration SQL, which Prisma can't express) keeps
 // every shop to its own rows for the API's everyday user, khmer_micro_store_app.
@@ -132,6 +133,18 @@ enum DispatchRoute {
   driver
   bus
   pickup
+}
+
+enum AdminRole {
+  owner
+  support
+  finance
+}
+
+enum AdminSessionStage {
+  /// Telegram (or the development login) passed; the authenticator code is still to come.
+  pending_2fa
+  active
 }
 
 // ---------------------------------------------------------- people and login
@@ -608,6 +621,66 @@ model DeliveryDispatch {
 
   @@index([orderId])
   @@map("delivery_dispatches")
+}
+
+// ----------------------------------------------------------------------- admin
+
+/// Who can use the admin area. Disabled, never deleted. Never readable by the API's everyday user.
+model AdminUser {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  /// The Telegram account they sign in with.
+  telegramId       String    @unique @map("telegram_id")
+  telegramUsername String    @default("") @map("telegram_username")
+  role             AdminRole
+  /// The authenticator app's secret, encrypted with ADMIN_SECRETS_KEY (AES-256-GCM). Null until set up.
+  totpSecretEnc    String?   @map("totp_secret_enc")
+  /// A secret being set up, until the first code proves the app has it.
+  totpPendingEnc   String?   @map("totp_pending_enc")
+  /// The 30-second step of the last code accepted: a code is never accepted twice.
+  totpLastStep     Int       @default(0) @map("totp_last_step")
+  failedCodes      Int       @default(0) @map("failed_codes")
+  lockedUntil      DateTime? @map("locked_until") @db.Timestamptz(6)
+  disabledAt       DateTime? @map("disabled_at") @db.Timestamptz(6)
+  lastActiveAt     DateTime? @map("last_active_at") @db.Timestamptz(6)
+  invitedBy        String?   @map("invited_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  backupCodes AdminBackupCode[]
+  sessions    AdminSession[]
+
+  @@map("admin_users")
+}
+
+/// One-time codes for a lost phone. Only their SHA-256 is kept.
+model AdminBackupCode {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  codeHash    String    @map("code_hash")
+  usedAt      DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("admin_backup_codes")
+}
+
+/// An admin's signed-in browser. Only the token's SHA-256 is kept.
+model AdminSession {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminUserId String            @map("admin_user_id") @db.Uuid
+  tokenHash   String            @unique @map("token_hash")
+  stage       AdminSessionStage
+  expiresAt   DateTime          @map("expires_at") @db.Timestamptz(6)
+  revokedAt   DateTime?         @map("revoked_at") @db.Timestamptz(6)
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("admin_sessions")
 }
 
 // -------------------------------------------------------------------- platform

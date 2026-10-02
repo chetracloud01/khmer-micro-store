@@ -1,15 +1,17 @@
 import { createSystemDb } from "@khmer-micro-store/db";
-import { EnvError, loadEnv, workerEnvSchema, type WorkerEnv } from "@khmer-micro-store/shared";
+import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } from "@khmer-micro-store/shared";
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";
 import { registerHeartbeat } from "./jobs/heartbeat";
-import { deliverOutboxOnce } from "./jobs/outbox";
+import { alertChats, deliverOutboxOnce } from "./jobs/outbox";
 import { pollButtons } from "./jobs/telegram-buttons";
 import { createTelegramClient } from "./telegram/client";
 
 /** How often waiting messages are looked for: an alert reaches the seller within a few seconds. */
 const OUTBOX_EVERY_MS = 3_000;
+/** At most one "worker is failing" alert this often, however many rounds fail. */
+const FAILING_ALERT_EVERY_MS = 10 * 60_000;
 
 // The background worker (docs/blueprint.md "System architecture"): payment
 // checks, Telegram messages and expiring unpaid orders run here, never inside
@@ -49,13 +51,27 @@ async function main() {
   const db = createSystemDb(env.DATABASE_OWNER_URL);
   const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger);
   let stopping = false;
+  // The alert chat, remembered while the database answers: the "failing" alert may be needed when it doesn't.
+  let knownAlertChats: string[] = [];
+  let lastFailingAlertAt = 0;
+  const alertFailing = async (error: unknown) => {
+    if (Date.now() - lastFailingAlertAt < FAILING_ALERT_EVERY_MS) return;
+    lastFailingAlertAt = Date.now();
+    // Straight to Telegram, not through the outbox: the database may be what's failing.
+    const detail = error instanceof Error ? error.message.slice(0, 200) : "unknown error";
+    for (const chat of knownAlertChats) {
+      await telegram.sendMessage(chat, adminAlertText({ reason: "worker_failing", detail })).catch(() => undefined);
+    }
+  };
   const outboxLoop = (async () => {
     while (!stopping) {
       try {
+        knownAlertChats = await alertChats(db);
         // A full batch means more may be waiting: go again at once.
         if ((await deliverOutboxOnce({ db, telegram, logger, webOrigin: env.WEB_ORIGIN })) > 0) continue;
       } catch (error) {
         report(error, "outbox round failed");
+        await alertFailing(error);
       }
       await new Promise((resolve) => setTimeout(resolve, OUTBOX_EVERY_MS));
     }

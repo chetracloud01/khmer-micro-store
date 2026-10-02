@@ -1,5 +1,5 @@
 import type { SystemDb } from "@khmer-micro-store/db";
-import { ALERT_BUTTONS, buyerCancelledAlert, confirmButtonData, newOrderAlert } from "@khmer-micro-store/shared";
+import { adminAlertText, ALERT_BUTTONS, buyerCancelledAlert, confirmButtonData, newOrderAlert, type AdminAlert } from "@khmer-micro-store/shared";
 import type { Logger } from "pino";
 import { TelegramError, type InlineButton, type TelegramClient } from "../telegram/client";
 
@@ -37,7 +37,7 @@ interface Message {
 export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
   const { db, logger } = deps;
   // Lease: mark the batch as taken for a while, in one short statement, before any network call.
-  const leased = await db.$queryRaw<{ id: string; store_id: string | null; kind: string; payload: { orderId?: string }; attempts: number }[]>`
+  const leased = await db.$queryRaw<{ id: string; store_id: string | null; kind: string; payload: Record<string, unknown>; attempts: number }[]>`
     UPDATE outbox_events SET available_at = now() + ${`${LEASE_MS} milliseconds`}::interval
     WHERE id IN (
       SELECT id FROM outbox_events
@@ -51,7 +51,8 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
   for (const event of leased) {
     try {
       const message = await buildMessage(deps, event.kind, event.payload);
-      const chats = event.store_id ? await telegramChatsOf(db, event.store_id) : [];
+      // Admin alerts go to the platform's alert chat (admin Settings); everything else to the shop's people.
+      const chats = event.kind === "admin_alert" ? await alertChats(db) : event.store_id ? await telegramChatsOf(db, event.store_id) : [];
       // Each person separately: one chat that can't be reached must not hold back — or repeat — everyone else's message.
       let delivered = 0;
       let lastFailure: unknown = null;
@@ -67,13 +68,20 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
       }
       // Try again later only if nobody got it and the reason may pass (Telegram down, rate limit).
       if (delivered === 0 && retryable) throw lastFailure;
-      const note = chats.length === 0 ? "no Telegram chat for this shop" : lastFailure instanceof Error ? `not delivered to every chat: ${lastFailure.message.slice(0, 200)}` : "";
+      const note = chats.length === 0 ? (event.kind === "admin_alert" ? "no alert chat set" : "no Telegram chat for this shop") : lastFailure instanceof Error ? `not delivered to every chat: ${lastFailure.message.slice(0, 200)}` : "";
       await db.outboxEvent.update({ where: { id: event.id }, data: { sentAt: new Date(), lastError: note } });
     } catch (error) {
       const attempts = event.attempts + 1;
       const reason = error instanceof Error ? error.message.slice(0, 300) : "unknown error";
       await db.outboxEvent.update({ where: { id: event.id }, data: { attempts, lastError: reason, availableAt: new Date(Date.now() + retryDelayMs(attempts)) } });
       logger.warn({ eventId: event.id, kind: event.kind, attempts, reason }, "outbox message not sent, will retry");
+      // Given up for good: a person has to look (but an alert about an alert would loop).
+      if (attempts >= MAX_ATTEMPTS && event.kind !== "admin_alert") {
+        const orderId = typeof event.payload.orderId === "string" ? event.payload.orderId : null;
+        const order = orderId ? await db.order.findUnique({ where: { id: orderId }, select: { orderNumber: true } }) : null;
+        const alert: AdminAlert = { reason: "message_gave_up", kind: event.kind, orderNumber: order?.orderNumber ?? null, attempts };
+        await db.outboxEvent.create({ data: { kind: "admin_alert", payload: alert } });
+      }
     }
   }
   return leased.length;
@@ -107,8 +115,15 @@ export async function telegramChatsOf(db: SystemDb, storeId: string): Promise<st
   return identities.map((identity) => identity.providerUserId);
 }
 
-async function buildMessage(deps: OutboxDeps, kind: string, payload: { orderId?: string }): Promise<Message> {
-  const order = payload.orderId
+/** The platform's alert chat (admin Settings), if one is set. */
+export async function alertChats(db: SystemDb): Promise<string[]> {
+  const settings = await db.platformSettings.findUnique({ where: { id: 1 }, select: { alertChatId: true } });
+  return settings?.alertChatId ? [settings.alertChatId] : [];
+}
+
+async function buildMessage(deps: OutboxDeps, kind: string, payload: Record<string, unknown>): Promise<Message> {
+  if (kind === "admin_alert") return { text: adminAlertText(payload as unknown as AdminAlert) };
+  const order = typeof payload.orderId === "string"
     ? await deps.db.order.findUnique({
         where: { id: payload.orderId },
         select: { id: true, orderNumber: true, status: true, totalMinor: true, currency: true, paymentMethod: true, fulfilment: true, districtId: true, provinceId: true, items: { select: { quantity: true } } },

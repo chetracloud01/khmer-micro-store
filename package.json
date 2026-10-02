@@ -14,7 +14,8 @@
     "db:up": "docker compose -f infra/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @khmer-micro-store/db migrate:dev",
-    "db:deploy": "pnpm --filter @khmer-micro-store/db migrate:deploy"
+    "db:deploy": "pnpm --filter @khmer-micro-store/db migrate:deploy",
+    "admin:add-owner": "pnpm --filter @khmer-micro-store/api admin:add-owner"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.15.0",

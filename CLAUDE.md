@@ -21,11 +21,14 @@ Windows (one-time setup: infra/setup-local-db.cmd), or `pnpm db:up` with Docker.
 NestJS injection uses explicit tokens (@Inject(TOKEN)), never constructor types.
 Shop data goes through packages/db AppDb + withContext() (row-level security);
 SystemDb only for login, sessions, creating a store, the worker and admin.
+Admin routes: AdminGuard + @AdminPermissionNeeded(...) from packages/shared/admin-roles.ts on every route;
+admin login is Telegram then a TOTP code (ADMIN_SECRETS_KEY encrypts the secrets); never log either.
 Every new table with store_id must enable RLS in its migration.
 
 ## Commands
 pnpm db:up (start Postgres) | pnpm dev | pnpm lint | pnpm typecheck | pnpm test |
 pnpm db:migrate (new migration) | pnpm db:deploy (apply migrations)
+pnpm admin:add-owner -- --telegram-id <id> --name "<name>" (make/reset a platform owner; resets their 2FA)
 
 ## Rules
 - Prices are integers: price_usd_cents, price_khr (riel). A product may have

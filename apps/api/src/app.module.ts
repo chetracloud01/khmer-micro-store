@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { AdminAuthController } from "./admin/admin-auth.controller";
+import { AdminController } from "./admin/admin.controller";
+import { AdminGuard } from "./admin/admin.guard";
 import { AuthController } from "./auth/auth.controller";
 import { SessionGuard } from "./auth/session.guard";
 import { CatalogController } from "./catalog/catalog.controller";
@@ -24,9 +27,11 @@ import { StoresController } from "./stores/stores.controller";
     ProductsController,
     DeliveryController,
     OrdersController,
+    AdminAuthController,
+    AdminController,
     FilesController,
     PublicController,
   ],
-  providers: [...dbProviders, DbShutdown, fileStorageProvider, SessionGuard, MerchantStoreGuard],
+  providers: [...dbProviders, DbShutdown, fileStorageProvider, SessionGuard, MerchantStoreGuard, AdminGuard],
 })
 export class AppModule {}

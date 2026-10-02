@@ -30,7 +30,11 @@ export type ErrorBody =
         // The shop can't take orders yet (no delivery saved, or no way for this buyer to pay).
         | "not_accepting_orders"
         // The order has moved on (or this step doesn't follow its status): nothing was changed.
-        | "action_not_allowed";
+        | "action_not_allowed"
+        // ADMIN_SECRETS_KEY isn't set: the admin login can't run.
+        | "admin_not_configured"
+        // Too many wrong two-step codes: try again in 15 minutes.
+        | "code_locked";
     };
 
 const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input">> = {
@@ -54,7 +58,7 @@ export class InvalidInputException extends Error {
 export class AppException extends Error {
   constructor(
     public readonly status: number,
-    public readonly code: "no_store" | "plan_limit" | "store_paused" | "not_accepting_orders" | "action_not_allowed",
+    public readonly code: "no_store" | "plan_limit" | "store_paused" | "not_accepting_orders" | "action_not_allowed" | "admin_not_configured" | "code_locked",
   ) {
     super(code);
   }
