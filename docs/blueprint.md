@@ -689,14 +689,14 @@ One feature per branch (`feat/payway-checkout`). CI must pass before merge. Data
 
 ## Budget
 
-Expect about **$45–60 per month** with the recommended setup (Option A), or **$15–35 per month** with one VPS (Option B), during development and beta. Most other tools you need are free at this size. All prices in USD, before tax.
+Expect about **$41–45 per month** with the recommended setup (Option A) from the beta up to about 100 shops, and about **$50–65** at 500 shops; or **$15–35 per month** with one VPS (Option B). Most other tools you need are free at this size. All prices in USD, before tax. How the numbers are worked out is under "How Railway usage adds up" below.
 
 ### Monthly costs (development, beta, up to about 50 merchants)
 
 | Item | Option A: Vercel + Railway | Option B: One VPS + Coolify | Notes |
 | --- | --- | --- | --- |
 | Web hosting (Next.js) | $20 (Vercel Pro, 1 seat) | included in VPS | Vercel Hobby is not allowed for business use |
-| API + worker + PostgreSQL | $20–35 (Railway Pro: $20 fee includes $20 of usage) | $12–30 (one 4 GB VPS) | Railway usage estimate: 3 small always-on services |
+| API + worker + PostgreSQL | $20 up to ~100–200 shops (Railway Pro: the $20 fee includes $20 of usage) | $12–30 (one 4 GB VPS) | 3 small always-on services use ~$7–8; see "How Railway usage adds up" |
 | Staging environment | $5–10 extra Railway usage | $0 (same VPS) | Can turn off staging when not testing |
 | Database backups storage | included in Railway | $0–2 (Cloudflare R2 or similar) | |
 | Cloudflare (DNS, WAF, Turnstile) | $0 (free plan) | $0 | Upgrade to Pro ($25) only if attacked often |
@@ -705,7 +705,7 @@ Expect about **$45–60 per month** with the recommended setup (Option A), or **
 | Error tracking (Sentry) | $0 (free tier) | $0 | |
 | Telegram Bot API | $0 | $0 | Free |
 | Bakong Open API | $0 | $0 | No fee known; confirm when you register |
-| **Total per month** | **~$45–60** | **~$15–35** | |
+| **Total per month** | **~$41–45** (+$5–10 with staging) | **~$15–35** | |
 
 ### One-time and yearly costs
 
@@ -722,16 +722,54 @@ Expect about **$45–60 per month** with the recommended setup (Option A), or **
 - **ABA PayWay fees** are charged by ABA to each merchant per transaction; confirm the rate with ABA.
 - **Buyer KHQR transfers** between Cambodian banks are normally free for the buyer.
 
-### When you grow (100–500 merchants)
+### How Railway usage adds up
 
-| Stage | Option A per month | What changes |
+Railway charges a plan fee that **includes the same amount of usage** ($20 on Pro), then counts usage **per minute each service runs**: memory, CPU, outgoing data and database storage. Our API, worker and database run all day even with no customers (the worker listens to Telegram and makes the 03:00 backup; the API must answer at once), so most of the cost is running time, not visitors. Vercel works the other way: pages run only when visited, inside Pro's large included allowance.
+
+Rates used (Railway, checked 2026-10-02; confirm before signing up): about **$10 per GB of memory per month**, **$20 per CPU per month**, **$0.05 per GB of outgoing data**, **$0.15 per GB of storage per month**.
+
+Most traffic never reaches Railway: **photos come from Cloudflare R2** (free downloads) and **pages from Vercel**. Railway only sends small text answers (shop data, orders).
+
+**Base, with zero customers:**
+
+| Service | Memory | Per month |
 | --- | --- | --- |
-| 100 merchants | ~$60–90 | Bigger database, more worker memory |
-| 500 merchants | ~$120–200 | Second API instance, read replica, Cloudflare Pro |
+| API (NestJS) | ~200 MB | ~$2 |
+| Worker | ~150 MB | ~$1.50 |
+| PostgreSQL | ~250 MB | ~$2.50 |
+| CPU while mostly idle | ~5% of one CPU | ~$1 |
+| Database storage | ~1 GB | ~$0.15 |
+| **Base** | | **~$7–8** |
 
-Plan your subscription price so that **10–15 paying merchants cover all hosting**. For example, at $5 per merchant per month, 12 merchants pay for Option A.
+**Added by shops.** A typical small shop is taken as **100 visits and 5 orders a day** (links from Facebook and TikTok): about 550 small API requests a day and 135 MB of outgoing data a month. 100 such shops average 0.6 requests a second, light work for one server, and add roughly **$3 a month**. A **busy shop** (1,000 visits and 50 orders a day) counts as about ten typical ones. Bursts, such as a live-selling session, briefly use more power and cost cents for those minutes.
 
-Prices checked on 2026-09-23: [Vercel Hobby plan](https://vercel.com/docs/plans/hobby), [Railway pricing plans](https://docs.railway.com/pricing/plans). VPS, domain and growth figures are approximate estimates.
+| Active shops | Railway usage | Railway bill | Platform total* |
+| --- | --- | --- | --- |
+| 10 (beta) | ~$8 | $20 (the plan fee covers it) | ~$41 |
+| 50 | ~$9–10 | $20 | ~$41 |
+| 100 | ~$11–14 | $20 | ~$41–45 |
+| 300 | ~$18–25 | $20–25 | ~$45–50 |
+| 500 | ~$25–40 (a second API copy for busy hours) | $25–40 | ~$50–65 |
+| 100 busy shops | ~$35–40 | $35–40 | ~$60 |
+
+*Vercel Pro $20 + Railway + about $1 a month for the domain. Cloudflare (DNS, Turnstile, R2 up to ~10 GB of photos, about 400 shops at 50 products × 3 photos) and Sentry stay free at these sizes; R2 beyond that is about $0.015 per GB per month.
+
+Not counted: Cloudflare Pro (~$25, only if attacked often), paid Sentry when errors outgrow the free tier, SMS codes if phone login is added (Release 2, charged per message), your time and company costs.
+
+**Keeping the bill safe:** set a spending limit on Railway (e.g. $40 to start) and on Vercel at go-live (docs/go-live.md), and read Railway's usage page monthly: it shows each service's real memory and CPU, which replace these estimates.
+
+### Seller prices against these costs
+
+With the plans in `packages/shared/plans.ts` (Free 14-day trial; Basic $5 / 20,000៛; Pro $12 / 48,000៛; Advance $29 / 116,000៛):
+
+- **Break-even:** ~$45 a month of hosting = **9 Basic sellers**.
+- **Hosting per seller** at 100 shops: about **$0.40–0.50 a month**, so the price is set by the market and the value to sellers, not by hosting.
+- **Example, 100 paying shops** (60% Basic, 30% Pro, 10% Advance): 60 × $5 + 30 × $12 + 10 × $29 = **$950 a month** against **$45–60** of hosting, about 5–6%.
+- Trial shops cost almost nothing, and the trial is once per store.
+
+Plan your subscription price so that **about 10 paying merchants cover all hosting**: at $5 per merchant per month, 9 merchants pay for Option A.
+
+Prices checked on 2026-09-23 (Railway usage rates on 2026-10-02): [Vercel Hobby plan](https://vercel.com/docs/plans/hobby), [Railway pricing plans](https://docs.railway.com/pricing/plans). VPS, domain, usage and growth figures are estimates from the assumptions above; replace them with Railway's usage page once live.
 
 ## Roadmap: zero to live
 
@@ -839,7 +877,7 @@ Going live is the middle of the project, not the end. From step 8 on, the platfo
 | Paying shops vs hosting cost | 10–15 paying shops cover hosting ("Budget") | Subscriptions |
 | Shops that pay again the next month | Above 80% | Subscriptions |
 
-Scale only when the numbers say so: add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb (see "When you grow" in Budget).
+Scale only when the numbers say so: add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb (see "How Railway usage adds up" in Budget).
 
 ### What "finished" means
 
