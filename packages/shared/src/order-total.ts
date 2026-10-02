@@ -142,5 +142,7 @@ export const placeOrderRequestSchema = z.object({
     .max(MAX_ORDER_LINES, "too_long")
     .refine((lines) => new Set(lines.map((line) => line.variantId)).size === lines.length, "product_unavailable"),
   checkout: z.record(z.unknown()),
+  /** Cloudflare Turnstile's token from the checkout page; the API checks it when Turnstile is set up. */
+  botCheck: z.string().max(4096).optional(),
 });
 export type PlaceOrderRequest = z.infer<typeof placeOrderRequestSchema>;

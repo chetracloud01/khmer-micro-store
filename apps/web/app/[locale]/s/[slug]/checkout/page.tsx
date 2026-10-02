@@ -23,11 +23,13 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BotCheck, TURNSTILE_SITE_KEY } from "@/components/bot-check";
 import { BuyerBottomBar, BuyerShell, BuyerSteps, BuyerTopBar } from "@/components/buyer-shell";
 import { focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { formatMoney } from "@/components/order-ui";
 import { api, ApiError, type PlacedOrder, type PublicShop } from "@/lib/api";
 import { cartLines, cartTotal, readBuyerDetails, saveBuyerDetails, useShopCart, type BuyerDetails } from "@/lib/cart";
+import { newId } from "@/lib/new-id";
 import { isTakingOrders, paymentMethodsFor } from "@/lib/shop-ordering";
 import { usePublicShop } from "@/lib/use-public-shop";
 import { BuyerLoading, BuyerProblem } from "../buyer-states";
@@ -69,7 +71,10 @@ function CheckoutForm({ shop, cart, onShopChanged }: { shop: PublicShop; cart: R
   // Set once the order exists, so the emptied cart doesn't flash "your cart is empty" before the order page opens.
   const [placed, setPlaced] = useState(false);
   // One key per checkout: a double tap or a retry on bad signal gives back the same order (packages/shared placeOrderRequestSchema).
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey] = useState(newId);
+  // Cloudflare Turnstile: a fresh token for each attempt (each works once).
+  const [botToken, setBotToken] = useState<string | null>(null);
+  const [botReset, setBotReset] = useState(0);
 
   const currency: Currency = cart.currency ?? shop.store.defaultCurrency;
   const rate = shop.store.usdToKhrRate;
@@ -147,11 +152,20 @@ function CheckoutForm({ shop, cart, onShopChanged }: { shop: PublicShop; cart: R
       focusFirstInvalidField(formRef.current);
       return;
     }
+    if (TURNSTILE_SITE_KEY && !botToken) {
+      setProblem(t("botCheckWait"));
+      return;
+    }
     setPlacing(true);
     try {
       const order = await api<PlacedOrder>(`/public/stores/${encodeURIComponent(slug)}/orders`, {
         method: "POST",
-        body: { idempotencyKey, lines: lines.map((line) => ({ variantId: line.variant.id, quantity: line.quantity })), checkout: checkoutForm() },
+        body: {
+          idempotencyKey,
+          lines: lines.map((line) => ({ variantId: line.variant.id, quantity: line.quantity })),
+          checkout: checkoutForm(),
+          ...(botToken ? { botCheck: botToken } : {}),
+        },
       });
       saveBuyerDetails(details, remember);
       setPlaced(true);
@@ -159,6 +173,15 @@ function CheckoutForm({ shop, cart, onShopChanged }: { shop: PublicShop; cart: R
       router.replace(`/${locale}/o/${order.token}`);
     } catch (failure) {
       setPlacing(false);
+      setBotReset((count) => count + 1);
+      if (failure instanceof ApiError && failure.code === "bot_check_failed") {
+        setProblem(t("botCheckFailed"));
+        return;
+      }
+      if (failure instanceof ApiError && failure.code === "too_many_requests") {
+        setProblem(tApp("tooManyTries"));
+        return;
+      }
       if (failure instanceof ApiError && Object.keys(failure.fields).length > 0) {
         const fields = failure.fields;
         if (Object.keys(fields).some((key) => key.startsWith("lines"))) {
@@ -450,6 +473,7 @@ function CheckoutForm({ shop, cart, onShopChanged }: { shop: PublicShop; cart: R
             </span>
           </div>
         </section>
+        <BotCheck onToken={setBotToken} resetKey={botReset} />
       </div>
 
       <BuyerBottomBar>

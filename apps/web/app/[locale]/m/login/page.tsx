@@ -35,7 +35,7 @@ export default function LoginPage() {
       await api(path, { method: "POST", body });
       router.replace(`/${locale}/m`);
     } catch (caught) {
-      setError(caught instanceof ApiError && caught.status === 0 ? t("offlineBody") : t("loginFailed"));
+      setError(caught instanceof ApiError && caught.status === 0 ? t("offlineBody") : caught instanceof ApiError && caught.code === "too_many_requests" ? t("tooManyTries") : t("loginFailed"));
       setBusy(false);
     }
   }

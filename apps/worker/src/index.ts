@@ -3,6 +3,7 @@ import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } fr
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";
+import { registerCleanup } from "./jobs/cleanup";
 import { registerHeartbeat } from "./jobs/heartbeat";
 import { alertChats, deliverOutboxOnce } from "./jobs/outbox";
 import { pollTelegram } from "./jobs/telegram-buttons";
@@ -49,6 +50,7 @@ async function main() {
 
   // Telegram alerts: the outbox is read with the owner user (the worker serves every shop).
   const db = createSystemDb(env.DATABASE_OWNER_URL);
+  await registerCleanup(boss, db, logger);
   const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger);
   let stopping = false;
   // The alert chat, remembered while the database answers: the "failing" alert may be needed when it doesn't.

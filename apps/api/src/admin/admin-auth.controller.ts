@@ -6,6 +6,7 @@ import { checkTelegramLogin } from "../auth/telegram";
 import { getEnv } from "../config";
 import { SYSTEM_DB } from "../db";
 import { AppException, InvalidInputException } from "../errors";
+import { clientAddress, RATE_LIMITER, type RateLimiter } from "../security/rate-limit";
 import {
   ADMIN_COOKIE,
   adminCookie,
@@ -23,6 +24,7 @@ interface CookieResponse {
 }
 interface CookieRequest {
   headers: { cookie?: string };
+  ip?: string;
 }
 
 /**
@@ -32,7 +34,10 @@ interface CookieRequest {
  */
 @Controller("admin/auth")
 export class AdminAuthController {
-  constructor(@Inject(SYSTEM_DB) private readonly db: SystemDb) {}
+  constructor(
+    @Inject(SYSTEM_DB) private readonly db: SystemDb,
+    @Inject(RATE_LIMITER) private readonly limits: RateLimiter,
+  ) {}
 
   private key(): string {
     const key = getEnv().ADMIN_SECRETS_KEY;
@@ -45,7 +50,8 @@ export class AdminAuthController {
   /** Step one with Telegram's signed login. An unlisted or disabled account gets nothing — and isn't told why. */
   @Post("telegram")
   @HttpCode(200)
-  async telegram(@Body() body: unknown, @Res({ passthrough: true }) res: CookieResponse) {
+  async telegram(@Req() req: CookieRequest, @Body() body: unknown, @Res({ passthrough: true }) res: CookieResponse) {
+    await this.limits.hit("adminLogin", clientAddress(req));
     this.key();
     const botToken = getEnv().TELEGRAM_BOT_TOKEN;
     if (!botToken) throw new ServiceUnavailableException();
@@ -71,6 +77,7 @@ export class AdminAuthController {
   @Post("enrol")
   @HttpCode(200)
   async enrol(@Req() req: CookieRequest) {
+    await this.limits.hit("adminCode", clientAddress(req));
     const key = this.key();
     const session = await this.pending(req);
     if (session.enrolled) throw new AppException(409, "action_not_allowed");
@@ -81,6 +88,7 @@ export class AdminAuthController {
   @Post("verify")
   @HttpCode(200)
   async verify(@Req() req: CookieRequest, @Body() body: unknown) {
+    await this.limits.hit("adminCode", clientAddress(req));
     const key = this.key();
     const session = await this.pending(req);
     const { code } = adminCodeSchema.parse(body);

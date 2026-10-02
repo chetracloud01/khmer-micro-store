@@ -32,10 +32,10 @@ Updated at the end of every roadmap step.
 | Step 2. Data and login | Done — schema, row-level security with two database users, Telegram login, 2-question onboarding |
 | Step 3. Catalog | Done — products with options and photos, shop details, setup checklist, read-only shop page |
 | Step 4. Shop and checkout | Done — delivery and store settings, cart, one-page checkout, cash orders priced by the API, buyer order page, seller order list (read-only) |
-| Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes; it must be done before step 8 (go live). Until then shops take cash on delivery only |
+| Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes. Decided 2026-10-02: the beta may go live with cash on delivery only, and KHQR is switched on when it's ready (its launch-checklist items then apply) |
 | Step 6. Orders and Telegram | Done — order actions (confirm → pack → send by driver, bus or pickup → delivered → cash collected; failed, rebook, cancel), the buyer cancels while allowed and their page refreshes itself, Telegram alerts through an outbox with a Confirm button. Telegram runs in dry run until a bot token is set: send one real alert then |
 | Step 7. Admin, the minimum | Done — admin login with Telegram + authenticator code (2FA, backup codes, lockout), roles enforced by the API, overview, merchants with extend/unblock and change plan, audit log, platform settings, admin alerts to Telegram. First owner by `pnpm admin:add-owner` |
-| **Next: Step 8. Security and go live** | Not started — needs a domain and hosting. Step 5 (KHQR) must be finished before going live |
+| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). Next: B2 photos to R2, B3 deploy config and backups, B4 production rehearsal and `docs/go-live.md` |
 
 ## Overview
 
@@ -633,12 +633,12 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 | Super admin | Separate login with 2FA (TOTP); admin routes on their own path, IP-limited if possible |
 | Roles | Owner and staff per store; staff cannot change payment settings or delete products |
 | Payments | KHQR: trust only your own MD5 poll. PayWay: verify HMAC-SHA512 header, then Check Transaction API. Match amount and currency. Idempotent processing |
-| Telegram webhook | `secret_token` header checked on every request; button presses checked against store membership |
+| Telegram updates | The worker long-polls getUpdates (one worker, no public URL needed; decided 2026-10-02 for the beta). If it ever moves to a webhook: `secret_token` header checked on every request. Button presses are checked against store membership either way |
 | Input | Zod on every endpoint; Prisma parameterised queries; image uploads checked by their bytes (JPEG/PNG/WebP only, whatever the file name says), 2 MB at most after the browser shrinks them, stored per shop and served with `nosniff` |
-| Abuse | Cloudflare WAF + Turnstile on checkout; limits per phone and device, not only per IP (mobile users share IPs) |
+| Abuse | Cloudflare WAF + Turnstile on checkout (checked by the API; if Cloudflare can't be reached the order goes through and Sentry is told). Rate limits counted in PostgreSQL (`app_rate_limit_hit`, keys hashed): seller login 20 / 10 min and admin login 10 / 10 min per address, admin codes 20 / 10 min, checkout 60 / hour per address and 10 / hour per phone, buyer links and cancels 30 / hour, staff-group links 10 / hour and photo uploads 120 / hour per shop. Address limits are generous because mobile users share addresses; `TRUST_PROXY_HOPS` must match the proxies in front of the API |
 | Secrets | Only in the hosting provider's environment settings; `.env` never in Git; PayWay keys encrypted at rest. Settings are checked at start-up (`packages/shared/env.ts`), and an error names the missing setting, never its value |
 | Development login | A "test merchant" login exists only in development and is refused in production |
-| Headers | HTTPS only, HSTS, CSP, no framing of admin pages |
+| Headers | HTTPS only, HSTS, CSP, no framing. Web: CSP allowing only the API, photos, Telegram's login button and Turnstile (inline scripts allowed for Next.js, no eval); the Telegram button uses redirect mode for that reason. API: `default-src 'none'`, nosniff, no framing, no `X-Powered-By`. Production refuses to start without https origins, the bot token, the admin key and the Turnstile secret, or with rate limits off |
 | Privacy | Buyer phone and address visible only to that store; masked in logs |
 | Backups | Daily automatic backups, kept 14 days, plus a monthly restore test |
 | Dependencies | Dependabot + `pnpm audit` in CI; pin versions |
@@ -1041,9 +1041,11 @@ The steps and their "Done when" checks are in "Roadmap: zero to live" above — 
 
 **Before going live (Release 1)** — ABA PayWay's own checks (production keys, fake and replayed callbacks rejected) join this list when PayWay is built in Release 3.
 
-- [ ] Live Bakong token works from the production host, and renewal job has run once
-- [ ] A real 100៛ and a real $0.10 payment tested end to end with KHQR
-- [ ] A payment for the wrong amount, and the same result delivered twice, both change nothing
+- [ ] When KHQR is switched on (a cash-only beta may start without it): live Bakong token works from the production host, and renewal job has run once
+- [ ] When KHQR is switched on: a real 100៛ and a real $0.10 payment tested end to end
+- [ ] When KHQR is switched on: a payment for the wrong amount, and the same result delivered twice, both change nothing
+- [ ] On the real domain: "Log in with Telegram" works for a seller and an admin (the bot's /setdomain set first)
+- [ ] Rate limits see each phone's own address behind the proxies (`TRUST_PROXY_HOPS` counted, not guessed)
 - [ ] Store isolation test passing in CI
 - [ ] With the production bot token set, a real new-order alert reaches a seller's Telegram and its Confirm button works
 - [ ] Backup restored into a fresh database

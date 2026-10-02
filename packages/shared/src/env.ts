@@ -41,7 +41,28 @@ const shared = {
     .pipe(z.array(z.string().url("must be a URL, or URLs separated by commas")).min(1, "required")),
 };
 
-export const apiEnvSchema = z.object({
+/**
+ * What production refuses to start without, so a missing setting shows up
+ * at deploy time instead of as a quiet hole (no alerts, no bot check, no
+ * admin login, cookies sent over plain http). Names only, never values.
+ */
+function productionRules(required: string[]) {
+  return (env: { NODE_ENV: string; WEB_ORIGIN: string[] } & Record<string, unknown>, ctx: z.RefinementCtx) => {
+    if (env.NODE_ENV !== "production") return;
+    env.WEB_ORIGIN.forEach((origin, index) => {
+      if (!origin.startsWith("https://")) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["WEB_ORIGIN", index], message: "must be https in production" });
+    });
+    for (const key of required) {
+      if (env[key] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "required in production" });
+    }
+    if (env.RATE_LIMITS === "off") ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["RATE_LIMITS"], message: "can't be off in production" });
+    if (typeof env.FILES_PUBLIC_URL === "string" && !env.FILES_PUBLIC_URL.startsWith("https://")) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["FILES_PUBLIC_URL"], message: "must be https in production" });
+    }
+  };
+}
+
+const apiFields = z.object({
   ...shared,
   /** The API's everyday database user (khmer_micro_store_app): row-level security keeps each shop to its own rows. */
   DATABASE_URL: postgresUrl,
@@ -58,10 +79,23 @@ export const apiEnvSchema = z.object({
     z.string().regex(/^[A-Za-z0-9+/]{43}=$/, "must be 32 random bytes in base64 (openssl rand -base64 32)"),
   ),
   PORT: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(65535).default(4000),
+  /**
+   * How many proxies stand in front of the API and add to X-Forwarded-For
+   * (Railway's edge, Cloudflare). The buyer's address for rate limits is
+   * read that many steps from the right; 0 = the direct connection (local).
+   * Too high lets anyone pick their own address, so count, don't guess.
+   */
+  TRUST_PROXY_HOPS: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(0).max(5).default(0),
+  /** "off" only for end-to-end test scripts that place many orders from one machine. Production refuses "off". */
+  RATE_LIMITS: z.enum(["on", "off"]).default("on"),
+  /** Cloudflare Turnstile's secret: checkout checks the buyer isn't a bot. Unset = no check (local). */
+  TURNSTILE_SECRET_KEY: optional(z.string().min(10, "must be the secret key from Cloudflare Turnstile")),
 });
+
+export const apiEnvSchema = apiFields.superRefine(productionRules(["TELEGRAM_BOT_TOKEN", "ADMIN_SECRETS_KEY", "TURNSTILE_SECRET_KEY"]));
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
-export const workerEnvSchema = z.object(shared);
+export const workerEnvSchema = z.object(shared).superRefine(productionRules(["TELEGRAM_BOT_TOKEN"]));
 export type WorkerEnv = z.infer<typeof workerEnvSchema>;
 
 export class EnvError extends Error {

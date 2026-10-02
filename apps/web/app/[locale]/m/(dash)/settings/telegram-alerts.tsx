@@ -35,7 +35,9 @@ export function TelegramAlerts({ signedInWithTelegram }: { signedInWithTelegram:
           ? t("notConfigured")
           : failure instanceof ApiError && failure.code === "store_paused"
             ? tApp("storePaused")
-            : tApp("saveFailed"),
+            : failure instanceof ApiError && failure.code === "too_many_requests"
+              ? tApp("tooManyTries")
+              : tApp("saveFailed"),
       );
     } finally {
       setBusy(false);

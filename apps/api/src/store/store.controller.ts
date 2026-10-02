@@ -8,6 +8,7 @@ import { FILE_STORAGE, type FileStorage } from "../files/storage";
 import { assertStoreWritable, storePlan } from "../merchant/plan";
 import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
 import { linkFor, newLinkCode } from "../telegram/links";
+import { RATE_LIMITER, type RateLimiter } from "../security/rate-limit";
 
 const storeSelect = {
   slug: true,
@@ -30,6 +31,7 @@ export class StoreController {
   constructor(
     @Inject(APP_DB) private readonly app: AppDb,
     @Inject(FILE_STORAGE) private readonly storage: FileStorage,
+    @Inject(RATE_LIMITER) private readonly limits: RateLimiter,
   ) {}
 
   @Get()
@@ -86,6 +88,7 @@ export class StoreController {
   @Post("telegram-groups/link")
   @HttpCode(200)
   async telegramGroupLink(@CurrentStore() context: MerchantStore) {
+    await this.limits.hit("groupLink", context.storeId);
     const { code, codeHash, expiresAt } = newLinkCode("group_link");
     const link = await linkFor(code, true);
     await withContext(this.app, context, async (tx) => {

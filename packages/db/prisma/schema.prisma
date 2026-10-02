@@ -796,3 +796,16 @@ model AuditLog {
   @@index([storeId, at])
   @@map("audit_logs")
 }
+
+/// Request counters for rate limits (login, checkout, links, uploads): one row per key and time window.
+/// The key is a scope plus a hash, never a raw IP address or phone. Only the API's
+/// app_rate_limit_hit() function writes here; the worker deletes rows older than two days.
+model RateLimitHit {
+  bucket      String
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  hits        Int      @default(1)
+
+  @@id([bucket, windowStart])
+  @@index([windowStart])
+  @@map("rate_limit_hits")
+}

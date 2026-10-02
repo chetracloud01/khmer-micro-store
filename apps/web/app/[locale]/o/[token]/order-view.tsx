@@ -49,7 +49,7 @@ export function OrderView({ order, token }: { order: PublicOrder | null; token: 
       await api(`/public/orders/${encodeURIComponent(token)}/cancel`, { method: "POST" });
     } catch (failure) {
       // Already moved on (the shop confirmed it meanwhile): the page shows why after the refresh.
-      setCancelProblem(failure instanceof ApiError && failure.code === "action_not_allowed" ? tApp("orderMovedOn") : tApp("saveFailed"));
+      setCancelProblem(failure instanceof ApiError && failure.code === "action_not_allowed" ? tApp("orderMovedOn") : failure instanceof ApiError && failure.code === "too_many_requests" ? tApp("tooManyTries") : tApp("saveFailed"));
     } finally {
       setCancelling(false);
       setConfirmCancel(false);
@@ -268,9 +268,10 @@ export function OrderView({ order, token }: { order: PublicOrder | null; token: 
  */
 function TelegramUpdates({ token, following }: { token: string; following: boolean }) {
   const t = useTranslations("Telegram");
+  const tApp = useTranslations("App");
   const [link, setLink] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   if (following) {
     return (
       <p className="flex items-center justify-center gap-2 rounded-DEFAULT bg-success/10 p-3 text-sm font-medium text-success">
@@ -281,13 +282,13 @@ function TelegramUpdates({ token, following }: { token: string; following: boole
   }
   async function getLink() {
     setBusy(true);
-    setFailed(false);
+    setFailed(null);
     try {
       const result = await api<TelegramLink>(`/public/orders/${encodeURIComponent(token)}/telegram-link`, { method: "POST" });
       setLink(result.link);
       window.open(result.link, "_blank", "noopener");
-    } catch {
-      setFailed(true);
+    } catch (failure) {
+      setFailed(failure instanceof ApiError && failure.code === "too_many_requests" ? tApp("tooManyTries") : t("buyerFailed"));
     } finally {
       setBusy(false);
     }
@@ -305,7 +306,7 @@ function TelegramUpdates({ token, following }: { token: string; following: boole
           {t("buyerGetUpdates")}
         </Button>
       )}
-      <p className="text-center text-xs text-muted">{failed ? t("buyerFailed") : link ? t("buyerPressStart") : t("buyerHint")}</p>
+      <p className="text-center text-xs text-muted">{failed ?? (link ? t("buyerPressStart") : t("buyerHint"))}</p>
     </div>
   );
 }

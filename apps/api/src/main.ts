@@ -5,7 +5,9 @@ import { AppModule } from "./app.module";
 import { getEnv } from "./config";
 import { AllErrorsFilter } from "./errors";
 import { createLogger, httpLogger } from "./logger";
+import { securityHeaders } from "./security/headers";
 import { initSentry } from "./sentry";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 
 function readSettings(): ApiEnv {
   try {
@@ -25,7 +27,11 @@ async function bootstrap() {
   const logger = createLogger(env.LOG_LEVEL);
   initSentry(env.SENTRY_DSN, env.NODE_ENV);
 
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false });
+  // The buyer's real address behind Railway/Cloudflare, for rate limits (count the proxies: TRUST_PROXY_HOPS).
+  app.set("trust proxy", env.TRUST_PROXY_HOPS);
+  app.disable("x-powered-by");
+  app.use(securityHeaders(env.NODE_ENV === "production"));
   app.use(httpLogger(logger));
   app.useGlobalFilters(new AllErrorsFilter(logger));
   // Only the web app may call the API from a browser.

@@ -1,6 +1,6 @@
 import { withPublicOrder, withPublicStore, type AppDb } from "@khmer-micro-store/db";
-import { canBuyerCancel, shopSlugSchema } from "@khmer-micro-store/shared";
-import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, Post, Res } from "@nestjs/common";
+import { canBuyerCancel, normalizeKhmerPhone, shopSlugSchema } from "@khmer-micro-store/shared";
+import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, Post, Req, Res } from "@nestjs/common";
 import { readDeliverySettings } from "../delivery/delivery";
 import { AppException } from "../errors";
 import { APP_DB } from "../db";
@@ -8,9 +8,16 @@ import { FILE_STORAGE, type FileStorage } from "../files/storage";
 import { ORDER_TOKEN_PATTERN, parsePlaceOrder, placeOrder } from "../orders/place-order";
 import { linkFor, newLinkCode } from "../telegram/links";
 import { productInclude, toProductDto } from "../products/products";
+import { getEnv } from "../config";
+import { clientAddress, RATE_LIMITER, type RateLimiter } from "../security/rate-limit";
+import { requireHuman } from "../security/turnstile";
+import { captureError } from "../sentry";
 
 interface StatusResponse {
   status(code: number): unknown;
+}
+interface AddressRequest {
+  ip?: string;
 }
 
 /**
@@ -24,6 +31,7 @@ export class PublicController {
   constructor(
     @Inject(APP_DB) private readonly app: AppDb,
     @Inject(FILE_STORAGE) private readonly storage: FileStorage,
+    @Inject(RATE_LIMITER) private readonly limits: RateLimiter,
   ) {}
 
   private url = (key: string) => this.storage.publicUrl(key);
@@ -77,9 +85,14 @@ export class PublicController {
   /** Places an order: 201 with its link token; 200 with the same token when this checkout was already placed. */
   @Post("stores/:slug/orders")
   @HttpCode(201)
-  async order(@Param("slug") slug: string, @Body() body: unknown, @Res({ passthrough: true }) response: StatusResponse) {
+  async order(@Req() req: AddressRequest, @Param("slug") slug: string, @Body() body: unknown, @Res({ passthrough: true }) response: StatusResponse) {
     if (!shopSlugSchema.safeParse(slug).success) throw new NotFoundException();
+    const address = clientAddress(req);
+    await this.limits.hit("checkoutAddress", address);
     const request = parsePlaceOrder(body);
+    const phone = typeof request.checkout.phone === "string" ? normalizeKhmerPhone(request.checkout.phone) : null;
+    if (phone) await this.limits.hit("checkoutPhone", phone);
+    await requireHuman(getEnv().TURNSTILE_SECRET_KEY, request.botCheck, address, () => captureError(new Error("Turnstile unreachable: an order went through without the bot check")));
     const placed = await placeOrder(this.app, slug, request);
     if (!placed) throw new NotFoundException();
     if (!placed.created) response.status(200);
@@ -147,8 +160,9 @@ export class PublicController {
   /** "Get updates on Telegram": a t.me link with a one-time code for this order (15 minutes). */
   @Post("orders/:token/telegram-link")
   @HttpCode(200)
-  async telegramLink(@Param("token") token: string) {
+  async telegramLink(@Req() req: AddressRequest, @Param("token") token: string) {
     if (!ORDER_TOKEN_PATTERN.test(token)) throw new NotFoundException();
+    await this.limits.hit("buyerAction", clientAddress(req));
     const { code, codeHash, expiresAt } = newLinkCode("order_follow");
     const link = await linkFor(code, false);
     const made = await withPublicOrder(this.app, token, async (tx, storeId) => {
@@ -165,8 +179,9 @@ export class PublicController {
   /** The buyer cancels their own order — only while no money has moved and nothing is packed (canBuyerCancel). */
   @Post("orders/:token/cancel")
   @HttpCode(200)
-  async cancel(@Param("token") token: string) {
+  async cancel(@Req() req: AddressRequest, @Param("token") token: string) {
     if (!ORDER_TOKEN_PATTERN.test(token)) throw new NotFoundException();
+    await this.limits.hit("buyerAction", clientAddress(req));
     const result = await withPublicOrder(this.app, token, async (tx) => {
       const order = await tx.order.findFirst({ select: { status: true, paymentMethod: true, fulfilment: true, area: true } });
       if (!order) return "missing" as const;

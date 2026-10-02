@@ -5,6 +5,7 @@ import { InvalidInputException } from "../errors";
 import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
 import { contentTypeOfKey, detectPhotoType, MAX_PHOTO_BYTES, newPhotoKey } from "./photos";
 import { FILE_STORAGE, type FileStorage } from "./storage";
+import { RATE_LIMITER, type RateLimiter } from "../security/rate-limit";
 
 interface FileResponse {
   setHeader(name: string, value: string): unknown;
@@ -13,7 +14,10 @@ interface FileResponse {
 
 @Controller()
 export class FilesController {
-  constructor(@Inject(FILE_STORAGE) private readonly storage: FileStorage) {}
+  constructor(
+    @Inject(FILE_STORAGE) private readonly storage: FileStorage,
+    @Inject(RATE_LIMITER) private readonly limits: RateLimiter,
+  ) {}
 
   /**
    * One photo (a product photo or the shop logo), already compressed by the
@@ -24,6 +28,7 @@ export class FilesController {
   @UseGuards(MerchantStoreGuard)
   @UseInterceptors(FileInterceptor("file", { storage: memoryStorage(), limits: { fileSize: MAX_PHOTO_BYTES, files: 1 } }))
   async upload(@CurrentStore() { storeId }: MerchantStore, @UploadedFile() file: { buffer: Buffer } | undefined) {
+    await this.limits.hit("photoUpload", storeId);
     if (!file) throw new InvalidInputException({ file: "photo_required" });
     const type = detectPhotoType(file.buffer);
     if (!type) throw new InvalidInputException({ file: "photo_required" });

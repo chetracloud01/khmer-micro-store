@@ -14,6 +14,7 @@ import { MerchantStoreGuard } from "./merchant/store.guard";
 import { OrdersController } from "./orders/orders.controller";
 import { ProductsController } from "./products/products.controller";
 import { PublicController } from "./public/public.controller";
+import { rateLimiterProvider } from "./security/rate-limit";
 import { StoreController } from "./store/store.controller";
 import { StoresController } from "./stores/stores.controller";
 
@@ -32,6 +33,6 @@ import { StoresController } from "./stores/stores.controller";
     FilesController,
     PublicController,
   ],
-  providers: [...dbProviders, DbShutdown, fileStorageProvider, SessionGuard, MerchantStoreGuard, AdminGuard],
+  providers: [...dbProviders, DbShutdown, fileStorageProvider, rateLimiterProvider, SessionGuard, MerchantStoreGuard, AdminGuard],
 })
 export class AppModule {}

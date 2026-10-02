@@ -150,7 +150,9 @@
     "provinceByBus": "Sent by bus or transport company. Fee: {fee}.",
     "rememberDetails": "Remember my details on this phone",
     "payAtPickup": "Pay when you pick up",
-    "feeAfterChoice": "Choose where first"
+    "feeAfterChoice": "Choose where first",
+    "botCheckWait": "One moment — checking the connection. Tap the button again in a few seconds.",
+    "botCheckFailed": "We couldn't confirm this order came from a person. Please tap the button again."
   },
   "Khqr": {
     "title": "Pay with KHQR",
@@ -1303,7 +1305,8 @@
     "orderFailed": "Your order wasn't sent. Check your connection and try again — you won't be charged twice.",
     "payCashOnDelivery": "Cash on delivery",
     "orderMovedOn": "This order changed meanwhile (maybe from Telegram or another phone). It's shown as it is now.",
-    "ordersWaiting": "{count, plural, one {# order needs you} other {# orders need you}}"
+    "ordersWaiting": "{count, plural, one {# order needs you} other {# orders need you}}",
+    "tooManyTries": "Too many tries in a short time. Please wait a few minutes, then try again."
   },
   "AdminApp": {
     "title": "Admin",
@@ -1401,7 +1404,8 @@
     "betaHelp": "While on, every shop gets the Basic plan's features and limits and nobody is charged. Turn it off when billing starts (Release 2).",
     "betaLabel": "Every shop counts as Basic",
     "betaOn": "On — beta: no charges, Basic features for all",
-    "betaOff": "Off — each shop's own plan applies"
+    "betaOff": "Off — each shop's own plan applies",
+    "tooManyTries": "Too many tries in a short time. Please wait a few minutes, then try again."
   },
   "Share": {
     "title": "Share your shop",

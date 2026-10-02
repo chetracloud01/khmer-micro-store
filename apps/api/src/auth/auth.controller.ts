@@ -8,12 +8,14 @@ import { findOrCreateTelegramMerchant } from "./accounts";
 import { CurrentMerchant, SessionGuard } from "./session.guard";
 import { clearedSessionCookie, createSession, readCookie, revokeSession, SESSION_COOKIE, sessionCookie } from "./sessions";
 import { checkTelegramLogin } from "./telegram";
+import { clientAddress, RATE_LIMITER, type RateLimiter } from "../security/rate-limit";
 
 interface CookieResponse {
   setHeader(name: string, value: string): unknown;
 }
 interface CookieRequest {
   headers: { cookie?: string };
+  ip?: string;
 }
 
 /** The two made-up merchants the development login can sign in as. */
@@ -28,12 +30,14 @@ export class AuthController {
   constructor(
     @Inject(SYSTEM_DB) private readonly system: SystemDb,
     @Inject(APP_DB) private readonly app: AppDb,
+    @Inject(RATE_LIMITER) private readonly limits: RateLimiter,
   ) {}
 
   /** "Log in with Telegram": checks Telegram's signature, then signs the merchant in (creating them the first time). */
   @Post("telegram")
   @HttpCode(200)
-  async telegram(@Body() body: unknown, @Res({ passthrough: true }) res: CookieResponse) {
+  async telegram(@Req() req: CookieRequest, @Body() body: unknown, @Res({ passthrough: true }) res: CookieResponse) {
+    await this.limits.hit("sellerLogin", clientAddress(req));
     const botToken = getEnv().TELEGRAM_BOT_TOKEN;
     if (!botToken) throw new ServiceUnavailableException();
     const payload = telegramLoginPayloadSchema.parse(body);

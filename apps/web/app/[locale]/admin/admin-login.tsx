@@ -30,7 +30,7 @@ export function AdminLogin({ me, onSignedIn }: { me: AdminMe | null; onSignedIn:
       const result = await api<{ next: "enrol" | "code" }>(path, { method: "POST", ...(body ? { body } : {}) });
       setStage(result.next);
     } catch (failure) {
-      setError(failure instanceof ApiError && failure.code === "admin_not_configured" ? t("notConfigured") : t("notAnAdmin"));
+      setError(failure instanceof ApiError && failure.code === "admin_not_configured" ? t("notConfigured") : failure instanceof ApiError && failure.code === "too_many_requests" ? t("tooManyTries") : t("notAnAdmin"));
     } finally {
       setBusy(false);
     }
@@ -128,7 +128,7 @@ function useCodeSubmit(onDone: (result: { backupCodes?: string[] }) => void) {
     try {
       onDone(await api<{ ok: true; backupCodes?: string[] }>("/admin/auth/verify", { method: "POST", body: { code } }));
     } catch (failure) {
-      setError(failure instanceof ApiError && failure.code === "code_locked" ? t("locked") : failure instanceof ApiError && failure.status === 401 ? t("expired") : t("wrongCode"));
+      setError(failure instanceof ApiError && failure.code === "code_locked" ? t("locked") : failure instanceof ApiError && failure.code === "too_many_requests" ? t("tooManyTries") : failure instanceof ApiError && failure.status === 401 ? t("expired") : t("wrongCode"));
       setCode("");
     } finally {
       setBusy(false);

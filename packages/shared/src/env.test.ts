@@ -39,4 +39,32 @@ describe("server settings", () => {
       expect((error as Error).message).not.toContain("s3cret");
     }
   });
+
+  it("refuses to start production without https and its required settings", () => {
+    try {
+      loadEnv(apiEnvSchema, { NODE_ENV: "production", DATABASE_OWNER_URL, DATABASE_URL, WEB_ORIGIN: "http://shop.example.com", FILES_PUBLIC_URL: "http://files.example.com" });
+      expect.unreachable();
+    } catch (error) {
+      const { problems } = error as EnvError;
+      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["ADMIN_SECRETS_KEY", "FILES_PUBLIC_URL", "TELEGRAM_BOT_TOKEN", "TURNSTILE_SECRET_KEY", "WEB_ORIGIN.0"]);
+    }
+    const productionSource = {
+      NODE_ENV: "production",
+      DATABASE_OWNER_URL,
+      DATABASE_URL,
+      WEB_ORIGIN: "https://shop.example.com",
+      TELEGRAM_BOT_TOKEN: "123456:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh",
+      ADMIN_SECRETS_KEY: "A".repeat(43) + "=",
+      TURNSTILE_SECRET_KEY: "0x4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      TRUST_PROXY_HOPS: "1",
+    };
+    const ready = loadEnv(apiEnvSchema, productionSource);
+    expect(ready.TRUST_PROXY_HOPS).toBe(1);
+    expect(ready.RATE_LIMITS).toBe("on");
+    expect(() => loadEnv(apiEnvSchema, { ...productionSource, RATE_LIMITS: "off" })).toThrow(EnvError);
+  });
+
+  it("the worker needs the bot in production", () => {
+    expect(() => loadEnv(workerEnvSchema, { NODE_ENV: "production", DATABASE_OWNER_URL, WEB_ORIGIN: "https://shop.example.com" })).toThrow(EnvError);
+  });
 });
