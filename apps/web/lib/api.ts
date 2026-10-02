@@ -56,7 +56,8 @@ export async function api<T>(
 }
 
 export interface Me {
-  merchant: { firstName: string; lastName: string; telegramUsername: string | null };
+  /** signedInWithTelegram: new-order alerts reach the merchant's own chat with the bot. */
+  merchant: { firstName: string; lastName: string; telegramUsername: string | null; signedInWithTelegram: boolean };
   store: {
     id: string;
     slug: string;
@@ -118,6 +119,8 @@ export interface StoreDetails {
   plan: PlanId;
   paused: boolean;
   readiness: { visibleProducts: number; productsWithPhoto: number; deliveryConfigured: boolean; khqrReady: boolean; codEnabled: boolean };
+  /** The last checklist step: the shop link was shared. */
+  linkShared: boolean;
 }
 
 export interface ProductVariant {
@@ -171,6 +174,8 @@ export interface PublicShop {
   delivery: Omit<DeliverySettings, "drivers">;
   /** Orders need delivery saved at least once; KHQR joins in step 5. */
   ordering: { deliveryConfigured: boolean; khqrReady: boolean };
+  /** false = the shop is paused: "temporarily closed", no orders. */
+  open: boolean;
 }
 
 /** GET/PUT /delivery. */
@@ -225,6 +230,8 @@ export interface PublicOrder {
   dispatch: { route: "driver" | "bus" | "pickup"; driverName: string; busCompany: string; ticketNumber: string; dispatchedAt: string } | null;
   /** The buyer may cancel by themselves right now (packages/shared canBuyerCancel). */
   canCancel: boolean;
+  /** A Telegram chat follows this order's status. */
+  followingOnTelegram: boolean;
   store: { slug: string; name: string; phone: string; logoUrl: string | null };
 }
 
@@ -247,7 +254,7 @@ export interface SellerOrder {
 }
 
 /** GET /orders/:id and POST /orders/:id/actions: one order in full, for the seller. */
-export interface SellerOrderDetail extends Omit<PublicOrder, "store" | "events" | "dispatch" | "canCancel"> {
+export interface SellerOrderDetail extends Omit<PublicOrder, "store" | "events" | "dispatch" | "canCancel" | "followingOnTelegram"> {
   id: string;
   buyerPhone: string;
   cancelNote: string;
@@ -267,4 +274,17 @@ export interface SellerOrderDetail extends Omit<PublicOrder, "store" | "events" 
   actions: SellerOrderAction[];
   /** How it must be sent (packages/shared getDispatchRoute). */
   route: "driver" | "bus" | "pickup";
+}
+
+/** POST /store/telegram-groups/link and /public/orders/:token/telegram-link: a one-time t.me link (15 minutes). */
+export interface TelegramLink {
+  link: string;
+  expiresAt: string;
+}
+
+/** GET /store/telegram-groups. */
+export interface StaffGroup {
+  id: string;
+  title: string;
+  createdAt: string;
 }

@@ -22,6 +22,7 @@ import { ACCEPTED_IMAGE_TYPES, compressImageToBlob } from "@/components/compress
 import { FormActions, FormSection, ReadOnlyField, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { api, ApiError, uploadPhoto, type StoreDetails } from "@/lib/api";
 import { useMerchant } from "../merchant-context";
+import { TelegramAlerts } from "./telegram-alerts";
 
 interface Draft {
   shopName: string;
@@ -55,7 +56,7 @@ export default function ShopSettingsPage() {
   const tApp = useTranslations("App");
   const locale = useLocale();
   const router = useRouter();
-  const { store, refreshStore } = useMerchant();
+  const { me, store, refreshStore } = useMerchant();
   const errorText = useFormErrorText();
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -301,6 +302,9 @@ export default function ShopSettingsPage() {
           className="bottom-above-nav -mb-4 rounded-b-DEFAULT"
         />
       </Card>
+
+      {/* Release 1 accounts all sign in with Telegram, so alerts to the private chat are always on (phone login comes in Release 2). */}
+      <TelegramAlerts signedInWithTelegram={me.merchant.signedInWithTelegram} />
 
       <Button variant="secondary" className="self-start" onClick={() => void signOut()}>
         <LogOut className="h-4 w-4" aria-hidden="true" />

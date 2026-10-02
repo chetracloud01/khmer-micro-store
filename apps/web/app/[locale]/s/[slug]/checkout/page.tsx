@@ -171,6 +171,12 @@ function CheckoutForm({ shop, cart, onShopChanged }: { shop: PublicShop; cart: R
         focusFirstInvalidField(formRef.current);
         return;
       }
+      // The shop was paused meanwhile: say so; reloading the shop then shows "temporarily closed".
+      if (failure instanceof ApiError && failure.code === "store_closed") {
+        setProblem(tStore("temporarilyClosed"));
+        onShopChanged();
+        return;
+      }
       if (failure instanceof ApiError && failure.code === "not_accepting_orders") {
         setProblem(t("noPaymentMethods"));
         onShopChanged();

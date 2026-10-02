@@ -2,7 +2,7 @@
 
 import { approximateIn, BUYER_ORDER_STEPS, formatKhmerPhoneLocal, getBuyerProgress } from "@khmer-micro-store/shared";
 import { Button, cn } from "@khmer-micro-store/ui";
-import { Bus, Check, Clock, MapPin, PackageX, Phone, Store, Truck } from "lucide-react";
+import { BellRing, Bus, Check, Clock, MapPin, PackageX, Phone, Send, Store, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { BuyerShell } from "@/components/buyer-shell";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
-import { api, ApiError, type PublicOrder } from "@/lib/api";
+import { api, ApiError, type PublicOrder, type TelegramLink } from "@/lib/api";
 
 /** How often an open order page asks for news (weak signal friendly; stops once the order is finished). */
 const REFRESH_EVERY_MS = 20_000;
@@ -233,6 +233,7 @@ export function OrderView({ order, token }: { order: PublicOrder | null; token: 
               {t("backToShop")}
             </Button>
           </Link>
+          {!finished && <TelegramUpdates token={token} following={order.followingOnTelegram} />}
           {cancelProblem && (
             <p role="alert" className="rounded-DEFAULT border border-warning/40 bg-warning/5 p-3 text-sm">
               {cancelProblem}
@@ -257,5 +258,54 @@ export function OrderView({ order, token }: { order: PublicOrder | null; token: 
         onClose={() => setConfirmCancel(false)}
       />
     </BuyerShell>
+  );
+}
+
+/**
+ * "Get updates on Telegram": a one-time link opens the shop's bot, and each
+ * status change then arrives as a message — no app, no account. The buyer can
+ * stop them from the message itself.
+ */
+function TelegramUpdates({ token, following }: { token: string; following: boolean }) {
+  const t = useTranslations("Telegram");
+  const [link, setLink] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (following) {
+    return (
+      <p className="flex items-center justify-center gap-2 rounded-DEFAULT bg-success/10 p-3 text-sm font-medium text-success">
+        <BellRing className="h-4 w-4" aria-hidden="true" />
+        {t("buyerFollowing")}
+      </p>
+    );
+  }
+  async function getLink() {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const result = await api<TelegramLink>(`/public/orders/${encodeURIComponent(token)}/telegram-link`, { method: "POST" });
+      setLink(result.link);
+      window.open(result.link, "_blank", "noopener");
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      {link ? (
+        <a href={link} target="_blank" rel="noreferrer" className="flex min-h-touch items-center justify-center gap-2 rounded-DEFAULT border border-brand text-sm font-medium text-brand">
+          <Send className="h-4 w-4" aria-hidden="true" />
+          {t("buyerOpenAgain")}
+        </a>
+      ) : (
+        <Button variant="secondary" className="w-full" loading={busy} onClick={() => void getLink()}>
+          <Send className="h-4 w-4" aria-hidden="true" />
+          {t("buyerGetUpdates")}
+        </Button>
+      )}
+      <p className="text-center text-xs text-muted">{failed ? t("buyerFailed") : link ? t("buyerPressStart") : t("buyerHint")}</p>
+    </div>
   );
 }

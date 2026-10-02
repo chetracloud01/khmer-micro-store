@@ -7,7 +7,8 @@ import type { PublicShop } from "./api";
 
 /** Delivery saved at least once, and at least one way to pay at all. */
 export function isTakingOrders(shop: PublicShop): boolean {
-  return shop.ordering.deliveryConfigured && (shop.store.allowCod || shop.ordering.khqrReady);
+  // A paused shop takes no orders (its page shows "temporarily closed").
+  return shop.open && shop.ordering.deliveryConfigured && (shop.store.allowCod || shop.ordering.khqrReady);
 }
 
 /** The payment methods for this buyer's area and delivery/pickup choice (packages/shared getAvailablePaymentMethods). */

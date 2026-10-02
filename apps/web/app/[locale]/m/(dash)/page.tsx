@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { api, type SellerOrder } from "@/lib/api";
 import { useMerchant } from "./merchant-context";
 import { SetupChecklist } from "./setup-checklist";
+import { ShareShop } from "./share-shop";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -57,6 +58,10 @@ export default function MerchantHomePage() {
       <WaitingOrders />
 
       <SetupChecklist />
+
+      <div id="share" className="scroll-mt-4">
+        <ShareShop />
+      </div>
 
       <Card className="flex flex-col gap-2 border-dashed p-4">
         <p className="font-semibold">{t("previewTitle")}</p>

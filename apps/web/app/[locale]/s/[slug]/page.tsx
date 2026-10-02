@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { PublicShop } from "@/lib/api";
 import { ShopView } from "./shop-view";
 
@@ -31,5 +32,10 @@ export default async function ShopPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const shop = await loadShop(slug);
   if (!shop) notFound();
-  return <ShopView shop={shop} />;
+  // The open product is read from ?product= in the browser, which needs a Suspense boundary.
+  return (
+    <Suspense>
+      <ShopView shop={shop} />
+    </Suspense>
+  );
 }

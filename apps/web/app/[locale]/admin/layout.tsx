@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, SegmentedControl } from "@khmer-micro-store/ui";
-import { LayoutDashboard, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
+import { Layers, LayoutDashboard, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -71,6 +71,7 @@ function AdminShell({ me, children }: { me: ActiveAdmin; children: ReactNode }) 
   const items: { href: string; label: string; icon: LucideIcon }[] = [
     { href: base, label: t("overview"), icon: LayoutDashboard },
     { href: `${base}/merchants`, label: t("merchants"), icon: Store },
+    { href: `${base}/plans`, label: t("plans"), icon: Layers },
     { href: `${base}/audit-log`, label: t("auditLog"), icon: ScrollText },
     { href: `${base}/settings`, label: t("settings"), icon: Settings },
   ];

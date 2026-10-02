@@ -68,7 +68,7 @@ function DashboardFrame({ store, children }: { store: StoreDetails; children: Re
   return (
     <div className="min-h-dvh bg-canvas text-fg">
       <div className="mx-auto flex min-h-dvh w-full max-w-[640px] flex-col bg-bg md:border-x md:border-border">
-        <header className="flex items-center justify-between gap-3 border-b border-border p-4">
+        <header className="flex items-center justify-between gap-3 border-b border-border p-4 print:hidden">
           <div className="flex min-w-0 items-center gap-3">
             {store.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- the shop's own uploaded logo
@@ -96,7 +96,7 @@ function DashboardFrame({ store, children }: { store: StoreDetails; children: Re
       </div>
 
       {/* 64px of tabs plus the phone's home-bar gap; .bottom-above-nav (globals.css) keeps form bars on top of it. */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] print:hidden">
         <div className="mx-auto flex h-16 max-w-[640px]">
           {tabs.map((tab) => (
             <Link

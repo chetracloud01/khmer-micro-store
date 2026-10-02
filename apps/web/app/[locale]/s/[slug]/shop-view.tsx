@@ -1,22 +1,50 @@
 "use client";
 
-import { formatKhmerPhoneLocal, type Currency } from "@khmer-micro-store/shared";
+import type { Currency } from "@khmer-micro-store/shared";
 import { Button, Card, cn, DiscountBadge, PriceTag, SearchInput, SegmentedControl } from "@khmer-micro-store/ui";
-import { ChevronLeft, ChevronRight, ImageOff, Phone, SearchX, ShoppingBag, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, ImageOff, SearchX, Share2, ShoppingBag, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/components/order-ui";
+import { shareOrCopyLink } from "@/components/share-link";
 import type { Product, ProductVariant, PublicShop } from "@/lib/api";
 import { cartLines, cartTotal, useShopCart } from "@/lib/cart";
 import { discounted, startingVariant } from "@/lib/product-price";
 import { isTakingOrders } from "@/lib/shop-ordering";
+import { ShopInfo } from "./shop-info";
 
 // What a buyer sees at /s/<link>: the shop, its categories and its visible
 // products, a product's own page for photos, description and options, and
 // the cart (kept on the buyer's phone) once the shop takes orders.
 export function ShopView({ shop }: { shop: PublicShop }) {
+  // A paused shop keeps its link but takes no orders (blueprint "Subscription life cycle").
+  if (!shop.open) return <ShopClosed shop={shop} />;
+  return <OpenShop shop={shop} />;
+}
+
+function ShopClosed({ shop }: { shop: PublicShop }) {
+  const t = useTranslations("Storefront");
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-canvas p-4 text-fg">
+      <div className="flex w-full max-w-[420px] flex-col items-center gap-3 rounded-2xl bg-bg p-8 text-center shadow-card">
+        <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-border/30">
+          {shop.store.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- the shop's own uploaded logo
+            <img src={shop.store.logoUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Store className="h-8 w-8 text-muted" aria-hidden="true" />
+          )}
+        </span>
+        <h1 className="text-lg font-semibold">{shop.store.name}</h1>
+        <p className="text-sm text-muted">{t("temporarilyClosed")}</p>
+      </div>
+    </div>
+  );
+}
+
+function OpenShop({ shop }: { shop: PublicShop }) {
   const t = useTranslations("Storefront");
   const tCheckout = useTranslations("Checkout");
   const locale = useLocale();
@@ -25,7 +53,11 @@ export function ShopView({ shop }: { shop: PublicShop }) {
   const { store, categories, products } = shop;
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState<Product | null>(null);
+  // The open product lives in the link (?product=…), so one product can be shared and Back closes it.
+  const productParam = useSearchParams().get("product");
+  const open = productParam ? (products.find((product) => product.id === productParam) ?? null) : null;
+  // The browser's own history (Next keeps useSearchParams in step): no trip to the server on every open.
+  const setOpen = (product: Product | null) => window.history.replaceState(null, "", product ? `${pathname}?product=${encodeURIComponent(product.id)}` : pathname);
   const cart = useShopCart(store.slug);
   const ordering = isTakingOrders(shop);
   const currency: Currency = cart.currency ?? store.defaultCurrency;
@@ -72,12 +104,7 @@ export function ShopView({ shop }: { shop: PublicShop }) {
               ]}
             />
           </div>
-          {store.phone && (
-            <a href={`tel:+${store.phone}`} className="flex min-h-touch items-center gap-2 self-start text-sm font-medium text-brand">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              {t("callShop", { phone: formatKhmerPhoneLocal(store.phone) })}
-            </a>
-          )}
+          <ShopInfo shop={shop} currency={currency} />
           {!ordering && <p className="rounded-DEFAULT bg-info/5 p-3 text-sm text-muted">{tCheckout("noPaymentMethods")}</p>}
         </header>
 
@@ -356,7 +383,10 @@ function ProductSheet({
           )}
         </div>
         <div className="flex flex-col gap-3 p-4">
-          <h2 className="text-lg font-semibold leading-normal">{title}</h2>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-lg font-semibold leading-normal">{title}</h2>
+            <ShareProduct title={title} />
+          </div>
           {description && <p className="whitespace-pre-line text-sm text-muted">{description}</p>}
           <ul className="flex flex-col gap-2">
             {product.variants.map((variant) => {
@@ -388,5 +418,21 @@ function ProductSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Shares this product's own link (the shop link with ?product=…), for a Facebook or TikTok post. */
+function ShareProduct({ title }: { title: string }) {
+  const t = useTranslations("Storefront");
+  const [done, setDone] = useState(false);
+  async function share() {
+    const outcome = await shareOrCopyLink(title, window.location.href);
+    if (outcome === "shared" || outcome === "copied") setDone(true);
+  }
+  return (
+    <button type="button" onClick={() => void share()} aria-label={t("share")} className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-border px-3 text-sm font-medium hover:bg-border/10">
+      {done ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
+      {done ? t("linkCopied") : t("share")}
+    </button>
   );
 }

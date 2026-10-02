@@ -34,7 +34,6 @@ const REQUIREMENT_ICON: Record<ShareRequirement, LucideIcon> = {
 export function SetupChecklist() {
   const t = useTranslations("Dashboard");
   const tReady = useTranslations("Readiness");
-  const tApp = useTranslations("App");
   const locale = useLocale();
   const { store } = useMerchant();
   const missing = getMissingForSharing({ businessType: store.businessType, shopPhone: store.phone, ...store.readiness });
@@ -63,13 +62,16 @@ export function SetupChecklist() {
       href: requirementHref[requirement],
       done: !missing.includes(requirement),
     })),
-    { key: "share", icon: Share2, title: t("setupShare"), hint: ready ? tApp("comingNextStep") : tReady("shareLocked"), done: false, locked: true },
+    // Unlocks once the four steps above are done; done when the link was copied, shared or its QR downloaded.
+    { key: "share", icon: Share2, title: t("setupShare"), hint: ready ? t("setupShareHint") : tReady("shareLocked"), href: ready ? "#share" : undefined, done: store.linkShared, locked: !ready },
   ];
   const extras: SetupItem[] = [
     { key: "bakong", icon: Wallet, title: t("setupBakongExtra"), href: `${base}/settings#payments`, done: store.readiness.khqrReady },
     { key: "logo", icon: ImagePlus, title: t("setupLogo"), href: `${base}/settings#details`, done: !!store.logoUrl },
   ];
   const doneCount = steps.filter((step) => step.done).length;
+  // Every step done: the checklist has done its job and goes away (the share card stays on Home).
+  if (doneCount === steps.length) return null;
   const nextKey = steps.find((step) => !step.done && !step.locked && step.href)?.key;
 
   function row(item: SetupItem, position: number | null) {

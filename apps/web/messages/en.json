@@ -1402,5 +1402,43 @@
     "betaLabel": "Every shop counts as Basic",
     "betaOn": "On — beta: no charges, Basic features for all",
     "betaOff": "Off — each shop's own plan applies"
+  },
+  "Share": {
+    "title": "Share your shop",
+    "body": "Send the link on Facebook, TikTok or Telegram, or print the QR code for your counter or a sticker.",
+    "shared": "Shared",
+    "linkLabel": "Your shop link",
+    "share": "Share",
+    "copy": "Copy link",
+    "copied": "Link copied — paste it in your post or chat.",
+    "sharedNow": "Shared!",
+    "manual": "Copy the link above by hand.",
+    "qrAlt": "QR code of your shop link",
+    "qrBody": "Buyers scan it with their phone camera to open your shop.",
+    "download": "Download QR code"
+  },
+  "Telegram": {
+    "title": "Telegram alerts",
+    "body": "New orders arrive in Telegram with a Confirm button.",
+    "privateOn": "Alerts reach your own chat with the bot — you signed in with Telegram.",
+    "privateOff": "Sign in with Telegram to get alerts in your own chat.",
+    "groupsTitle": "Staff groups",
+    "noGroups": "No group yet. Add the bot to a group so your staff see orders too.",
+    "unnamedGroup": "Telegram group",
+    "unlink": "Remove {group}",
+    "addGroup": "Add to a staff group",
+    "step1": "Tap the button: Telegram opens.",
+    "step2": "Choose your staff group and add the bot.",
+    "step3": "The bot says “This group will now get order alerts”. Done.",
+    "openTelegram": "Open Telegram",
+    "linkExpires": "The link works once, for 15 minutes.",
+    "done": "Done",
+    "notConfigured": "Telegram isn't set up on this server yet.",
+    "buyerGetUpdates": "Get updates on Telegram",
+    "buyerHint": "A message each time your order moves on. No app or account needed.",
+    "buyerPressStart": "In Telegram, press Start. Didn't open? Tap the button above.",
+    "buyerOpenAgain": "Open Telegram",
+    "buyerFollowing": "You'll get updates on Telegram",
+    "buyerFailed": "Couldn't make the link. Please try again."
   }
 }

@@ -95,7 +95,7 @@ export class AuthController {
       : null;
     const telegram = merchant.identities.find((identity) => identity.method === "telegram");
     return {
-      merchant: { firstName: merchant.firstName, lastName: merchant.lastName, telegramUsername: telegram?.telegramUsername ?? null },
+      merchant: { firstName: merchant.firstName, lastName: merchant.lastName, telegramUsername: telegram?.telegramUsername ?? null, signedInWithTelegram: telegram !== undefined },
       store,
     };
   }

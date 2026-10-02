@@ -14,7 +14,7 @@ import {
   type SellerOrderAction,
 } from "@khmer-micro-store/shared";
 import { BottomSheet, Button, Card, Input, Select } from "@khmer-micro-store/ui";
-import { ArrowLeft, Bus, MapPin, Phone, Store, Truck, User } from "lucide-react";
+import { ArrowLeft, Bus, MapPin, Phone, Printer, Store, Truck, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -166,7 +166,7 @@ function OrderDetail({
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center gap-1">
-        <Link href={`/${locale}/m/orders`} aria-label={t("backToOrders")} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-border/30">
+        <Link href={`/${locale}/m/orders`} aria-label={t("backToOrders")} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-border/30 print:hidden">
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
@@ -175,9 +175,14 @@ function OrderDetail({
           </h1>
           <p className="text-sm text-muted">{timeAgo(order.createdAt)}</p>
         </div>
+        {/* A one-page slip to pack with, or to hand to the driver. */}
+        <Button variant="secondary" onClick={() => window.print()} className="shrink-0 px-3 print:hidden">
+          <Printer className="h-4 w-4" aria-hidden="true" />
+          {t("printSlip")}
+        </Button>
       </div>
 
-      <Card className="flex flex-col gap-3 p-4">
+      <Card className="flex flex-col gap-3 p-4 print:hidden">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-semibold">{t("nextStep")}</h2>
           <OrderStatusPill order={order} />
@@ -372,7 +377,7 @@ function OrderDetail({
         )}
       </Card>
 
-      <Card className="flex flex-col gap-2 p-4">
+      <Card className="flex flex-col gap-2 p-4 print:hidden">
         <h2 className="font-semibold">{t("history")}</h2>
         <ol className="flex flex-col gap-2 text-sm">
           {[...order.events].reverse().map((entry, index) => (
