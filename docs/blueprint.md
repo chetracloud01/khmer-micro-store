@@ -35,7 +35,7 @@ Updated at the end of every roadmap step.
 | Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes. Decided 2026-10-02: the beta may go live with cash on delivery only, and KHQR is switched on when it's ready (its launch-checklist items then apply) |
 | Step 6. Orders and Telegram | Done — order actions (confirm → pack → send by driver, bus or pickup → delivered → cash collected; failed, rebook, cancel), the buyer cancels while allowed and their page refreshes itself, Telegram alerts through an outbox with a Confirm button. Telegram runs in dry run until a bot token is set: send one real alert then |
 | Step 7. Admin, the minimum | Done — admin login with Telegram + authenticator code (2FA, backup codes, lockout), roles enforced by the API, overview, merchants with extend/unblock and change plan, audit log, platform settings, admin alerts to Telegram. First owner by `pnpm admin:add-owner` |
-| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). B2 photo storage done: one S3 adapter for Cloudflare R2 (production, required there) and a local SeaweedFS (`pnpm s3:up`; MinIO no longer ships Windows downloads), `pnpm files:setup`, `files:check`, `files:copy-to-s3`. Next: B3 deploy config, backups and the Khmer font, B4 production rehearsal and `docs/go-live.md` |
+| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). B2 photo storage done: one S3 adapter for Cloudflare R2 (production, required there) and a local SeaweedFS (`pnpm s3:up`; MinIO no longer ships Windows downloads), `pnpm files:setup`, `files:check`, `files:copy-to-s3`. B3 done: nightly backup (worker, 03:00 Phnom Penh, pg_dump into a private bucket, kept 14 days, the newest 3 always; failures alert the admins), `pnpm db:backup` and `pnpm db:restore` (into a new database only; rehearsed: the restored copy ran the API with the same rows, row-level security and migrations), Dockerfiles for the API and worker (`infra/docker`, built and run by CI), `railway.json` for both (migrations before each API release, health check, worker never overlaps itself), `apps/web/vercel.json`, and Kantumruy Pro bundled with the web app. Next: B4 production rehearsal and `docs/go-live.md` |
 
 ## Overview
 
@@ -640,12 +640,12 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 | Development login | A "test merchant" login exists only in development and is refused in production |
 | Headers | HTTPS only, HSTS, CSP, no framing. Web: CSP allowing only the API, photos, Telegram's login button and Turnstile (inline scripts allowed for Next.js, no eval); the Telegram button uses redirect mode for that reason. API: `default-src 'none'`, nosniff, no framing, no `X-Powered-By`. Production refuses to start without https origins, the bot token, the admin key and the Turnstile secret, or with rate limits off |
 | Privacy | Buyer phone and address visible only to that store; masked in logs |
-| Backups | Daily automatic backups, kept 14 days, plus a monthly restore test |
+| Backups | Nightly `pg_dump` by the worker into a private R2 bucket of its own (never the photos bucket; the settings refuse it), kept 14 days with the newest 3 always kept; a failure alerts the admins' Telegram. Production refuses to start the worker with backups off. Plus Railway's own backups, and a monthly restore test with `pnpm db:restore` into a new database |
 | Dependencies | Dependabot + `pnpm audit` in CI; pin versions |
 
 ## Deployment
 
-Recommended: Next.js on Vercel Pro, and the API, worker and PostgreSQL on Railway. Both deploy automatically on every `git push`. Decide this finally after the Bakong test in roadmap gate G3: if Bakong blocks your server's location, use Option B.
+Recommended: Next.js on Vercel Pro, and the API, worker and PostgreSQL on Railway. Both deploy automatically on every `git push`. Ready in the repo: `infra/docker/api.Dockerfile` and `worker.Dockerfile` (CI builds both and starts the API image), `apps/api/railway.json` and `apps/worker/railway.json`, `apps/web/vercel.json`; the click-by-click steps are in `docs/go-live.md`. Decide this finally after the Bakong test in roadmap gate G3: if Bakong blocks your server's location, use Option B.
 
 Vercel alone cannot run the whole system. Its functions start per request and stop, so it cannot keep the job worker running to poll Bakong every few seconds. The worker needs an always-on host.
 
@@ -825,7 +825,7 @@ Going live is the middle of the project, not the end. From step 8 on, the platfo
 | A release broke something | Roll back: Vercel instant rollback, redeploy the previous tag on Railway | Fix on a branch, with a test that would have caught it |
 | Bakong unreachable or token renewal failed | Admin alert fires; orders keep waiting, nothing is marked paid by guesswork | Renew the token by hand; checks resume and catch up, because every pending MD5 is still checked until it expires |
 | A payment was taken but the order says unpaid | Find it in "Failed checks"; ask Bakong again from there | Never set an attempt to paid by hand. If the money truly arrived, Bakong's answer confirms it |
-| Database down or corrupted | Restore the latest backup into a new database and point the API at it | Write down what was lost and tell affected sellers the same day |
+| Database down or corrupted | Restore the latest backup into a new database (`RESTORE_DATABASE_URL=… pnpm db:restore -- --from latest`, which refuses the database in use and prints the restored counts) and point the API and worker at it | Write down what was lost and tell affected sellers the same day |
 | A seller reports someone else's data | Treat as a security incident: take the affected route offline | Find the missing `store_id` / row-level security gap; add a test; tell the seller |
 
 ### Numbers to watch

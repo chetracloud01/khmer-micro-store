@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { Kantumruy_Pro } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { THEME_BOOT_SCRIPT } from "@khmer-micro-store/ui";
 import { isValidLocale, routing } from "@/i18n/routing";
 import "@khmer-micro-store/ui/globals.css";
+
+// Kantumruy Pro, downloaded at build time and served from this site: phones
+// don't need it installed, and no outside font address is needed (CSP).
+const kantumruy = Kantumruy_Pro({ subsets: ["khmer", "latin"], display: "swap", variable: "--font-kantumruy" });
 
 export const metadata: Metadata = {
   title: "Khmer Micro-Store",
@@ -39,7 +44,7 @@ export default async function LocaleLayout({
   // suppressHydrationWarning: the theme script sets data-theme/data-accent on
   // <html> before React loads, so the server HTML intentionally differs there.
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className={kantumruy.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>

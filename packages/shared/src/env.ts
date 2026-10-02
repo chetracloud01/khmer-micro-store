@@ -128,7 +128,38 @@ function storageRules(env: z.infer<typeof apiFields>, ctx: z.RefinementCtx) {
 export const apiEnvSchema = apiFields.superRefine(productionRules(["TELEGRAM_BOT_TOKEN", "ADMIN_SECRETS_KEY", "TURNSTILE_SECRET_KEY"])).superRefine(storageRules);
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
-export const workerEnvSchema = z.object(shared).superRefine(productionRules(["TELEGRAM_BOT_TOKEN"]));
+const workerFields = z.object({
+  ...shared,
+  /**
+   * The daily database backup (pg_dump into S3_BACKUP_BUCKET, kept
+   * BACKUP_KEEP_DAYS). "on" needs the S3_* settings; production must have it on.
+   */
+  BACKUPS: z.enum(["on", "off"]).default("off"),
+  /**
+   * A private bucket of its own — never the photos bucket, which anyone can
+   * read: a backup holds every buyer's phone and address.
+   */
+  S3_BACKUP_BUCKET: optional(z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "must be a bucket name (lower-case letters, digits, dots, dashes)")),
+  BACKUP_KEEP_DAYS: z.coerce.number({ invalid_type_error: "must be a number" }).int().min(1).max(365).default(14),
+  /** pg_dump and pg_restore: on the PATH in the worker's image; on Windows e.g. C:/Program Files/PostgreSQL/16/bin/pg_dump.exe */
+  PG_DUMP_PATH: z.string().min(1).default("pg_dump"),
+  PG_RESTORE_PATH: z.string().min(1).default("pg_restore"),
+});
+
+function backupRules(env: z.infer<typeof workerFields>, ctx: z.RefinementCtx) {
+  if (env.BACKUPS === "on") {
+    for (const key of ["S3_ENDPOINT", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "S3_BACKUP_BUCKET"] as const) {
+      if (env[key] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "required when BACKUPS=on" });
+    }
+    if (env.S3_BACKUP_BUCKET !== undefined && env.S3_BACKUP_BUCKET === env.S3_BUCKET) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["S3_BACKUP_BUCKET"], message: "must not be the photos bucket (anyone can read photos)" });
+    }
+  } else if (env.NODE_ENV === "production") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["BACKUPS"], message: "must be on in production" });
+  }
+}
+
+export const workerEnvSchema = workerFields.superRefine(productionRules(["TELEGRAM_BOT_TOKEN"])).superRefine(backupRules);
 export type WorkerEnv = z.infer<typeof workerEnvSchema>;
 
 export class EnvError extends Error {

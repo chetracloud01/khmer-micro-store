@@ -12,7 +12,7 @@
   Khmer vowels above/below the base line get cut off below ~1.5 line-height.
 */
 :root {
-  --font-khmer: "Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif;
+  --font-khmer: var(--font-kantumruy, "Kantumruy Pro"), "Noto Sans Khmer", system-ui, sans-serif;
 
   --color-brand: 8 145 178; /* teal accent: cyan-700 */
   --color-on-brand: 255 255 255;

@@ -3,6 +3,7 @@ import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } fr
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";
+import { registerBackup } from "./jobs/backup";
 import { registerCleanup } from "./jobs/cleanup";
 import { registerHeartbeat } from "./jobs/heartbeat";
 import { alertChats, deliverOutboxOnce } from "./jobs/outbox";
@@ -51,6 +52,7 @@ async function main() {
   // Telegram alerts: the outbox is read with the owner user (the worker serves every shop).
   const db = createSystemDb(env.DATABASE_OWNER_URL);
   await registerCleanup(boss, db, logger);
+  if (env.BACKUPS === "on") await registerBackup(boss, env, db, logger);
   const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger);
   let stopping = false;
   // The alert chat, remembered while the database answers: the "failing" alert may be needed when it doesn't.
@@ -80,7 +82,7 @@ async function main() {
   })();
   // Button presses need a real bot; in dry run there is nothing to listen to.
   const buttonLoop = telegram.dryRun ? Promise.resolve() : pollTelegram({ db, telegram, logger, stopped: () => stopping });
-  logger.info({ environment: env.NODE_ENV, telegram: telegram.dryRun ? "dry run (no TELEGRAM_BOT_TOKEN)" : "on" }, "worker started");
+  logger.info({ environment: env.NODE_ENV, telegram: telegram.dryRun ? "dry run (no TELEGRAM_BOT_TOKEN)" : "on", backups: env.BACKUPS }, "worker started");
 
   // Finish the jobs in hand before stopping, so a deploy never cuts a payment check in half.
   const stop = async (signal: string) => {

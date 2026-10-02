@@ -8,9 +8,13 @@
     "start": "node --enable-source-maps dist/index.js",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "node --env-file-if-exists=../../.env ./node_modules/vitest/vitest.mjs run --passWithNoTests"
+    "test": "node --env-file-if-exists=../../.env ./node_modules/vitest/vitest.mjs run --passWithNoTests",
+    "backup": "tsx --env-file-if-exists=../../.env src/cli/backup.ts",
+    "restore": "tsx --env-file-if-exists=../../.env src/cli/restore.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3",
+    "@aws-sdk/lib-storage": "^3",
     "@khmer-micro-store/db": "workspace:^",
     "@khmer-micro-store/shared": "workspace:*",
     "@prisma/client": "5.22.0",

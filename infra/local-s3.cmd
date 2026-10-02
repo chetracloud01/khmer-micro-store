@@ -34,4 +34,4 @@ echo.
 echo  Local S3: http://localhost:9000 (bucket kms-photos). First time, in another window: pnpm files:setup
 echo  Ctrl+C stops it.
 echo.
-"%WEED%" server -dir="%ROOT%\.s3-data" -ip=127.0.0.1 -ip.bind=%BIND% -master.volumeSizeLimitMB=64 -s3 -s3.port=9000 -s3.config="%~dp0local-s3.json"
+"%WEED%" server -dir="%ROOT%\.s3-data" -ip=127.0.0.1 -ip.bind=%BIND% -master.volumeSizeLimitMB=64 -volume.max=0 -s3 -s3.port=9000 -s3.config="%~dp0local-s3.json"

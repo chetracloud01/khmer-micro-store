@@ -70,8 +70,21 @@ describe("server settings", () => {
     expect(() => loadEnv(apiEnvSchema, { ...productionSource, RATE_LIMITS: "off" })).toThrow(EnvError);
   });
 
-  it("the worker needs the bot in production", () => {
-    expect(() => loadEnv(workerEnvSchema, { NODE_ENV: "production", DATABASE_OWNER_URL, WEB_ORIGIN: "https://shop.example.com" })).toThrow(EnvError);
+  it("the worker needs the bot and backups in production", () => {
+    try {
+      loadEnv(workerEnvSchema, { NODE_ENV: "production", DATABASE_OWNER_URL, WEB_ORIGIN: "https://shop.example.com" });
+      expect.unreachable();
+    } catch (error) {
+      expect((error as EnvError).problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["BACKUPS", "TELEGRAM_BOT_TOKEN"]);
+    }
+  });
+
+  it("backups need their own private bucket", () => {
+    const s3 = { S3_ENDPOINT: "http://localhost:9000", S3_ACCESS_KEY_ID: "localdev", S3_SECRET_ACCESS_KEY: "localdev-secret" };
+    expect(() => loadEnv(workerEnvSchema, { DATABASE_OWNER_URL, BACKUPS: "on", ...s3 })).toThrow(EnvError);
+    expect(() => loadEnv(workerEnvSchema, { DATABASE_OWNER_URL, BACKUPS: "on", ...s3, S3_BUCKET: "kms-photos", S3_BACKUP_BUCKET: "kms-photos" })).toThrow(EnvError);
+    const env = loadEnv(workerEnvSchema, { DATABASE_OWNER_URL, BACKUPS: "on", ...s3, S3_BUCKET: "kms-photos", S3_BACKUP_BUCKET: "kms-backups" });
+    expect(env).toMatchObject({ BACKUP_KEEP_DAYS: 14, PG_DUMP_PATH: "pg_dump" });
   });
 
   it("S3 storage needs all its settings", () => {

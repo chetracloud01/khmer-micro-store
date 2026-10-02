@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        khmer: ["Kantumruy Pro", "Noto Sans Khmer", "system-ui", "sans-serif"],
+        khmer: ["var(--font-kantumruy)", "Kantumruy Pro", "Noto Sans Khmer", "system-ui", "sans-serif"],
       },
       spacing: {
         touch: "44px",
