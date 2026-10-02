@@ -1,5 +1,5 @@
 import type { SystemDb } from "@khmer-micro-store/db";
-import { adminAlertText, ALERT_BUTTONS, buyerCancelledAlert, confirmButtonData, newOrderAlert, type AdminAlert } from "@khmer-micro-store/shared";
+import { adminAlertText, ALERT_BUTTONS, buyerCancelledAlert, buyerUpdateText, confirmButtonData, newOrderAlert, STOP_BUTTON_LABEL, stopButtonData, type AdminAlert } from "@khmer-micro-store/shared";
 import type { Logger } from "pino";
 import { TelegramError, type InlineButton, type TelegramClient } from "../telegram/client";
 
@@ -51,15 +51,23 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
   for (const event of leased) {
     try {
       const message = await buildMessage(deps, event.kind, event.payload);
-      // Admin alerts go to the platform's alert chat (admin Settings); everything else to the shop's people.
-      const chats = event.kind === "admin_alert" ? await alertChats(db) : event.store_id ? await telegramChatsOf(db, event.store_id) : [];
+      // Admin alerts → the platform's alert chat; a status change → the buyers following that order; the rest → the shop's people and groups.
+      const chats = !message
+        ? []
+        : event.kind === "admin_alert"
+          ? await alertChats(db)
+          : event.kind === "order_status_changed"
+            ? await followerChatsOf(db, String(event.payload.orderId ?? ""))
+            : event.store_id
+              ? await telegramChatsOf(db, event.store_id)
+              : [];
       // Each person separately: one chat that can't be reached must not hold back — or repeat — everyone else's message.
       let delivered = 0;
       let lastFailure: unknown = null;
       let retryable = false;
       for (const chat of chats) {
         try {
-          await deps.telegram.sendMessage(chat, message.text, message.buttons);
+          await deps.telegram.sendMessage(chat, message!.text, message!.buttons);
           delivered += 1;
         } catch (error) {
           lastFailure = error;
@@ -68,7 +76,7 @@ export async function deliverOutboxOnce(deps: OutboxDeps): Promise<number> {
       }
       // Try again later only if nobody got it and the reason may pass (Telegram down, rate limit).
       if (delivered === 0 && retryable) throw lastFailure;
-      const note = chats.length === 0 ? (event.kind === "admin_alert" ? "no alert chat set" : "no Telegram chat for this shop") : lastFailure instanceof Error ? `not delivered to every chat: ${lastFailure.message.slice(0, 200)}` : "";
+      const note = !message ? "" : chats.length === 0 ? (event.kind === "admin_alert" ? "no alert chat set" : event.kind === "order_status_changed" ? "" : "no Telegram chat for this shop") : lastFailure instanceof Error ? `not delivered to every chat: ${lastFailure.message.slice(0, 200)}` : "";
       await db.outboxEvent.update({ where: { id: event.id }, data: { sentAt: new Date(), lastError: note } });
     } catch (error) {
       const attempts = event.attempts + 1;
@@ -106,13 +114,20 @@ export function isPermanentRefusal(error: unknown): boolean {
   return error instanceof TelegramError && (error.status === 400 || error.status === 403);
 }
 
-/** The Telegram chats of a shop's people: a member who logs in with Telegram has a private chat with the bot. */
+/** The Telegram chats of a shop: each member who logs in with Telegram (their chat with the bot), and the shop's staff groups. */
 export async function telegramChatsOf(db: SystemDb, storeId: string): Promise<string[]> {
-  const identities = await db.merchantIdentity.findMany({
-    where: { method: "telegram", merchant: { memberships: { some: { storeId } } } },
-    select: { providerUserId: true },
-  });
-  return identities.map((identity) => identity.providerUserId);
+  const [identities, groups] = await Promise.all([
+    db.merchantIdentity.findMany({ where: { method: "telegram", merchant: { memberships: { some: { storeId } } } }, select: { providerUserId: true } }),
+    db.storeAlertChat.findMany({ where: { storeId }, select: { chatId: true } }),
+  ]);
+  return [...new Set([...identities.map((identity) => identity.providerUserId), ...groups.map((group) => group.chatId)])];
+}
+
+/** The buyers following an order on Telegram, who haven't pressed Stop. */
+export async function followerChatsOf(db: SystemDb, orderId: string): Promise<string[]> {
+  if (!/^[0-9a-f-]{36}$/.test(orderId)) return [];
+  const followers = await db.orderFollower.findMany({ where: { orderId, stoppedAt: null }, select: { chatId: true } });
+  return followers.map((follower) => follower.chatId);
 }
 
 /** The platform's alert chat (admin Settings), if one is set. */
@@ -121,8 +136,10 @@ export async function alertChats(db: SystemDb): Promise<string[]> {
   return settings?.alertChatId ? [settings.alertChatId] : [];
 }
 
-async function buildMessage(deps: OutboxDeps, kind: string, payload: Record<string, unknown>): Promise<Message> {
+/** The message for an outbox event, or null when there's nothing worth sending (a status buyers don't hear about). */
+async function buildMessage(deps: OutboxDeps, kind: string, payload: Record<string, unknown>): Promise<Message | null> {
   if (kind === "admin_alert") return { text: adminAlertText(payload as unknown as AdminAlert) };
+  if (kind === "order_status_changed") return buyerUpdate(deps, payload);
   const order = typeof payload.orderId === "string"
     ? await deps.db.order.findUnique({
         where: { id: payload.orderId },
@@ -143,4 +160,23 @@ async function buildMessage(deps: OutboxDeps, kind: string, payload: Record<stri
   }
   if (kind === "order_cancelled_by_buyer") return { text: buyerCancelledAlert(order), buttons: open.length ? [open] : undefined };
   throw new Error(`unknown message kind ${kind}`);
+}
+
+/** A buyer's status message: the status the event recorded, with the driver or bus ticket once sent; a Stop button under it. */
+async function buyerUpdate(deps: OutboxDeps, payload: Record<string, unknown>): Promise<Message | null> {
+  const orderId = typeof payload.orderId === "string" ? payload.orderId : null;
+  const status = typeof payload.status === "string" ? payload.status : null;
+  if (!orderId || !status) return null;
+  const order = await deps.db.order.findUnique({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      fulfilment: true,
+      store: { select: { name: true } },
+      dispatches: { orderBy: { dispatchedAt: "desc" }, take: 1, select: { route: true, driverName: true, busCompany: true, ticketNumber: true } },
+    },
+  });
+  if (!order) return null;
+  const text = buyerUpdateText({ orderNumber: order.orderNumber, shopName: order.store.name, status, fulfilment: order.fulfilment, dispatch: order.dispatches[0] ?? null });
+  return text ? { text, buttons: [[{ text: STOP_BUTTON_LABEL, callbackData: stopButtonData(orderId) }]] } : null;
 }

@@ -29,8 +29,16 @@ const shared = {
    * still works) and the worker only records the alerts it would send.
    */
   TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
-  /** The web app's address: the only browser origin the API accepts, and the base of links in Telegram messages. */
-  WEB_ORIGIN: z.string().url("must be a URL").default("http://localhost:3000"),
+  /**
+   * The web app's address(es), comma-separated: the only browser origins the
+   * API accepts. The first one is the base of links in Telegram messages.
+   * e.g. "http://localhost:3000,http://192.168.40.39:3000" to test on a phone.
+   */
+  WEB_ORIGIN: z
+    .string()
+    .default("http://localhost:3000")
+    .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean))
+    .pipe(z.array(z.string().url("must be a URL, or URLs separated by commas")).min(1, "required")),
 };
 
 export const apiEnvSchema = z.object({

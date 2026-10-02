@@ -91,3 +91,73 @@ export function adminAlertText(alert: AdminAlert): string {
       return ["🔒 គណនីអ្នកគ្រប់គ្រងត្រូវបានចាក់សោ ១៥ នាទី", "", `Admin login locked for 15 minutes after 5 wrong codes: ${alert.adminName}`].join("\n");
   }
 }
+
+// ---------------------------------------------------------------- buyer updates
+
+/** What a status message to a buyer says, both languages; null = no message for this status. */
+const BUYER_STATUS_TEXT: Partial<Record<string, { km: string; en: string }>> = {
+  confirmed: { km: "ហាងបានទទួលការបញ្ជាទិញរបស់អ្នក", en: "The shop accepted your order" },
+  packing: { km: "ការបញ្ជាទិញរបស់អ្នកកំពុងវេចខ្ចប់", en: "Your order is being packed" },
+  out_for_delivery: { km: "ការបញ្ជាទិញរបស់អ្នកកំពុងមកដល់", en: "Your order is on the way" },
+  delivered: { km: "បានប្រគល់ — អរគុណ!", en: "Delivered — thank you!" },
+  completed: { km: "ការបញ្ជាទិញបានបញ្ចប់ — អរគុណ!", en: "Order complete — thank you!" },
+  cancelled: { km: "ការបញ្ជាទិញត្រូវបានបោះបង់", en: "Order cancelled" },
+  failed_delivery: { km: "មិនអាចដឹកជញ្ជូនបាន — ហាងនឹងទាក់ទងអ្នក", en: "We couldn't deliver — the shop will contact you" },
+};
+
+export interface BuyerUpdateFacts {
+  orderNumber: number;
+  shopName: string;
+  status: string;
+  fulfilment: "delivery" | "pickup";
+  /** How it was sent, once sent: the driver's name or the bus ticket — never a phone number. */
+  dispatch: { route: "driver" | "bus" | "pickup"; driverName: string; busCompany: string; ticketNumber: string } | null;
+}
+
+/** A buyer's status message, or null when this status isn't worth a message (e.g. waiting for a driver). */
+export function buyerUpdateText(facts: BuyerUpdateFacts): string | null {
+  const pickupReady = facts.status === "out_for_delivery" && facts.fulfilment === "pickup";
+  const line = pickupReady ? { km: "ការបញ្ជាទិញរបស់អ្នករួចរាល់សម្រាប់មកយក", en: "Your order is ready for pickup" } : BUYER_STATUS_TEXT[facts.status];
+  if (!line) return null;
+  const extra =
+    facts.status === "out_for_delivery" && facts.dispatch?.route === "driver" && facts.dispatch.driverName
+      ? [`🛵 ${facts.dispatch.driverName}`]
+      : facts.status === "out_for_delivery" && facts.dispatch?.route === "bus"
+        ? [`🚌 ${facts.dispatch.busCompany} · ${facts.dispatch.ticketNumber}`]
+        : [];
+  return [`📦 ${facts.shopName} · #${facts.orderNumber}`, line.km, line.en, ...extra].join("\n");
+}
+
+/** "Stop updates" under each buyer message; carries only the order id. */
+export const STOP_BUTTON_LABEL = "🔕 ឈប់ទទួល · Stop updates";
+export function stopButtonData(orderId: string): string {
+  return `stop:${orderId}`;
+}
+export function parseStopButton(data: string): string | null {
+  const match = /^stop:([0-9a-f-]{36})$/.exec(data);
+  return match ? match[1]! : null;
+}
+
+// ---------------------------------------------------------------- t.me link codes
+
+/**
+ * The code in a t.me/<bot>?start= (or startgroup=) link: "g_" for a staff
+ * group, "f_" for a buyer following an order, then 24 random URL-safe
+ * characters (Telegram allows A–Z a–z 0–9 _ - and up to 64).
+ */
+export const TELEGRAM_LINK_CODE_PATTERN = /^(g|f)_[A-Za-z0-9_-]{24}$/;
+export const TELEGRAM_LINK_MINUTES = 15;
+
+export function telegramStartLink(botUsername: string, code: string, group: boolean): string {
+  return `https://t.me/${botUsername}?${group ? "startgroup" : "start"}=${code}`;
+}
+
+/** What the bot says when it links a group or a follower, or can't. */
+export const LINK_REPLIES = {
+  groupLinked: (shopName: string) => `✅ ក្រុមនេះនឹងទទួលការជូនដំណឹងការបញ្ជាទិញពី ${shopName}\n\nThis group will now get order alerts for ${shopName}.`,
+  following: (shopName: string, orderNumber: number) =>
+    `✅ អ្នកនឹងទទួលព័ត៌មានថ្មីៗសម្រាប់ការបញ្ជាទិញ #${orderNumber} ពី ${shopName}\n\nYou'll get updates for order #${orderNumber} from ${shopName}.`,
+  stopped: "🔕 បានឈប់ផ្ញើព័ត៌មានថ្មីៗ។\n\nUpdates stopped.",
+  badCode: "⚠️ តំណនេះផុតកំណត់ ឬបានប្រើរួចហើយ។ សូមយកតំណថ្មីពីគេហទំព័រ។\n\nThis link has expired or was already used. Get a new one from the website.",
+  hello: "👋 សួស្តី! បូតនេះផ្ញើការជូនដំណឹងពី Khmer Micro-Store។\n\nHello! This bot sends Khmer Micro-Store notifications.",
+} as const;

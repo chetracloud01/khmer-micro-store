@@ -7,7 +7,7 @@ const DATABASE_OWNER_URL = "postgresql://owner:s3cret-password@localhost:5432/ap
 describe("server settings", () => {
   it("fills in defaults for local development", () => {
     const env = loadEnv(apiEnvSchema, { DATABASE_URL, DATABASE_OWNER_URL });
-    expect(env).toMatchObject({ NODE_ENV: "development", PORT: 4000, WEB_ORIGIN: "http://localhost:3000", LOG_LEVEL: "info" });
+    expect(env).toMatchObject({ NODE_ENV: "development", PORT: 4000, WEB_ORIGIN: ["http://localhost:3000"], LOG_LEVEL: "info" });
     expect(env.SENTRY_DSN).toBeUndefined();
   });
 
@@ -22,8 +22,13 @@ describe("server settings", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(EnvError);
       const { problems } = error as EnvError;
-      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["DATABASE_OWNER_URL", "DATABASE_URL", "PORT", "WEB_ORIGIN"]);
+      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["DATABASE_OWNER_URL", "DATABASE_URL", "PORT", "WEB_ORIGIN.0"]);
     }
+  });
+
+  it("accepts several web addresses, separated by commas", () => {
+    const env = loadEnv(apiEnvSchema, { DATABASE_OWNER_URL, DATABASE_URL: DATABASE_OWNER_URL, WEB_ORIGIN: "http://localhost:3000, http://192.168.40.39:3000" });
+    expect(env.WEB_ORIGIN).toEqual(["http://localhost:3000", "http://192.168.40.39:3000"]);
   });
 
   it("never repeats a value in its message — it may be a secret", () => {

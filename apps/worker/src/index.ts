@@ -5,7 +5,7 @@ import PgBoss from "pg-boss";
 import pino from "pino";
 import { registerHeartbeat } from "./jobs/heartbeat";
 import { alertChats, deliverOutboxOnce } from "./jobs/outbox";
-import { pollButtons } from "./jobs/telegram-buttons";
+import { pollTelegram } from "./jobs/telegram-buttons";
 import { createTelegramClient } from "./telegram/client";
 
 /** How often waiting messages are looked for: an alert reaches the seller within a few seconds. */
@@ -68,7 +68,7 @@ async function main() {
       try {
         knownAlertChats = await alertChats(db);
         // A full batch means more may be waiting: go again at once.
-        if ((await deliverOutboxOnce({ db, telegram, logger, webOrigin: env.WEB_ORIGIN })) > 0) continue;
+        if ((await deliverOutboxOnce({ db, telegram, logger, webOrigin: env.WEB_ORIGIN[0]! })) > 0) continue;
       } catch (error) {
         report(error, "outbox round failed");
         await alertFailing(error);
@@ -77,7 +77,7 @@ async function main() {
     }
   })();
   // Button presses need a real bot; in dry run there is nothing to listen to.
-  const buttonLoop = telegram.dryRun ? Promise.resolve() : pollButtons({ db, telegram, logger, stopped: () => stopping });
+  const buttonLoop = telegram.dryRun ? Promise.resolve() : pollTelegram({ db, telegram, logger, stopped: () => stopping });
   logger.info({ environment: env.NODE_ENV, telegram: telegram.dryRun ? "dry run (no TELEGRAM_BOT_TOKEN)" : "on" }, "worker started");
 
   // Finish the jobs in hand before stopping, so a deploy never cuts a payment check in half.

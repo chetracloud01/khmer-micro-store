@@ -16,11 +16,28 @@ export interface CallbackQuery {
   messageId: number | null;
 }
 
+/** A text message to the bot: /start with a code, /stop… */
+export interface IncomingMessage {
+  chatId: string;
+  chatType: "private" | "group" | "supergroup" | "channel";
+  chatTitle: string;
+  fromUserId: string;
+  text: string;
+}
+
+/** The bot was added to, or removed from, a chat. */
+export interface MembershipChange {
+  chatId: string;
+  status: "member" | "administrator" | "left" | "kicked" | "restricted" | "creator";
+}
+
+export type TelegramUpdate = { type: "callback"; query: CallbackQuery } | { type: "message"; message: IncomingMessage } | { type: "membership"; change: MembershipChange };
+
 export interface TelegramClient {
   readonly dryRun: boolean;
   sendMessage(chatId: string, text: string, buttons?: InlineButton[][]): Promise<void>;
-  /** Long polling: waits up to `timeoutSeconds` for button presses after `offset`. */
-  getCallbackQueries(offset: number, timeoutSeconds: number): Promise<{ queries: CallbackQuery[]; nextOffset: number }>;
+  /** Long polling: waits up to `timeoutSeconds` for button presses, messages and membership changes after `offset`. */
+  getUpdates(offset: number, timeoutSeconds: number): Promise<{ updates: TelegramUpdate[]; nextOffset: number }>;
   answerCallback(queryId: string, text: string): Promise<void>;
   /** Replaces a message's buttons (e.g. "Confirm" becomes "Confirmed"). */
   editButtons(chatId: string, messageId: number, buttons: InlineButton[][]): Promise<void>;
@@ -62,24 +79,30 @@ class HttpTelegramClient implements TelegramClient {
     await this.call("sendMessage", { chat_id: chatId, text, ...(buttons ? { reply_markup: toMarkup(buttons) } : {}) });
   }
 
-  async getCallbackQueries(offset: number, timeoutSeconds: number) {
-    type Update = { update_id: number; callback_query?: { id: string; from: { id: number }; data?: string; message?: { message_id: number; chat: { id: number } } } };
-    const updates = await this.call<Update[]>("getUpdates", { offset, timeout: timeoutSeconds, allowed_updates: ["callback_query"] }, (timeoutSeconds + 10) * 1000);
-    const queries = updates.flatMap((update) =>
-      update.callback_query?.data
-        ? [
-            {
-              id: update.callback_query.id,
-              fromUserId: String(update.callback_query.from.id),
-              data: update.callback_query.data,
-              chatId: update.callback_query.message ? String(update.callback_query.message.chat.id) : null,
-              messageId: update.callback_query.message?.message_id ?? null,
-            },
-          ]
-        : [],
-    );
-    const last = updates[updates.length - 1];
-    return { queries, nextOffset: last ? last.update_id + 1 : offset };
+  async getUpdates(offset: number, timeoutSeconds: number) {
+    type Chat = { id: number; type: IncomingMessage["chatType"]; title?: string };
+    type Update = {
+      update_id: number;
+      callback_query?: { id: string; from: { id: number }; data?: string; message?: { message_id: number; chat: { id: number } } };
+      message?: { chat: Chat; from?: { id: number }; text?: string };
+      my_chat_member?: { chat: Chat; new_chat_member: { status: MembershipChange["status"] } };
+    };
+    const raw = await this.call<Update[]>("getUpdates", { offset, timeout: timeoutSeconds, allowed_updates: ["callback_query", "message", "my_chat_member"] }, (timeoutSeconds + 10) * 1000);
+    const updates = raw.flatMap((update): TelegramUpdate[] => {
+      const q = update.callback_query;
+      if (q?.data) {
+        return [{ type: "callback", query: { id: q.id, fromUserId: String(q.from.id), data: q.data, chatId: q.message ? String(q.message.chat.id) : null, messageId: q.message?.message_id ?? null } }];
+      }
+      const m = update.message;
+      if (m?.text && m.from) {
+        return [{ type: "message", message: { chatId: String(m.chat.id), chatType: m.chat.type, chatTitle: m.chat.title ?? "", fromUserId: String(m.from.id), text: m.text } }];
+      }
+      const c = update.my_chat_member;
+      if (c) return [{ type: "membership", change: { chatId: String(c.chat.id), status: c.new_chat_member.status } }];
+      return [];
+    });
+    const last = raw[raw.length - 1];
+    return { updates, nextOffset: last ? last.update_id + 1 : offset };
   }
 
   async answerCallback(queryId: string, text: string) {
@@ -100,10 +123,10 @@ class DryRunTelegramClient implements TelegramClient {
     this.logger.info({ chat: `…${chatId.slice(-3)}`, text, buttons: buttons?.flat().map((button) => button.text) }, "telegram dry run: would send");
   }
 
-  async getCallbackQueries(offset: number, timeoutSeconds: number) {
-    // No bot, so no button presses: wait as long as a real poll would, then report nothing.
+  async getUpdates(offset: number, timeoutSeconds: number) {
+    // No bot, so nothing comes in: wait as long as a real poll would, then report nothing.
     await new Promise((resolve) => setTimeout(resolve, timeoutSeconds * 1000));
-    return { queries: [], nextOffset: offset };
+    return { updates: [], nextOffset: offset };
   }
 
   async answerCallback() {}

@@ -74,6 +74,8 @@ export async function runSellerAction(tx: Tx, context: MerchantStore, orderId: s
   });
   if (count === 0) throw new AppException(409, "action_not_allowed");
   await tx.orderStatusEvent.create({ data: { storeId: context.storeId, orderId: order.id, status: decision.status, actor: "merchant", actorMerchantId: context.merchantId } });
+  // Buyers following the order on Telegram hear about it (sent by the worker).
+  await tx.outboxEvent.createMany({ data: [{ storeId: context.storeId, kind: "order_status_changed", payload: { orderId: order.id, status: decision.status } }] });
 
   const now = new Date();
   const latestDispatch = () => tx.deliveryDispatch.findFirst({ where: { orderId: order.id }, orderBy: { dispatchedAt: "desc" }, select: { id: true } });

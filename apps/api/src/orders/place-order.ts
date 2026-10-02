@@ -71,6 +71,9 @@ async function placeInStore(tx: Tx, storeId: string, request: PlaceOrderRequest)
     where: { id: storeId },
     select: { allowCod: true, usdToKhrRate: true, vatPercent: true, pickupAddress: true, pickupHours: true },
   });
+  // A paused shop keeps its page but takes no orders (blueprint "Subscription life cycle").
+  const [openRow] = await tx.$queryRaw<{ open: boolean }[]>`SELECT app_public_store_open() AS open`;
+  if (!openRow?.open) throw new AppException(409, "store_closed");
   const { settings: delivery, configured } = await readDeliverySettings(tx, storeId);
   // No delivery saved, or no way at all to pay (cash off, and KHQR only arrives in step 5): the shop isn't open for orders.
   if (!configured || !store.allowCod) throw new AppException(409, "not_accepting_orders");

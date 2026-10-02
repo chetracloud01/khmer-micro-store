@@ -6,6 +6,7 @@
 // Step 4 (shop and checkout): delivery zones and drivers, customers, orders.
 // Step 6 (orders and Telegram): how each order was sent, and the outbox of messages.
 // Step 7 (admin): admin users with two-step login, their backup codes and sessions.
+// Release 1 complete: staff Telegram groups, buyers following an order, one-time Telegram link codes.
 //
 // Row-level security (in the migration SQL, which Prisma can't express) keeps
 // every shop to its own rows for the API's everyday user, khmer_micro_store_app.
@@ -141,6 +142,13 @@ enum AdminRole {
   finance
 }
 
+enum TelegramLinkKind {
+  /// "Add the bot to your staff group": links a group to a shop.
+  group_link
+  /// "Get updates on Telegram": links a buyer's chat to an order.
+  order_follow
+}
+
 enum AdminSessionStage {
   /// Telegram (or the development login) passed; the authenticator code is still to come.
   pending_2fa
@@ -262,6 +270,7 @@ model Store {
   drivers        StoreDriver[]
   customers      Customer[]
   orders         Order[]
+  alertChats     StoreAlertChat[]
 
   @@map("stores")
 }
@@ -552,6 +561,7 @@ model Order {
   items      OrderItem[]
   events     OrderStatusEvent[]
   dispatches DeliveryDispatch[]
+  followers  OrderFollower[]
 
   @@unique([storeId, orderNumber])
   @@unique([storeId, idempotencyKey])
@@ -621,6 +631,57 @@ model DeliveryDispatch {
 
   @@index([orderId])
   @@map("delivery_dispatches")
+}
+
+// -------------------------------------------------------------------- telegram
+
+/// A shop's staff Telegram group: gets the same order alerts as the shop's people.
+model StoreAlertChat {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String   @map("store_id") @db.Uuid
+  /// Telegram's id for the group (negative).
+  chatId    String   @map("chat_id")
+  title     String   @default("")
+  /// The merchant whose link code added it.
+  linkedBy  String?  @map("linked_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, chatId])
+  @@index([chatId])
+  @@map("store_alert_chats")
+}
+
+/// A buyer's Telegram chat following one order's status. Never a phone number.
+model OrderFollower {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String    @map("store_id") @db.Uuid
+  orderId   String    @map("order_id") @db.Uuid
+  chatId    String    @map("chat_id")
+  stoppedAt DateTime? @map("stopped_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, chatId])
+  @@index([chatId])
+  @@map("order_followers")
+}
+
+/// The one-time code behind a t.me link (start / startgroup). Only its SHA-256 is kept; 15 minutes, once.
+model TelegramLinkCode {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind      TelegramLinkKind
+  codeHash  String           @unique @map("code_hash")
+  storeId   String           @map("store_id") @db.Uuid
+  orderId   String?          @map("order_id") @db.Uuid
+  createdBy String?          @map("created_by") @db.Uuid
+  expiresAt DateTime         @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime?        @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("telegram_link_codes")
 }
 
 // ----------------------------------------------------------------------- admin

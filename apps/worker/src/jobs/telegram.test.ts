@@ -13,7 +13,7 @@ import { handleButton } from "./telegram-buttons";
 
 const ownerUrl = process.env.DATABASE_OWNER_URL;
 
-class FakeTelegram implements TelegramClient {
+export class FakeTelegram implements TelegramClient {
   readonly dryRun = false;
   sent: { chatId: string; text: string; buttons?: InlineButton[][] }[] = [];
   failing = false;
@@ -24,8 +24,8 @@ class FakeTelegram implements TelegramClient {
     if (this.deadChats.has(chatId)) throw new TelegramError("sendMessage", 400, "Bad Request: chat not found");
     this.sent.push({ chatId, text, buttons });
   }
-  async getCallbackQueries(offset: number) {
-    return { queries: [], nextOffset: offset };
+  async getUpdates(offset: number) {
+    return { updates: [], nextOffset: offset };
   }
   async answerCallback() {}
   async editButtons() {}

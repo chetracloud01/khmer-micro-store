@@ -6,6 +6,7 @@ import { AppException } from "../errors";
 import { APP_DB } from "../db";
 import { FILE_STORAGE, type FileStorage } from "../files/storage";
 import { ORDER_TOKEN_PATTERN, parsePlaceOrder, placeOrder } from "../orders/place-order";
+import { linkFor, newLinkCode } from "../telegram/links";
 import { productInclude, toProductDto } from "../products/products";
 
 interface StatusResponse {
@@ -31,6 +32,7 @@ export class PublicController {
   async store(@Param("slug") slug: string) {
     if (!shopSlugSchema.safeParse(slug).success) throw new NotFoundException();
     const shop = await withPublicStore(this.app, slug, async (tx, storeId) => {
+      const [openRow] = await tx.$queryRaw<{ open: boolean }[]>`SELECT app_public_store_open() AS open`;
       const [store, categories, products, delivery] = await Promise.all([
         tx.store.findUniqueOrThrow({
           where: { id: storeId },
@@ -64,6 +66,8 @@ export class PublicController {
         // Ordering needs delivery saved at least once; which payment methods fit is worked out per checkout
         // (packages/shared getAvailablePaymentMethods). KHQR joins in step 5.
         ordering: { deliveryConfigured: delivery.configured, khqrReady: false },
+        // A paused shop: the page shows "temporarily closed" and orders are refused.
+        open: openRow?.open ?? false,
       };
     });
     if (!shop) throw new NotFoundException();
@@ -87,7 +91,7 @@ export class PublicController {
   async orderPage(@Param("token") token: string) {
     if (!ORDER_TOKEN_PATTERN.test(token)) throw new NotFoundException();
     const found = await withPublicOrder(this.app, token, async (tx, storeId) => {
-      const [order, store] = await Promise.all([
+      const [order, store, followers] = await Promise.all([
         tx.order.findFirst({
           select: {
             orderNumber: true,
@@ -121,6 +125,8 @@ export class PublicController {
           },
         }),
         tx.store.findUniqueOrThrow({ where: { id: storeId }, select: { slug: true, name: true, phone: true, logoKey: true } }),
+        // Whether this order is followed on Telegram (the database shows only this order's followers).
+        tx.orderFollower.count({ where: { stoppedAt: null } }),
       ]);
       if (!order) return null;
       const { logoKey, ...shop } = store;
@@ -130,11 +136,30 @@ export class PublicController {
         ...rest,
         dispatch: dispatches[0] ?? null,
         canCancel: canBuyerCancel(order),
+        followingOnTelegram: followers > 0,
         store: { ...shop, logoUrl: logoKey ? this.url(logoKey) : null },
       };
     });
     if (!found) throw new NotFoundException();
     return found;
+  }
+
+  /** "Get updates on Telegram": a t.me link with a one-time code for this order (15 minutes). */
+  @Post("orders/:token/telegram-link")
+  @HttpCode(200)
+  async telegramLink(@Param("token") token: string) {
+    if (!ORDER_TOKEN_PATTERN.test(token)) throw new NotFoundException();
+    const { code, codeHash, expiresAt } = newLinkCode("order_follow");
+    const link = await linkFor(code, false);
+    const made = await withPublicOrder(this.app, token, async (tx, storeId) => {
+      const order = await tx.order.findFirst({ select: { id: true } });
+      if (!order) return false;
+      // createMany: the buyer may write the code but never read codes back.
+      await tx.telegramLinkCode.createMany({ data: [{ kind: "order_follow", codeHash, storeId, orderId: order.id, expiresAt }] });
+      return true;
+    });
+    if (!made) throw new NotFoundException();
+    return { link, expiresAt };
   }
 
   /** The buyer cancels their own order — only while no money has moved and nothing is packed (canBuyerCancel). */

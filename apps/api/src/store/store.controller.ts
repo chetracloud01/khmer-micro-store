@@ -1,12 +1,13 @@
 import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { storeDetailsSaveSchema, storeSettingsSchema } from "@khmer-micro-store/shared";
-import { Body, Controller, Get, Inject, Put, UseGuards } from "@nestjs/common";
+import { getMissingForSharing, storeDetailsSaveSchema, storeSettingsSchema } from "@khmer-micro-store/shared";
+import { Body, Controller, Delete, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, UseGuards } from "@nestjs/common";
 import { APP_DB } from "../db";
-import { InvalidInputException } from "../errors";
+import { AppException, InvalidInputException } from "../errors";
 import { isStorePhotoKey } from "../files/photos";
 import { FILE_STORAGE, type FileStorage } from "../files/storage";
 import { assertStoreWritable, storePlan } from "../merchant/plan";
-import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
+import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
+import { linkFor, newLinkCode } from "../telegram/links";
 
 const storeSelect = {
   slug: true,
@@ -19,6 +20,7 @@ const storeSelect = {
   usdToKhrRate: true,
   allowCod: true,
   deliveryConfiguredAt: true,
+  linkSharedAt: true,
 } as const;
 
 /** The shop details page: name, business type, phone, area, description, logo and the (optional) Bakong ID. */
@@ -52,6 +54,56 @@ export class StoreController {
         data: { actorType: "merchant", actorId: context.merchantId, storeId: context.storeId, action: "store.settings_saved", entity: "store", entityId: context.storeId },
       });
       return this.settings(tx, context.storeId);
+    });
+  }
+
+  /**
+   * "Share your shop link" was used (copied, shared or the QR downloaded).
+   * Only once the shop is ready for buyers (packages/shared getMissingForSharing).
+   */
+  @Post("link-shared")
+  @HttpCode(200)
+  async linkShared(@CurrentStore() context: MerchantStore) {
+    return withContext(this.app, context, async (tx) => {
+      const details = await this.details(tx, context.storeId);
+      if (getMissingForSharing({ businessType: details.businessType, shopPhone: details.phone, ...details.readiness }).length > 0) {
+        throw new AppException(409, "action_not_allowed");
+      }
+      await tx.store.updateMany({ where: { id: context.storeId, linkSharedAt: null }, data: { linkSharedAt: new Date() } });
+      return { linkShared: true };
+    });
+  }
+
+  /** The shop's staff Telegram groups (they get the same order alerts). */
+  @Get("telegram-groups")
+  async telegramGroups(@CurrentStore() context: MerchantStore) {
+    return withContext(this.app, context, (tx) =>
+      tx.storeAlertChat.findMany({ select: { id: true, title: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
+    );
+  }
+
+  /** "Add the bot to your staff group": a t.me link with a one-time code (15 minutes) for this shop. */
+  @Post("telegram-groups/link")
+  @HttpCode(200)
+  async telegramGroupLink(@CurrentStore() context: MerchantStore) {
+    const { code, codeHash, expiresAt } = newLinkCode("group_link");
+    const link = await linkFor(code, true);
+    await withContext(this.app, context, async (tx) => {
+      await assertStoreWritable(tx, context.storeId);
+      // createMany: the API may write codes but never read them back.
+      await tx.telegramLinkCode.createMany({ data: [{ kind: "group_link", codeHash, storeId: context.storeId, createdBy: context.merchantId, expiresAt }] });
+    });
+    return { link, expiresAt };
+  }
+
+  @Delete("telegram-groups/:id")
+  @HttpCode(200)
+  async unlinkTelegramGroup(@CurrentStore() context: MerchantStore, @Param("id", ParseUUIDPipe) id: string) {
+    return withContext(this.app, context, async (tx) => {
+      const { count } = await tx.storeAlertChat.deleteMany({ where: { id } });
+      if (count === 0) throw new NotFoundException();
+      await tx.auditLog.create({ data: { actorType: "merchant", actorId: context.merchantId, storeId: context.storeId, action: "store.telegram_group_unlinked", entity: "store", entityId: context.storeId } });
+      return { unlinked: true };
     });
   }
 
@@ -101,7 +153,7 @@ export class StoreController {
   /** The shop's details, plus what the dashboard needs around them: the plan in force and the setup checklist's facts. */
   private async details(tx: Parameters<Parameters<typeof withContext>[2]>[0], storeId: string) {
     const visible = { deletedAt: null, isVisible: true } as const;
-    const [{ usdToKhrRate, allowCod, deliveryConfiguredAt, ...store }, bakong, plan, visibleProducts, productsWithPhoto] = await Promise.all([
+    const [{ usdToKhrRate, allowCod, deliveryConfiguredAt, linkSharedAt, ...store }, bakong, plan, visibleProducts, productsWithPhoto] = await Promise.all([
       tx.store.findUniqueOrThrow({ where: { id: storeId }, select: storeSelect }),
       tx.storePaymentConfig.findUnique({ where: { storeId_provider: { storeId, provider: "bakong_khqr" } }, select: { bakongAccountId: true } }),
       storePlan(tx, storeId),
@@ -118,6 +170,8 @@ export class StoreController {
       paused: plan.paused,
       // The facts packages/shared shop-readiness.ts asks for.
       readiness: { visibleProducts, productsWithPhoto, deliveryConfigured: deliveryConfiguredAt !== null, khqrReady: bakongId !== "", codEnabled: allowCod },
+      /** The last checklist step: the seller shared (copied or sent) the shop link. */
+      linkShared: linkSharedAt !== null,
     };
   }
 }

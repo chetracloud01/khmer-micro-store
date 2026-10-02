@@ -34,7 +34,11 @@ export type ErrorBody =
         // ADMIN_SECRETS_KEY isn't set: the admin login can't run.
         | "admin_not_configured"
         // Too many wrong two-step codes: try again in 15 minutes.
-        | "code_locked";
+        | "code_locked"
+        // The shop is paused: it takes no orders until it reopens.
+        | "store_closed"
+        // TELEGRAM_BOT_TOKEN isn't set: no Telegram links.
+        | "telegram_not_configured";
     };
 
 const CODE_BY_STATUS: Record<number, Exclude<ErrorBody["error"], "invalid_input">> = {
@@ -58,7 +62,7 @@ export class InvalidInputException extends Error {
 export class AppException extends Error {
   constructor(
     public readonly status: number,
-    public readonly code: "no_store" | "plan_limit" | "store_paused" | "not_accepting_orders" | "action_not_allowed" | "admin_not_configured" | "code_locked",
+    public readonly code: "no_store" | "plan_limit" | "store_paused" | "not_accepting_orders" | "action_not_allowed" | "admin_not_configured" | "code_locked" | "store_closed" | "telegram_not_configured",
   ) {
     super(code);
   }
