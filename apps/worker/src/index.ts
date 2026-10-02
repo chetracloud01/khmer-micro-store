@@ -53,7 +53,7 @@ async function main() {
   const db = createSystemDb(env.DATABASE_OWNER_URL);
   await registerCleanup(boss, db, logger);
   if (env.BACKUPS === "on") await registerBackup(boss, env, db, logger);
-  const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger);
+  const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger, env.TELEGRAM_API_URL);
   let stopping = false;
   // The alert chat, remembered while the database answers: the "failing" alert may be needed when it doesn't.
   let knownAlertChats: string[] = [];

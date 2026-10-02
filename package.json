@@ -21,7 +21,8 @@
     "files:check": "pnpm --filter @khmer-micro-store/api files check",
     "files:copy-to-s3": "pnpm --filter @khmer-micro-store/api files copy-to-s3",
     "db:backup": "pnpm --filter @khmer-micro-store/worker backup",
-    "db:restore": "pnpm --filter @khmer-micro-store/worker restore"
+    "db:restore": "pnpm --filter @khmer-micro-store/worker restore",
+    "test:e2e": "node tests/e2e/run.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.15.0",

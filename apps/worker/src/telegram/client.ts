@@ -61,10 +61,13 @@ export class TelegramError extends Error {
 
 class HttpTelegramClient implements TelegramClient {
   readonly dryRun = false;
-  constructor(private readonly token: string) {}
+  constructor(
+    private readonly token: string,
+    private readonly apiUrl: string,
+  ) {}
 
   private async call<T>(method: string, body: object, timeoutMs = 15_000): Promise<T> {
-    const response = await fetch(`https://api.telegram.org/bot${this.token}/${method}`, {
+    const response = await fetch(`${this.apiUrl}/bot${this.token}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -133,6 +136,7 @@ class DryRunTelegramClient implements TelegramClient {
   async editButtons() {}
 }
 
-export function createTelegramClient(token: string | undefined, logger: Logger): TelegramClient {
-  return token ? new HttpTelegramClient(token) : new DryRunTelegramClient(logger);
+/** apiUrl: Telegram's Bot API (TELEGRAM_API_URL); only the end-to-end tests point it elsewhere. */
+export function createTelegramClient(token: string | undefined, logger: Logger, apiUrl = "https://api.telegram.org"): TelegramClient {
+  return token ? new HttpTelegramClient(token, apiUrl) : new DryRunTelegramClient(logger);
 }

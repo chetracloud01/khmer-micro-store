@@ -1,6 +1,7 @@
 import { loadEnv, apiEnvSchema } from "@khmer-micro-store/shared";
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { isPhotoKey, isStorePhotoKey, thumbKeyOf } from "./photos";
 import { assertSafeKey, createFileStorage, LocalFileStorage, S3FileStorage } from "./storage";
 
 const base = { DATABASE_URL: "postgresql://a:b@localhost/x", DATABASE_OWNER_URL: "postgresql://a:b@localhost/x" };
@@ -51,5 +52,22 @@ describe.skipIf(!s3Env)("photo storage in a real S3 bucket", () => {
 
   it("answers null for a photo that isn't there", async () => {
     expect(await createFileStorage(s3Env!).read(key())).toBeNull();
+  });
+});
+
+describe("photo thumbnails", () => {
+  it("keeps the small copy next to the photo, always as a JPEG", () => {
+    const store = randomUUID();
+    const name = randomUUID();
+    expect(thumbKeyOf(`stores/${store}/${name}.png`)).toBe(`stores/${store}/${name}-t.jpg`);
+    expect(isPhotoKey(thumbKeyOf(`stores/${store}/${name}.webp`))).toBe(true);
+  });
+
+  it("never lets a product point at a thumbnail, or at another shop's photo", () => {
+    const store = randomUUID();
+    const photo = `stores/${store}/${randomUUID()}.jpg`;
+    expect(isStorePhotoKey(store, photo)).toBe(true);
+    expect(isStorePhotoKey(store, thumbKeyOf(photo))).toBe(false);
+    expect(isStorePhotoKey(randomUUID(), photo)).toBe(false);
   });
 });

@@ -79,15 +79,19 @@ export async function getMe(): Promise<Me | null> {
 }
 
 /** Sends one photo (already shrunk in the browser) and returns the key to save with the product or logo. */
-export function uploadPhoto(photo: Blob): Promise<UploadedPhoto> {
+/** One photo, and optionally its small copy for lists (made in the browser, about 400 px). */
+export function uploadPhoto(photo: Blob, thumb?: Blob): Promise<UploadedPhoto> {
   const form = new FormData();
   form.append("file", photo, "photo.jpg");
+  if (thumb) form.append("thumb", thumb, "thumb.jpg");
   return api<UploadedPhoto>("/uploads/photo", { method: "POST", form });
 }
 
 export interface UploadedPhoto {
   key: string;
   url: string;
+  /** The ~400 px copy for lists; null or missing when there isn't one (PhotoThumb then shows the photo). */
+  thumbUrl?: string | null;
 }
 
 export interface CatalogName {

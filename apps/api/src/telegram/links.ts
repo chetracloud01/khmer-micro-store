@@ -12,9 +12,9 @@ let cachedUsername: string | null = null;
 /** The bot's @username, asked from Telegram once (getMe) — so it always matches the token in use. */
 export async function botUsername(): Promise<string> {
   if (cachedUsername) return cachedUsername;
-  const token = getEnv().TELEGRAM_BOT_TOKEN;
+  const { TELEGRAM_BOT_TOKEN: token, TELEGRAM_API_URL: apiUrl } = getEnv();
   if (!token) throw new AppException(503, "telegram_not_configured");
-  const response = await fetch(`https://api.telegram.org/bot${token}/getMe`, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
+  const response = await fetch(`${apiUrl}/bot${token}/getMe`, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
   const data = (await response?.json().catch(() => null)) as { ok?: boolean; result?: { username?: string } } | null;
   if (!data?.ok || !data.result?.username) throw new AppException(503, "telegram_not_configured");
   cachedUsername = data.result.username;

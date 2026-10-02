@@ -79,6 +79,16 @@ jobs:
           done
           echo "API did not become healthy" && exit 1
 
+      # Every end-to-end check (tests/e2e) through the built API, on a fresh database of their own.
+      - name: End-to-end checks
+        env:
+          DATABASE_OWNER_URL: postgresql://khmer_micro_store:khmer_micro_store@localhost:5432/kms_e2e
+          DATABASE_URL: postgresql://khmer_micro_store_app:khmer_micro_store_app@localhost:5432/kms_e2e
+        run: |
+          psql "postgresql://khmer_micro_store:khmer_micro_store@localhost:5432/khmer_micro_store" -c "CREATE DATABASE kms_e2e"
+          pnpm db:deploy
+          pnpm test:e2e
+
   # The production images (infra/docker): they build, the API starts and
   # reaches a database, and the worker has pg_dump 17 for backups.
   docker:

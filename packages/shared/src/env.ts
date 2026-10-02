@@ -29,6 +29,8 @@ const shared = {
    * still works) and the worker only records the alerts it would send.
    */
   TELEGRAM_BOT_TOKEN: optional(z.string().regex(/^\d+:[A-Za-z0-9_-]{30,}$/, "must look like 123456:ABC…")),
+  /** Telegram's Bot API address. Only the end-to-end tests change it (to a stand-in); production must be https. */
+  TELEGRAM_API_URL: z.string().url("must be a URL").default("https://api.telegram.org"),
   /**
    * The web app's address(es), comma-separated: the only browser origins the
    * API accepts. The first one is the base of links in Telegram messages.
@@ -65,6 +67,9 @@ function productionRules(required: string[]) {
     });
     for (const key of required) {
       if (env[key] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "required in production" });
+    }
+    if (typeof env.TELEGRAM_API_URL === "string" && !env.TELEGRAM_API_URL.startsWith("https://")) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["TELEGRAM_API_URL"], message: "must be https in production" });
     }
     if (env.RATE_LIMITS === "off") ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["RATE_LIMITS"], message: "can't be off in production" });
     if (typeof env.FILES_PUBLIC_URL === "string" && !env.FILES_PUBLIC_URL.startsWith("https://")) {

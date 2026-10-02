@@ -35,7 +35,7 @@ Updated at the end of every roadmap step.
 | Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes. Decided 2026-10-02: the beta may go live with cash on delivery only, and KHQR is switched on when it's ready (its launch-checklist items then apply) |
 | Step 6. Orders and Telegram | Done — order actions (confirm → pack → send by driver, bus or pickup → delivered → cash collected; failed, rebook, cancel), the buyer cancels while allowed and their page refreshes itself, Telegram alerts through an outbox with a Confirm button. Telegram runs in dry run until a bot token is set: send one real alert then |
 | Step 7. Admin, the minimum | Done — admin login with Telegram + authenticator code (2FA, backup codes, lockout), roles enforced by the API, overview, merchants with extend/unblock and change plan, audit log, platform settings, admin alerts to Telegram. First owner by `pnpm admin:add-owner` |
-| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). B2 photo storage done: one S3 adapter for Cloudflare R2 (production, required there) and a local SeaweedFS (`pnpm s3:up`; MinIO no longer ships Windows downloads), `pnpm files:setup`, `files:check`, `files:copy-to-s3`. B3 done: nightly backup (worker, 03:00 Phnom Penh, pg_dump into a private bucket, kept 14 days, the newest 3 always; failures alert the admins), `pnpm db:backup` and `pnpm db:restore` (into a new database only; rehearsed: the restored copy ran the API with the same rows, row-level security and migrations), Dockerfiles for the API and worker (`infra/docker`, built and run by CI), `railway.json` for both (migrations before each API release, health check, worker never overlaps itself), `apps/web/vercel.json`, and Kantumruy Pro bundled with the web app. Next: B4 production rehearsal and `docs/go-live.md` |
+| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). B2 photo storage done: one S3 adapter for Cloudflare R2 (production, required there) and a local SeaweedFS (`pnpm s3:up`; MinIO no longer ships Windows downloads), `pnpm files:setup`, `files:check`, `files:copy-to-s3`. B3 done: nightly backup (worker, 03:00 Phnom Penh, pg_dump into a private bucket, kept 14 days, the newest 3 always; failures alert the admins), `pnpm db:backup` and `pnpm db:restore` (into a new database only; rehearsed: the restored copy ran the API with the same rows, row-level security and migrations), Dockerfiles for the API and worker (`infra/docker`, built and run by CI), `railway.json` for both (migrations before each API release, health check, worker never overlaps itself), `apps/web/vercel.json`, and Kantumruy Pro bundled with the web app. B4a done (from the 2026-10-02 structure review): web functions in Singapore (`sin1`), photo thumbnails (~400 px, made in the browser) for the shop grid, cart and product list, the end-to-end checks moved into the repo (`pnpm test:e2e`, run by CI with a stand-in for Telegram), Dependabot; photo upload fixed under the CSP. Next: B4b production rehearsal and `docs/go-live.md` |
 
 ## Overview
 
@@ -641,7 +641,7 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 | Headers | HTTPS only, HSTS, CSP, no framing. Web: CSP allowing only the API, photos, Telegram's login button and Turnstile (inline scripts allowed for Next.js, no eval); the Telegram button uses redirect mode for that reason. API: `default-src 'none'`, nosniff, no framing, no `X-Powered-By`. Production refuses to start without https origins, the bot token, the admin key and the Turnstile secret, or with rate limits off |
 | Privacy | Buyer phone and address visible only to that store; masked in logs |
 | Backups | Nightly `pg_dump` by the worker into a private R2 bucket of its own (never the photos bucket; the settings refuse it), kept 14 days with the newest 3 always kept; a failure alerts the admins' Telegram. Production refuses to start the worker with backups off. Plus Railway's own backups, and a monthly restore test with `pnpm db:restore` into a new database |
-| Dependencies | Dependabot + `pnpm audit` in CI; pin versions |
+| Dependencies | Dependabot (`.github/dependabot.yml`): weekly grouped library updates, monthly GitHub Actions and Docker base images, each through CI before merging; the lockfile pins versions |
 
 ## Deployment
 
@@ -803,7 +803,7 @@ A seller opens a shop, a buyer orders and pays by KHQR or cash, the seller gets 
 | 8. Security and go live | Cloudflare WAF and Turnstile, rate limits on login and checkout, security headers, backups and one restore test; buy the domain and hosting; staging and preview links; photo storage moves to Cloudflare R2; deploy | The launch checklist below is ticked; a real KHQR order completes on the live site | — |
 | 9. Beta | 5–10 sellers you onboard yourself; a Telegram group; fix the top three complaints each week | Two weeks of real orders, and sellers say they would pay | — |
 
-Every step ends the same way before it is merged: lint, typecheck and all tests pass; a fresh database built from the migrations matches the schema and every `store_id` table has row-level security; the built API passes the step's end-to-end checks; the pages are checked on a 360 px phone in Khmer and English; and logs hold no secrets or phone numbers.
+Every step ends the same way before it is merged: lint, typecheck and all tests pass; a fresh database built from the migrations matches the schema and every `store_id` table has row-level security; the built API passes every end-to-end check (`pnpm test:e2e`, in `tests/e2e`, also run by CI); the pages are checked on a 360 px phone in Khmer and English; and logs hold no secrets or phone numbers.
 
 Left out of Release 1 on purpose, although their screens exist: subscription billing, plan limits, KYC, stock, wholesale prices, ABA PayWay, phone-number login, admin roles.
 
@@ -878,6 +878,19 @@ Going live is the middle of the project, not the end. From step 8 on, the platfo
 | Shops that pay again the next month | Above 80% | Subscriptions |
 
 Scale only when the numbers say so: add PgBouncer or a read replica when database CPU stays high; a second API instance when response times climb (see "How Railway usage adds up" in Budget).
+
+**Growth path to 1,000+ shops** (from the structure review of 2026-10-02; each when its sign appears, not before):
+
+| Change | Do it when |
+| --- | --- |
+| Telegram webhook instead of long polling, so more than one worker can run | One worker can't keep up with alerts, or the worker needs a second copy for safety |
+| PgBouncer (connection pooling) | API copies multiply and database connections near the limit |
+| Cache public shop data at Cloudflare for a few seconds | Busy shops make the API's CPU climb at peak hours |
+| Live order updates (server-sent events) instead of the buyer page asking every 20 seconds | Order-page requests become a large share of API traffic |
+| Point-in-time recovery (Railway backups or a managed PostgreSQL), so a disaster loses minutes, not up to a day | Real money flows through KHQR, before the public launch |
+| Partner API: versioned (`/v1`), per-shop API keys, signed webhooks sent by the worker from the outbox, OpenAPI docs | The first partner (delivery company, accounting tool, marketplace) asks |
+
+**Running other projects on the same accounts:** one Vercel team, one Railway workspace and one Cloudflare account can host them all (Vercel Pro is paid per person, not per project; Railway projects share the plan's included usage). Give each project its own domain, database, buckets, Telegram bot and secrets, and never put another project on a sub-domain of the shop domain: browsers treat the whole domain as one site, which weakens the login cookie's protection.
 
 ### What "finished" means
 

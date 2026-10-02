@@ -25,6 +25,9 @@ import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } fr
 import { api, ApiError, uploadPhoto, type Catalog, type CatalogName, type Product } from "@/lib/api";
 import { useMerchant } from "../../merchant-context";
 
+/** The small copy of each photo, for the shop grid and lists. */
+const THUMB_SIDE = 400;
+
 const NEW_VALUE = "__new__";
 
 interface VariantDraft {
@@ -397,8 +400,8 @@ function ProductForm({ catalog, existing, onReset }: { catalog: Catalog; existin
       const id = nextDraftId();
       const preview = URL.createObjectURL(file);
       setPhotos((previous) => (previous.length >= MAX_PRODUCT_PHOTOS ? previous : [...previous, { id, url: preview, status: "uploading" }]));
-      compressImageToBlob(file)
-        .then(uploadPhoto)
+      Promise.all([compressImageToBlob(file), compressImageToBlob(file, THUMB_SIDE, 0.75)])
+        .then(([photo, thumb]) => uploadPhoto(photo, thumb))
         .then((uploaded) => {
           setPhotos((previous) => previous.map((photo) => (photo.id === id ? { id, key: uploaded.key, url: uploaded.url, status: "ready" } : photo)));
           URL.revokeObjectURL(preview);

@@ -14,6 +14,7 @@ import { cartLines, cartTotal, useShopCart } from "@/lib/cart";
 import { discounted, startingVariant } from "@/lib/product-price";
 import { isTakingOrders } from "@/lib/shop-ordering";
 import { ShopInfo } from "./shop-info";
+import { PhotoThumb } from "@/components/photo-thumb";
 
 // What a buyer sees at /s/<link>: the shop, its categories and its visible
 // products, a product's own page for photos, description and options, and
@@ -286,8 +287,7 @@ function ProductCard({
       <button type="button" onClick={onOpen} className="flex flex-1 flex-col gap-2 text-left">
         <span className="relative block">
           {product.photos[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element -- the seller's uploaded photo
-            <img src={product.photos[0].url} alt="" loading="lazy" className="aspect-square w-full rounded-DEFAULT object-cover" />
+            <PhotoThumb photo={product.photos[0]} lazy className="aspect-square w-full rounded-DEFAULT object-cover" />
           ) : (
             <span className="flex aspect-square w-full items-center justify-center rounded-DEFAULT bg-border/30">
               <ImageOff className="h-6 w-6 text-muted" aria-hidden="true" />

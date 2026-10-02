@@ -1,7 +1,7 @@
 import type { Prisma, Tx } from "@khmer-micro-store/db";
 import { canAddProduct, planHasFeature, productSaveSchema, slugify, toFieldErrors, type FormErrorCode, type PlanId, type ProductSave } from "@khmer-micro-store/shared";
 import { AppException, InvalidInputException } from "../errors";
-import { isStorePhotoKey } from "../files/photos";
+import { isStorePhotoKey, thumbKeyOf } from "../files/photos";
 
 // Saving and reading products. Every function here runs inside the store's
 // own context (withContext), so row-level security already limits it to
@@ -26,7 +26,7 @@ export function toProductDto(product: ProductRow, photoUrl: (key: string) => str
     unitId: product.unitId,
     discountPercent: product.discountPercent,
     isVisible: product.isVisible,
-    photos: product.photos.map((photo) => ({ key: photo.fileKey, url: photoUrl(photo.fileKey) })),
+    photos: product.photos.map((photo) => ({ key: photo.fileKey, url: photoUrl(photo.fileKey), thumbUrl: photoUrl(thumbKeyOf(photo.fileKey)) })),
     hasOptions: !product.variants.some((variant) => variant.isDefault),
     variants: product.variants.map((variant) => ({
       id: variant.id,

@@ -13,6 +13,7 @@ import { cartLines, cartTotal, sellableVariantIds, useShopCart } from "@/lib/car
 import { isTakingOrders } from "@/lib/shop-ordering";
 import { usePublicShop } from "@/lib/use-public-shop";
 import { BuyerLoading, BuyerProblem } from "../buyer-states";
+import { PhotoThumb } from "@/components/photo-thumb";
 
 // The cart (design/screens.md B3), from the cart kept on the buyer's phone and
 // the shop's current products and prices. Lines the shop no longer sells are
@@ -90,8 +91,7 @@ export default function CartPage() {
                 return (
                   <li key={line.variant.id} className="flex items-center gap-3 border-b border-border py-3 first:pt-0">
                     {line.product.photos[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- the seller's uploaded photo
-                      <img src={line.product.photos[0].url} alt="" className="h-16 w-16 shrink-0 rounded-DEFAULT object-cover" />
+                      <PhotoThumb photo={line.product.photos[0]} className="h-16 w-16 shrink-0 rounded-DEFAULT object-cover" />
                     ) : (
                       <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-DEFAULT bg-border/30">
                         <ImageOff className="h-5 w-5 text-muted" aria-hidden="true" />

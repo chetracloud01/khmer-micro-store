@@ -12,6 +12,7 @@ import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { api, ApiError, type Catalog, type Product } from "@/lib/api";
 import { priceText, startingVariant, usdValue } from "@/lib/product-price";
 import { useMerchant } from "../merchant-context";
+import { PhotoThumb } from "@/components/photo-thumb";
 
 // The seller's products, from the API: search, filters, Hidden badge, and
 // delete (soft — old orders keep pointing at the product).
@@ -77,8 +78,7 @@ export default function ProductsPage() {
 
   const thumbnail = (product: Product, size: string) =>
     product.photos[0] ? (
-      // eslint-disable-next-line @next/next/no-img-element -- the seller's own uploaded photo
-      <img src={product.photos[0].url} alt="" className={`${size} shrink-0 rounded-DEFAULT object-cover`} />
+      <PhotoThumb photo={product.photos[0]} className={`${size} shrink-0 rounded-DEFAULT object-cover`} />
     ) : (
       <div className={`${size} flex shrink-0 items-center justify-center rounded-DEFAULT bg-border/30`} aria-hidden="true">
         <ImageOff className="h-5 w-5 text-muted" />
