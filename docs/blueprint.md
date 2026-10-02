@@ -35,7 +35,7 @@ Updated at the end of every roadmap step.
 | Step 5. KHQR | **Postponed** — no Bakong Open API token yet. Built as soon as there is one and gate G3 passes. Decided 2026-10-02: the beta may go live with cash on delivery only, and KHQR is switched on when it's ready (its launch-checklist items then apply) |
 | Step 6. Orders and Telegram | Done — order actions (confirm → pack → send by driver, bus or pickup → delivered → cash collected; failed, rebook, cancel), the buyer cancels while allowed and their page refreshes itself, Telegram alerts through an outbox with a Confirm button. Telegram runs in dry run until a bot token is set: send one real alert then |
 | Step 7. Admin, the minimum | Done — admin login with Telegram + authenticator code (2FA, backup codes, lockout), roles enforced by the API, overview, merchants with extend/unblock and change plan, audit log, platform settings, admin alerts to Telegram. First owner by `pnpm admin:add-owner` |
-| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). Next: B2 photos to R2, B3 deploy config and backups, B4 production rehearsal and `docs/go-live.md` |
+| **Now: Step 8. Security and go live** | In progress, done in parts so that buying hosting is the last step. B1 security hardening done: rate limits (PostgreSQL counters), Turnstile on checkout, security headers on API and web, production start-up checks, order tokens kept out of logs, Telegram login in redirect mode (no eval under the CSP). B2 photo storage done: one S3 adapter for Cloudflare R2 (production, required there) and a local SeaweedFS (`pnpm s3:up`; MinIO no longer ships Windows downloads), `pnpm files:setup`, `files:check`, `files:copy-to-s3`. Next: B3 deploy config, backups and the Khmer font, B4 production rehearsal and `docs/go-live.md` |
 
 ## Overview
 
@@ -311,7 +311,7 @@ khmer-micro-store/
 │   ├── payments/   # provider adapters: bakong-khqr, aba-payway
 │   ├── db/         # Prisma schema, migrations, seed
 │   └── ui/         # shared components + Khmer font setup
-├── infra/          # docker-compose, Caddy/Nginx, backup scripts
+├── infra/          # docker-compose, local database and local S3 (SeaweedFS) scripts, backup scripts
 ├── .github/workflows/ci.yml
 └── CLAUDE.md
 ```
@@ -634,7 +634,7 @@ The three things that matter most: nobody can fake a payment, no merchant can se
 | Roles | Owner and staff per store; staff cannot change payment settings or delete products |
 | Payments | KHQR: trust only your own MD5 poll. PayWay: verify HMAC-SHA512 header, then Check Transaction API. Match amount and currency. Idempotent processing |
 | Telegram updates | The worker long-polls getUpdates (one worker, no public URL needed; decided 2026-10-02 for the beta). If it ever moves to a webhook: `secret_token` header checked on every request. Button presses are checked against store membership either way |
-| Input | Zod on every endpoint; Prisma parameterised queries; image uploads checked by their bytes (JPEG/PNG/WebP only, whatever the file name says), 2 MB at most after the browser shrinks them, stored per shop and served with `nosniff` |
+| Input | Zod on every endpoint; Prisma parameterised queries; image uploads checked by their bytes (JPEG/PNG/WebP only, whatever the file name says), 2 MB at most after the browser shrinks them, stored per shop under keys only the API makes (`stores/<store>/<uuid>.jpg`). In production they live in R2: anyone may read them through the bucket's custom domain, nobody may list or write without the API's token (Object Read & Write, that bucket only); a Cloudflare rule adds `nosniff` there. Locally the API's `/files` adds it |
 | Abuse | Cloudflare WAF + Turnstile on checkout (checked by the API; if Cloudflare can't be reached the order goes through and Sentry is told). Rate limits counted in PostgreSQL (`app_rate_limit_hit`, keys hashed): seller login 20 / 10 min and admin login 10 / 10 min per address, admin codes 20 / 10 min, checkout 60 / hour per address and 10 / hour per phone, buyer links and cancels 30 / hour, staff-group links 10 / hour and photo uploads 120 / hour per shop. Address limits are generous because mobile users share addresses; `TRUST_PROXY_HOPS` must match the proxies in front of the API |
 | Secrets | Only in the hosting provider's environment settings; `.env` never in Git; PayWay keys encrypted at rest. Settings are checked at start-up (`packages/shared/env.ts`), and an error names the missing setting, never its value |
 | Development login | A "test merchant" login exists only in development and is refused in production |

@@ -24,6 +24,11 @@ export function newPhotoKey(storeId: string, type: PhotoType): string {
 
 const KEY = /^stores\/([0-9a-f-]{36})\/[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
+/** A key the API could have made (newPhotoKey), in any store's folder. */
+export function isPhotoKey(key: string): boolean {
+  return KEY.test(key);
+}
+
 /** True only for a photo key in this store's own folder — a product can't point at another shop's photos. */
 export function isStorePhotoKey(storeId: string, key: string): boolean {
   return KEY.exec(key)?.[1] === storeId;

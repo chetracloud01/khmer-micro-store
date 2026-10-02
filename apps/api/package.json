@@ -9,9 +9,11 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "admin:add-owner": "tsx --env-file-if-exists=../../.env src/cli/add-owner.ts"
+    "admin:add-owner": "tsx --env-file-if-exists=../../.env src/cli/add-owner.ts",
+    "files": "tsx --env-file-if-exists=../../.env src/cli/files.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3",
     "@khmer-micro-store/db": "workspace:^",
     "@khmer-micro-store/shared": "workspace:*",
     "@nestjs/common": "^10.4.6",

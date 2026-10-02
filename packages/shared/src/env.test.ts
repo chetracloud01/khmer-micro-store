@@ -46,7 +46,7 @@ describe("server settings", () => {
       expect.unreachable();
     } catch (error) {
       const { problems } = error as EnvError;
-      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["ADMIN_SECRETS_KEY", "FILES_PUBLIC_URL", "TELEGRAM_BOT_TOKEN", "TURNSTILE_SECRET_KEY", "WEB_ORIGIN.0"]);
+      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["ADMIN_SECRETS_KEY", "FILES_PUBLIC_URL", "FILE_STORAGE", "TELEGRAM_BOT_TOKEN", "TURNSTILE_SECRET_KEY", "WEB_ORIGIN.0"]);
     }
     const productionSource = {
       NODE_ENV: "production",
@@ -57,6 +57,12 @@ describe("server settings", () => {
       ADMIN_SECRETS_KEY: "A".repeat(43) + "=",
       TURNSTILE_SECRET_KEY: "0x4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       TRUST_PROXY_HOPS: "1",
+      FILE_STORAGE: "s3",
+      S3_ENDPOINT: "https://account.r2.cloudflarestorage.com",
+      S3_BUCKET: "kms-photos",
+      S3_ACCESS_KEY_ID: "key-id",
+      S3_SECRET_ACCESS_KEY: "s3cret",
+      FILES_PUBLIC_URL: "https://files.example.com",
     };
     const ready = loadEnv(apiEnvSchema, productionSource);
     expect(ready.TRUST_PROXY_HOPS).toBe(1);
@@ -66,5 +72,26 @@ describe("server settings", () => {
 
   it("the worker needs the bot in production", () => {
     expect(() => loadEnv(workerEnvSchema, { NODE_ENV: "production", DATABASE_OWNER_URL, WEB_ORIGIN: "https://shop.example.com" })).toThrow(EnvError);
+  });
+
+  it("S3 storage needs all its settings", () => {
+    try {
+      loadEnv(apiEnvSchema, { DATABASE_OWNER_URL, DATABASE_URL, FILE_STORAGE: "s3", S3_BUCKET: "kms-photos" });
+      expect.unreachable();
+    } catch (error) {
+      const { problems } = error as EnvError;
+      expect(problems.map((problem) => problem.split(":")[0]).sort()).toEqual(["FILES_PUBLIC_URL", "S3_ACCESS_KEY_ID", "S3_ENDPOINT", "S3_SECRET_ACCESS_KEY"]);
+    }
+    const env = loadEnv(apiEnvSchema, {
+      DATABASE_OWNER_URL,
+      DATABASE_URL,
+      FILE_STORAGE: "s3",
+      S3_ENDPOINT: "http://localhost:9000",
+      S3_BUCKET: "kms-photos",
+      S3_ACCESS_KEY_ID: "localdev",
+      S3_SECRET_ACCESS_KEY: "localdev-secret",
+      FILES_PUBLIC_URL: "http://localhost:9000/kms-photos",
+    });
+    expect(env.S3_REGION).toBe("auto");
   });
 });

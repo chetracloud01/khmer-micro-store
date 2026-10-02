@@ -15,7 +15,11 @@
     "db:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @khmer-micro-store/db migrate:dev",
     "db:deploy": "pnpm --filter @khmer-micro-store/db migrate:deploy",
-    "admin:add-owner": "pnpm --filter @khmer-micro-store/api admin:add-owner"
+    "admin:add-owner": "pnpm --filter @khmer-micro-store/api admin:add-owner",
+    "s3:up": "infra\\local-s3.cmd",
+    "files:setup": "pnpm --filter @khmer-micro-store/api files setup",
+    "files:check": "pnpm --filter @khmer-micro-store/api files check",
+    "files:copy-to-s3": "pnpm --filter @khmer-micro-store/api files copy-to-s3"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.15.0",

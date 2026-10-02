@@ -39,6 +39,17 @@ const shared = {
     .default("http://localhost:3000")
     .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean))
     .pipe(z.array(z.string().url("must be a URL, or URLs separated by commas")).min(1, "required")),
+  /**
+   * S3-compatible storage: Cloudflare R2 in production, SeaweedFS
+   * locally (pnpm s3:up). The endpoint is the account's S3 address,
+   * e.g. https://<account id>.r2.cloudflarestorage.com or http://localhost:9000.
+   */
+  S3_ENDPOINT: optional(z.string().url("must be a URL")),
+  /** "auto" for R2; the local SeaweedFS accepts any (us-east-1). */
+  S3_REGION: z.string().min(1).default("auto"),
+  S3_BUCKET: optional(z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "must be a bucket name (lower-case letters, digits, dots, dashes)")),
+  S3_ACCESS_KEY_ID: optional(z.string().min(1)),
+  S3_SECRET_ACCESS_KEY: optional(z.string().min(1)),
 };
 
 /**
@@ -66,9 +77,20 @@ const apiFields = z.object({
   ...shared,
   /** The API's everyday database user (khmer_micro_store_app): row-level security keeps each shop to its own rows. */
   DATABASE_URL: postgresUrl,
-  /** Where uploaded photos are kept on this machine (development). Production uses Cloudflare R2 from roadmap step 8. */
+  /**
+   * Where photos are kept: "local" = a folder on this machine (FILES_DIR,
+   * served by the API's /files); "s3" = the S3_* bucket (R2, or SeaweedFS locally),
+   * served from FILES_PUBLIC_URL. Production must use "s3": a host's disk is
+   * wiped on every deploy.
+   */
+  FILE_STORAGE: z.enum(["local", "s3"]).default("local"),
+  /** The folder for FILE_STORAGE=local. */
   FILES_DIR: z.string().min(1).default(".uploads"),
-  /** The address photos are served from. Unset = this API's own /files. */
+  /**
+   * The address photos are served from. Unset = this API's own /files
+   * (local only). With S3: the bucket's public address — R2's custom domain
+   * (https://files.<domain>) or locally http://localhost:9000/kms-photos.
+   */
   FILES_PUBLIC_URL: optional(z.string().url("must be a URL")),
   /**
    * 32 random bytes, base64: encrypts admins' authenticator secrets. Without
@@ -92,7 +114,18 @@ const apiFields = z.object({
   TURNSTILE_SECRET_KEY: optional(z.string().min(10, "must be the secret key from Cloudflare Turnstile")),
 });
 
-export const apiEnvSchema = apiFields.superRefine(productionRules(["TELEGRAM_BOT_TOKEN", "ADMIN_SECRETS_KEY", "TURNSTILE_SECRET_KEY"]));
+/** S3 storage needs its five settings; production needs S3 storage. */
+function storageRules(env: z.infer<typeof apiFields>, ctx: z.RefinementCtx) {
+  if (env.FILE_STORAGE === "s3") {
+    for (const key of ["S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "FILES_PUBLIC_URL"] as const) {
+      if (env[key] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "required when FILE_STORAGE=s3" });
+    }
+  } else if (env.NODE_ENV === "production") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["FILE_STORAGE"], message: "must be s3 in production (the host's disk is wiped on every deploy)" });
+  }
+}
+
+export const apiEnvSchema = apiFields.superRefine(productionRules(["TELEGRAM_BOT_TOKEN", "ADMIN_SECRETS_KEY", "TURNSTILE_SECRET_KEY"])).superRefine(storageRules);
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
 export const workerEnvSchema = z.object(shared).superRefine(productionRules(["TELEGRAM_BOT_TOKEN"]));
