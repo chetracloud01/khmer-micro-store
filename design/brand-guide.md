@@ -81,7 +81,7 @@ The app uses named colour tokens (`brand`, `success`, `warning`, `danger`, `info
 
 The app's default (teal) `brand` token in light mode is Khmio Teal `#0E7490`, so the app, the icon and the marketing use one teal. It replaced the lighter `#0891B2` on 2026-10-06, on which white button text reached only about 3.7 : 1. The same day, the `success` green became `#157036` (was `#16A34A`, about 3 : 1 on its light badges, now above 5 : 1).
 
-**Still borderline (open):** on their light-tinted badges, `danger` (4.1 : 1), `warning` (4.4 : 1) and `info` (4.5 : 1) sit just under or at the 4.5 : 1 small text needs. They pass on white. Fix by darkening each light-mode token slightly, checked the same way.
+Also on 2026-10-06, `danger` became `#C81E1E` (was `#DC2626`), `warning` `#A34B08` (was `#B45309`) and `info` `#1D5AE0` (was `#2563EB`): on their light-tinted badges they had been just under the 4.5 : 1 small text needs, and now reach about 5 : 1. Every light-mode status colour now passes on white, on the page background and on its own badge. When a colour token changes, check those three backgrounds the same way.
 
 ## 6. Fonts
 

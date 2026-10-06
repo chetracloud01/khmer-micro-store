@@ -17,9 +17,9 @@
   --color-brand: 14 116 144; /* Khmio Teal #0E7490 (design/brand-guide.md); white text on it is 5.4:1 */
   --color-on-brand: 255 255 255;
   --color-success: 21 112 54; /* #157036: 6.2:1 on white, 5.3:1 on its own 10% tint (badges) */
-  --color-warning: 180 83 9;
-  --color-info: 37 99 235;
-  --color-danger: 220 38 38;
+  --color-warning: 163 75 8; /* #A34B08: 5.9:1 on white, 5.1:1 on its 10% tint */
+  --color-info: 29 90 224; /* #1D5AE0: 5.9:1 on white, 5.1:1 on its 10% tint */
+  --color-danger: 200 30 30; /* #C81E1E: 5.7:1 on white, 4.9:1 on its 10% tint */
   --color-bg: 255 255 255; /* cards, inputs, sheets */
   --color-canvas: 244 246 250; /* page background behind cards */
   --color-fg: 15 23 42;
