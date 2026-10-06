@@ -29,6 +29,8 @@ export interface SiteKitContext {
   plans?: SitePlansLabels;
   /** Needed only on pages with a Waitlist section. */
   waitlist?: SiteWaitlistContext;
+  /** Turns a picture's src into an address: "library:<id>" points into the picture library (A12). */
+  image?: (src: string) => string;
 }
 
 export const pick = (text: LocalizedText, locale: SiteLocale) => text[locale];

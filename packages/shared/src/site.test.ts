@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toFieldErrors } from "./form-errors";
-import { isPromotionLive, promotionTiming, siteLinkSchema, siteSectionSchema, visibleSections, waitlistSignupSchema } from "./site";
+import { isPromotionLive, picturesUsedIn, promotionTiming, siteLinkSchema, sitePictureDetailsSchema, siteSectionSchema, visibleSections, waitlistSignupSchema } from "./site";
 
 const text = (km: string, en: string) => ({ km, en });
 
@@ -64,5 +64,21 @@ describe("site content", () => {
     const bad = waitlistSignupSchema.safeParse({ product: "class", name: "D", phone: "123", businessType: undefined });
     expect(bad.success).toBe(false);
     if (!bad.success) expect(toFieldErrors(bad.error)).toEqual({ name: "too_short", phone: "phone_invalid", businessType: "required" });
+  });
+  it("finds the library pictures a page uses, deep in its sections and link preview", () => {
+    const page = {
+      seo: { title: text("ក", "A"), description: text("ខ", "B"), image: { src: "library:cover", alt: text("គ", "C") } },
+      sections: [
+        { ...promotion, image: { src: "library:promo", alt: text("ឃ", "D") } },
+        { id: "f", visible: true, type: "features" as const, title: text("ង", "E"), features: [{ icon: "qr" as const, title: text("ច", "F"), line: text("ឆ", "G"), image: { src: "/site/shop/khqr.jpg", alt: text("ជ", "H") } }, { icon: "bell" as const, title: text("ឈ", "I"), line: text("ញ", "J"), image: { src: "library:alert", alt: text("ដ", "K") } }] },
+      ],
+    };
+    expect([...picturesUsedIn(page)].sort()).toEqual(["alert", "cover", "promo"]);
+  });
+
+  it("needs a picture description in both languages", () => {
+    const result = sitePictureDetailsSchema.safeParse({ alt: text("រូបថតហាង", "") });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(toFieldErrors(result.error)).toEqual({ "alt.en": "required" });
   });
 });

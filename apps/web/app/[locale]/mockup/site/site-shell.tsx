@@ -60,6 +60,7 @@ export function SitePageView({ pageKey, mode = "published" }: { pageKey: SitePag
     locale,
     href,
     products: mockPlatformProducts,
+    image: website.resolveImage,
     labels: {
       comingSoon: t("comingSoon"),
       learnMore: t("learnMore"),

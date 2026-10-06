@@ -250,3 +250,34 @@ export type WaitlistSignup = z.infer<typeof waitlistSignupSchema>;
 
 /** The schema type, for code that reads a schema to build a form (the admin's site editor). */
 export type { ZodTypeAny as SiteSchema } from "zod";
+
+// ------------------------------------------------------------ picture library
+
+/** A content picture's src that points into the picture library (A12): "library:<id>". */
+export const LIBRARY_SRC_PREFIX = "library:";
+
+/** What the admin gives every picture: a description in both languages (screen readers, search). */
+export const sitePictureDetailsSchema = z.object({ alt: localizedTextSchema(160) });
+
+/** The library picture a content src points to, or null for an ordinary address. */
+export function libraryPictureId(src: string): string | null {
+  return src.startsWith(LIBRARY_SRC_PREFIX) ? src.slice(LIBRARY_SRC_PREFIX.length) : null;
+}
+
+/** Every library picture a page uses, in its sections and its link preview. */
+export function picturesUsedIn(page: Pick<SitePage, "sections" | "seo">): Set<string> {
+  const used = new Set<string>();
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) return value.forEach(visit);
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    if (typeof record.src === "string") {
+      const id = libraryPictureId(record.src);
+      if (id) used.add(id);
+    }
+    Object.values(record).forEach(visit);
+  };
+  visit(page.sections);
+  visit(page.seo);
+  return used;
+}

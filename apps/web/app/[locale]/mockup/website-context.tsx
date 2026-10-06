@@ -1,9 +1,9 @@
 "use client";
 
-import { sitePageSchema, type SitePage } from "@khmer-micro-store/shared";
+import { libraryPictureId, picturesUsedIn, sitePageSchema, type SitePage } from "@khmer-micro-store/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { mockComingSoonPages, mockHomePage, mockPricingPage, mockShopPage } from "@/mock/mock-site";
+import { mockComingSoonPages, mockHomePage, mockPictures, mockPricingPage, mockShopPage, type MockPicture } from "@/mock/mock-site";
 import { SITE_PAGE_KEYS, type SitePageKey } from "./site-pages";
 
 // The platform website's content, as the admin edits it (design/screens.md
@@ -49,8 +49,25 @@ function seed(): Record<SitePageKey, SitePageState> {
 
 export type PublishResult = { ok: true } | { ok: false; issues: { path: string; code: string }[] };
 
+/** Where a library picture is used: which page, and in which copy of it. */
+export interface PictureUse {
+  pageKey: SitePageKey;
+  where: "live" | "draft" | "history";
+}
+
 interface WebsiteContextValue {
   hydrated: boolean;
+  /** The picture library (A12). */
+  pictures: MockPicture[];
+  addPicture: (picture: Omit<MockPicture, "id" | "addedAt">) => string;
+  updatePictureAlt: (id: string, alt: MockPicture["alt"]) => void;
+  /** A new file for a picture: every page that uses it shows the new one. */
+  replacePictureFile: (id: string, file: Pick<MockPicture, "file" | "width" | "height" | "bytes">) => void;
+  /** Callers check pictureUses first: a picture in use is never deleted. */
+  deletePicture: (id: string) => void;
+  pictureUses: (id: string) => PictureUse[];
+  /** A content src as the browser needs it: "library:<id>" becomes the library file. */
+  resolveImage: (src: string) => string;
   pages: Record<SitePageKey, SitePageState>;
   hasChanges: (key: SitePageKey) => boolean;
   saveDraft: (key: SitePageKey, page: SitePage) => void;
@@ -63,10 +80,30 @@ interface WebsiteContextValue {
 
 const WebsiteContext = createContext<WebsiteContextValue | null>(null);
 const STORAGE_KEY = "khmer-micro-store:mockup-website";
+const PICTURES_KEY = "khmer-micro-store:mockup-pictures";
 
 export function WebsiteProvider({ children }: { children: ReactNode }) {
   const [pages, setPages] = useState<Record<SitePageKey, SitePageState>>(seed);
   const [hydrated, setHydrated] = useState(false);
+  const [pictures, setPictures] = useState<MockPicture[]>(mockPictures);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PICTURES_KEY);
+      if (raw) setPictures(JSON.parse(raw) as MockPicture[]);
+    } catch {
+      // Unreadable storage: start from the sample pictures.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(PICTURES_KEY, JSON.stringify(pictures));
+    } catch {
+      // Storage full (uploads are kept as data URLs in the mockup): they last until a reload.
+    }
+  }, [pictures, hydrated]);
 
   useEffect(() => {
     try {
@@ -101,8 +138,39 @@ export function WebsiteProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  function pictureUses(id: string): PictureUse[] {
+    return SITE_PAGE_KEYS.flatMap((pageKey) => {
+      const state = pages[pageKey];
+      const uses: PictureUse[] = [];
+      // The most visible use per page is enough: live, else the draft, else an earlier version.
+      if (picturesUsedIn(state.published).has(id)) uses.push({ pageKey, where: "live" });
+      else if (picturesUsedIn(state.draft).has(id)) uses.push({ pageKey, where: "draft" });
+      // A version that could be restored still needs its pictures.
+      else if (state.history.slice(1).some((version) => picturesUsedIn(version.page).has(id))) uses.push({ pageKey, where: "history" });
+      return uses;
+    });
+  }
+
   const value: WebsiteContextValue = {
     hydrated,
+    pictures,
+    addPicture: (picture) => {
+      const taken = new Set(pictures.map((existing) => existing.id));
+      let n = pictures.length + 1;
+      while (taken.has(`picture-${n}`)) n += 1;
+      const id = `picture-${n}`;
+      setPictures((current) => [{ ...picture, id, addedAt: new Date().toISOString() }, ...current]);
+      return id;
+    },
+    updatePictureAlt: (id, alt) => setPictures((current) => current.map((picture) => (picture.id === id ? { ...picture, alt } : picture))),
+    replacePictureFile: (id, file) => setPictures((current) => current.map((picture) => (picture.id === id ? { ...picture, ...file } : picture))),
+    deletePicture: (id) => setPictures((current) => current.filter((picture) => picture.id !== id)),
+    pictureUses,
+    resolveImage: (src) => {
+      const id = libraryPictureId(src);
+      if (!id) return src;
+      return pictures.find((picture) => picture.id === id)?.file ?? "";
+    },
     pages,
     hasChanges: (key) => JSON.stringify(pages[key].draft) !== JSON.stringify(pages[key].published),
     saveDraft: (key, page) => setPages((current) => ({ ...current, [key]: { ...current[key], draft: page } })),

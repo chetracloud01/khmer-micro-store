@@ -166,8 +166,32 @@ export const mockHomePage: SitePage = {
   ],
 };
 
-/** A phone screenshot of the Shop app (Khmer), saved under public/site/shop. */
-const shot = (file: string, km: string, en: string) => ({ src: `/site/shop/${file}.jpg`, alt: { km, en } });
+/** A picture in the website's picture library (A12). Pages point to it as "library:<id>". */
+export interface MockPicture {
+  id: string;
+  /** The file itself: a path under public/ for the samples, a data URL for uploads in the mockup. */
+  file: string;
+  alt: { km: string; en: string };
+  width: number;
+  height: number;
+  bytes: number;
+  /** ISO time it was added. */
+  addedAt: string;
+}
+
+const SHOT_BYTES: Record<string, number> = { "shop-link": 30817, khqr: 46277, orders: 33825, send: 31726, delivery: 32618, stock: 27537 };
+
+/** The library starts with the Shop app's phone screenshots (Khmer), saved under public/site/shop. */
+export const mockPictures: MockPicture[] = [];
+
+/** A Shop screenshot: added to the library once, used by the page as "library:shop-<file>". */
+const shot = (file: string, km: string, en: string) => {
+  const id = `shop-${file}`;
+  if (!mockPictures.some((picture) => picture.id === id)) {
+    mockPictures.push({ id, file: `/site/shop/${file}.jpg`, alt: { km, en }, width: 360, height: 740, bytes: SHOT_BYTES[file] ?? 0, addedAt: "2026-10-06T09:00:00+07:00" });
+  }
+  return { src: `library:${id}`, alt: { km, en } };
+};
 
 export const mockShopPage: SitePage = {
   slug: "products/shop",

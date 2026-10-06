@@ -67,7 +67,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { key: "website", segment: "website", icon: Globe },
       { key: "promotions", segment: "promotions", icon: Megaphone },
-      { key: "pictures", segment: "pictures", icon: Images, comingSoon: true },
+      { key: "pictures", segment: "pictures", icon: Images },
     ],
   },
   {

@@ -244,12 +244,17 @@ Phone first; sidebar from tablet width; tables on desktop.
 - Promotions are switched off, never removed — here or in A10 — so the
   record of what ran when is kept.
 
-### A12. Pictures — New · Website
+### A12. Pictures — Mockup · Website
 - Library of uploaded pictures: thumbnail, description (Khmer and English),
-  size, where it's used. Upload shrinks the picture in the browser first
-  (as product photos do) and needs both descriptions.
-- A picture in use can't be deleted; replacing it updates every page that
-  uses it after the next publish.
+  size, where it's used (live page, draft, or an earlier version). Upload
+  shrinks the picture in the browser first (as product photos do) and needs
+  both descriptions.
+- Pages point to a library picture as "library:<id>"; every picture field
+  in A10 and A11 has "Choose from the library", which also fills in the
+  description (still editable).
+- A picture in use — live, in a draft or in a version that could be
+  restored — can't be deleted. Replacing its file updates every page that
+  uses it right away, after a confirmation that names those pages.
 
 ## Platform website (Khmio)
 

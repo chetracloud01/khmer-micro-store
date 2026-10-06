@@ -71,7 +71,7 @@ function LinkButton({ link, ctx, variant = "primary", className }: { link: SiteL
 
 function SiteImg({ image, ctx, className }: { image: SiteImage; ctx: SiteKitContext; className?: string }) {
   // Plain <img>: the kit is shared by every product's site; pictures are already shrunk at upload.
-  return <img src={image.src} alt={pick(image.alt, ctx.locale)} loading="lazy" className={cn("rounded-2xl object-cover", className)} />;
+  return <img src={ctx.image ? ctx.image(image.src) : image.src} alt={pick(image.alt, ctx.locale)} loading="lazy" className={cn("rounded-2xl object-cover", className)} />;
 }
 
 // ------------------------------------------------------------------ sections

@@ -1,11 +1,12 @@
 "use client";
 
-import { Button, Input, Select, Switch, Textarea, cn } from "@khmer-micro-store/ui";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { BottomSheet, Button, Input, Select, Switch, Textarea, cn } from "@khmer-micro-store/ui";
+import { ArrowDown, ArrowUp, ImageIcon, Plus, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useState, type ReactNode } from "react";
 import { useFormErrorText } from "@/components/form-ui";
-import type { FormErrorCode, SiteSchema as ZodTypeAny } from "@khmer-micro-store/shared";
+import { LIBRARY_SRC_PREFIX, type FormErrorCode, type SiteSchema as ZodTypeAny } from "@khmer-micro-store/shared";
+import { useWebsite } from "../../website-context";
 
 // One form for every site kit section (design/screens.md A10): it is built
 // from the section's own Zod schema, so a new field in the schema shows up
@@ -42,6 +43,13 @@ function unwrapEffects(schema: ZodTypeAny): ZodTypeAny {
 function shapeOf(schema: ZodTypeAny): Record<string, ZodTypeAny> {
   return (schema._def as { shape: () => Record<string, ZodTypeAny> }).shape();
 }
+/** A picture: an object with exactly a src and an alt. */
+function isPicture(schema: ZodTypeAny): boolean {
+  if (typeName(schema) !== "ZodObject") return false;
+  const keys = Object.keys(shapeOf(schema));
+  return keys.length === 2 && keys.includes("src") && keys.includes("alt");
+}
+
 function isLocalized(schema: ZodTypeAny): boolean {
   if (typeName(schema) !== "ZodObject") return false;
   const keys = Object.keys(shapeOf(schema));
@@ -112,9 +120,11 @@ interface FieldProps {
 
 function useLabels() {
   const t = useTranslations("SiteEditor");
+  const locale: "km" | "en" = useLocale() === "en" ? "en" : "km";
   const errorText = useFormErrorText();
   return {
     t,
+    locale,
     field: (key: string) => (FIELD_KEYS.has(key) ? t(`field_${key}`) : key),
     option: (value: string) => (OPTION_KEYS.has(value) ? t(`option_${value}`) : value),
     error: (errors: Errors, path: string) => errorText(errors[path]),
@@ -224,6 +234,8 @@ function Field(props: FieldProps) {
       </fieldset>
     );
   }
+
+  if (kind === "ZodObject" && isPicture(schema)) return <PictureField {...props} schema={schema} />;
 
   switch (kind) {
     case "ZodObject":
@@ -390,4 +402,81 @@ export function IconButton({ label, disabled, onClick, children, className }: { 
 /** Minutes between an ISO time and now, never negative. */
 export function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+}
+
+/**
+ * A picture field: a thumbnail and "Choose from the library" (A12), which sets
+ * the src to "library:<id>" and fills in the picture's description — still
+ * editable. An outside https address can be typed instead.
+ */
+function PictureField({ schema, value, onChange, path, name, errors }: FieldProps) {
+  const labels = useLabels();
+  const website = useWebsite();
+  const [choosing, setChoosing] = useState(false);
+  const picture = (value ?? { src: "", alt: { km: "", en: "" } }) as { src: string; alt: { km: string; en: string } };
+  const shape = shapeOf(schema);
+  const preview = picture.src ? website.resolveImage(picture.src) : "";
+  const fromLibrary = picture.src.startsWith(LIBRARY_SRC_PREFIX);
+
+  return (
+    <fieldset className="flex flex-col gap-3 rounded-2xl border border-border p-4">
+      <legend className="px-1 text-sm font-semibold text-fg">{labels.field(name)}</legend>
+      <div className="flex items-center gap-3">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-DEFAULT bg-canvas">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a library file (data URL in the mockup)
+            <img src={preview} alt="" className="max-h-full max-w-full object-contain" />
+          ) : (
+            <ImageIcon className="h-6 w-6 text-muted" aria-hidden="true" />
+          )}
+        </div>
+        <div className="flex flex-col gap-1">
+          <Button type="button" variant="secondary" onClick={() => setChoosing(true)}>
+            {picture.src ? labels.t("picChange") : labels.t("picChoose")}
+          </Button>
+          {!picture.src && <span className="text-xs text-muted">{labels.t("picNone")}</span>}
+        </div>
+      </div>
+      {labels.error(errors, `${path}.src`) && <p className="text-sm text-danger">{labels.error(errors, `${path}.src`)}</p>}
+      {!fromLibrary && (
+        <Input
+          label={labels.t("picOther")}
+          value={picture.src}
+          placeholder="https://…"
+          onChange={(e) => onChange({ ...picture, src: e.target.value })}
+        />
+      )}
+      {shape.alt && <Field schema={shape.alt} value={picture.alt} onChange={(alt) => onChange({ ...picture, alt })} path={`${path}.alt`} name="alt" errors={errors} />}
+
+      <BottomSheet open={choosing} onClose={() => setChoosing(false)} closeLabel={labels.t("close")} title={labels.t("picChooseTitle")} placement="center" wide>
+        {website.pictures.length === 0 ? (
+          <p className="text-sm text-muted">{labels.t("picEmpty")}</p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {website.pictures.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange({ src: `${LIBRARY_SRC_PREFIX}${item.id}`, alt: item.alt });
+                    setChoosing(false);
+                  }}
+                  className={cn(
+                    "flex w-full flex-col gap-2 rounded-DEFAULT border p-2 text-left hover:border-brand",
+                    picture.src === `${LIBRARY_SRC_PREFIX}${item.id}` ? "border-2 border-brand" : "border-border",
+                  )}
+                >
+                  <span className="flex aspect-square items-center justify-center overflow-hidden rounded-DEFAULT bg-canvas">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a library file */}
+                    <img src={item.file} alt="" className="max-h-full max-w-full object-contain" />
+                  </span>
+                  <span className="line-clamp-2 text-xs">{item.alt[labels.locale]}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </BottomSheet>
+    </fieldset>
+  );
 }
