@@ -256,6 +256,72 @@ Phone first; sidebar from tablet width; tables on desktop.
   restored — can't be deleted. Replacing its file updates every page that
   uses it right away, after a confirmation that names those pages.
 
+### A13. Backups — New · Go-live
+Decided 2026-10-06. The nightly backup already exists (go-live step B3):
+the worker backs up the whole database at 03:00 Phnom Penh time into the
+private R2 bucket `kms-backups`, keeps every backup 14 days and the newest
+three always, and tells the admin alerts chat when one fails. This screen
+makes it visible, adds "Backup now", and lets one shop's catalog go back to
+a backup — never orders or money.
+
+**Backups list**
+- The latest successful backup at the top: when, how big, how long it took.
+  A red banner when the latest success is older than 26 hours ("the nightly
+  backup didn't run") with the failure reason if there is one.
+- A table of backups: date and time, nightly or manual (and who started
+  it), size, status (done / failed + reason), kept until.
+- **Backup now** — confirm, then queued → running → done, shown live. One
+  at a time: the button waits while a backup runs. Every manual backup goes
+  to the audit log.
+- **No download button, ever.** A backup holds every buyer's phone and
+  address; it stays in the private bucket. (The restore procedure reads it
+  from there.)
+
+**Full restore — a procedure, not a button**
+- A card explaining that restoring the whole platform replaces the live
+  database, so it is done by hand, step by step, never from the admin: the
+  steps from `docs/go-live.md` "When something goes wrong" (restore into a
+  new database, compare the counts it prints, then switch the app over),
+  with a link to them.
+- The monthly restore test (blueprint "The routine") is recorded here: the
+  date it last passed, so a forgotten test is visible.
+
+**Restore one shop's catalog** ("undo the shop's catalog changes")
+- For when a seller deleted or broke their products or settings by mistake.
+- Steps: choose the shop (search by name, link or phone) → choose a backup
+  (date) → choose what comes back (all ticked by default):
+  - products, their options, prices, descriptions and photos;
+  - categories, brands and units;
+  - shop settings and delivery zones.
+- **Never restored:** orders, payments, buyers, stock movements,
+  subscription and invoices — they are records of what really happened and
+  only move forward. Old orders are safe anyway: each order line keeps its
+  own copy of the title and price.
+- **Preview before anything changes:** counts and lists of what will come
+  back (deleted since the backup), what will be removed (added since), and
+  what will change, per kind; products that have orders since the backup
+  are marked (their orders keep their own copy, and the product is hidden
+  rather than removed).
+- **Confirm** by typing the shop's link (e.g. `sokha-coffee`). Just before
+  the restore, the system takes an automatic backup of that shop's current
+  catalog, so the restore itself can be undone the same way.
+- After: the audit log records the shop, the backup date and the counts;
+  the seller gets a Telegram message ("Your shop's catalog was restored to
+  <date> by Khmio support").
+- Photos come back only if their files still exist: photo files are never
+  deleted while any backup could still need them (at least the 14 days
+  backups are kept).
+
+**Who may do what** (new permissions in `packages/shared/admin-roles.ts`)
+- `backups_view` — the list and the procedure: Owner, Support, Finance.
+- `backups_run` — Backup now: Owner, Support.
+- `shop_restore` — restore a shop's catalog: Owner only.
+
+**Done when:** at go-live the list shows the first nightly backup; Backup
+now creates one that appears in the list and the audit log; a shop whose
+products were deleted gets them back (with photos) from the morning's
+backup, its orders untouched, and the seller is told on Telegram.
+
 ## Platform website (Khmio)
 
 The public site on `khmio.com` that presents every product, from
@@ -401,4 +467,5 @@ Buyer first, then the seller screens the buyer flow depends on.
 7. Platform website: the site kit sections, then P1–P4 from sample
    content; then the admin website screens A10–A12; then the account hub
    H1–H4. Mockups only — the content backend is its own roadmap step.
-8. Phase 2 and 3 screens.
+8. Admin A13 Backups (mockup), then its backend after go-live.
+9. Phase 2 and 3 screens.
