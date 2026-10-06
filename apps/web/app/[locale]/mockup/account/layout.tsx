@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, KhmioLogo, SegmentedControl, ThemeSwitcher } from "@khmer-micro-store/ui";
+import { cn, KhmioLogo, SegmentedControl, ThemeSwitcher } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";

@@ -6,8 +6,8 @@ import {
   PLAN_ORDER,
   type PlanId,
   type SubscriptionStatus,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, Select } from "@khmio/ui";
 import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

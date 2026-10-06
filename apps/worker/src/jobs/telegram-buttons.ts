@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { ALERT_BUTTONS, CONFIRMED_BUTTON_DATA, decideOrderAction, LINK_REPLIES, parseButtonData, parseStopButton } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { ALERT_BUTTONS, CONFIRMED_BUTTON_DATA, decideOrderAction, LINK_REPLIES, parseButtonData, parseStopButton } from "@khmio/shared";
 import type { Logger } from "pino";
 import type { CallbackQuery, TelegramClient } from "../telegram/client";
 import { handleMembership, handleMessage, handleStopButton } from "./telegram-links";

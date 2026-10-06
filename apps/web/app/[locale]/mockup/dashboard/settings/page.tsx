@@ -8,8 +8,8 @@ import {
   toFieldErrors,
   type FormErrorCode,
   type StoreSettings,
-} from "@khmer-micro-store/shared";
-import { Card, Input, SegmentedControl, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Card, Input, SegmentedControl, Select } from "@khmio/ui";
 import { ChevronRight, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

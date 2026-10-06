@@ -1,5 +1,5 @@
-import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { BUSINESS_TYPE_DEFAULTS, catalogNameSchema } from "@khmer-micro-store/shared";
+import { withContext, type AppDb } from "@khmio/db";
+import { BUSINESS_TYPE_DEFAULTS, catalogNameSchema } from "@khmio/shared";
 import { Body, Controller, Get, Inject, Param, Post, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { APP_DB } from "../db";

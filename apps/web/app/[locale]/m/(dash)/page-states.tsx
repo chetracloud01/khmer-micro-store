@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@khmer-micro-store/ui";
+import { Button } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 
 /** Grey blocks while a dashboard page's data is on its way. */

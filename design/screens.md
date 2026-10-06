@@ -259,7 +259,7 @@ Phone first; sidebar from tablet width; tables on desktop.
 ### A13. Backups — New · Go-live
 Decided 2026-10-06. The nightly backup already exists (go-live step B3):
 the worker backs up the whole database at 03:00 Phnom Penh time into the
-private R2 bucket `kms-backups`, keeps every backup 14 days and the newest
+private R2 bucket `khmio-backups`, keeps every backup 14 days and the newest
 three always, and tells the admin alerts chat when one fails. This screen
 makes it visible, adds "Backup now", and lets one shop's catalog go back to
 a backup — never orders or money.

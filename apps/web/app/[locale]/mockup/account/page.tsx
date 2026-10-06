@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonVariants, Card, KhmioMark, cn } from "@khmer-micro-store/ui";
+import { buttonVariants, Card, KhmioMark, cn } from "@khmio/ui";
 import { Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { STATUS_STYLES } from "../admin/admin-ui";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
 
-const WAITLIST_KEY = "khmer-micro-store:mockup-waitlist";
+const WAITLIST_KEY = "khmio:mockup-waitlist";
 
 /** The products this device has joined the waitlist for (the mockup's waitlist form keeps them here). */
 function useJoinedWaitlists(): Set<string> {

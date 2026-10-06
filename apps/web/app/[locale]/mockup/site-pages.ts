@@ -1,4 +1,4 @@
-import type { PlatformProductId } from "@khmer-micro-store/shared";
+import type { PlatformProductId } from "@khmio/shared";
 
 // The platform website's pages — fixed facts, not content. A plain module
 // (no "use client"), so server pages such as the admin's Preview can read it.

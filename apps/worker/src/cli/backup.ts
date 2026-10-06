@@ -1,5 +1,5 @@
 import { CreateBucketCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
-import { EnvError, loadEnv, workerEnvSchema } from "@khmer-micro-store/shared";
+import { EnvError, loadEnv, workerEnvSchema } from "@khmio/shared";
 import { listBackups, pgDumpCommand, pruneBackups, runBackup } from "../backup/backup";
 import { backupTarget } from "../jobs/backup";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { sitePictureDetailsSchema, toFieldErrors, type FormErrorCode } from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, cn } from "@khmer-micro-store/ui";
+import { sitePictureDetailsSchema, toFieldErrors, type FormErrorCode } from "@khmio/shared";
+import { BottomSheet, Button, Card, cn } from "@khmio/ui";
 import { ImagePlus, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";

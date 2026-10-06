@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonVariants, Card } from "@khmer-micro-store/ui";
+import { buttonVariants, Card } from "@khmio/ui";
 import { ChevronRight, ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

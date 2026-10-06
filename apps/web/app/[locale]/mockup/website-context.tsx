@@ -1,6 +1,6 @@
 "use client";
 
-import { libraryPictureId, picturesUsedIn, sitePageSchema, type SitePage } from "@khmer-micro-store/shared";
+import { libraryPictureId, picturesUsedIn, sitePageSchema, type SitePage } from "@khmio/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { mockComingSoonPages, mockHomePage, mockPictures, mockPricingPage, mockShopPage, type MockPicture } from "@/mock/mock-site";
@@ -79,8 +79,8 @@ interface WebsiteContextValue {
 }
 
 const WebsiteContext = createContext<WebsiteContextValue | null>(null);
-const STORAGE_KEY = "khmer-micro-store:mockup-website";
-const PICTURES_KEY = "khmer-micro-store:mockup-pictures";
+const STORAGE_KEY = "khmio:mockup-website";
+const PICTURES_KEY = "khmio:mockup-pictures";
 
 export function WebsiteProvider({ children }: { children: ReactNode }) {
   const [pages, setPages] = useState<Record<SitePageKey, SitePageState>>(seed);

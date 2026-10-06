@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Mio } from "@khmer-micro-store/ui";
+import { Button, Mio } from "@khmio/ui";
 import { Download, Landmark } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

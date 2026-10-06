@@ -111,21 +111,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build the API image
-        run: docker build -f infra/docker/api.Dockerfile -t kms-api .
+        run: docker build -f infra/docker/api.Dockerfile -t khmio-api .
 
       - name: Build the worker image
-        run: docker build -f infra/docker/worker.Dockerfile -t kms-worker .
+        run: docker build -f infra/docker/worker.Dockerfile -t khmio-worker .
 
       - name: The worker image has pg_dump 17
-        run: docker run --rm kms-worker pg_dump --version | grep -E "pg_dump \(PostgreSQL\) 17"
+        run: docker run --rm khmio-worker pg_dump --version | grep -E "pg_dump \(PostgreSQL\) 17"
 
       - name: Migrations run from the API image, then the API starts and is healthy
         run: |
           psql "postgresql://khmer_micro_store:khmer_micro_store@localhost:5432/khmer_micro_store" -c "CREATE ROLE khmer_micro_store_app LOGIN PASSWORD 'khmer_micro_store_app' NOSUPERUSER NOBYPASSRLS"
           OWNER=postgresql://khmer_micro_store:khmer_micro_store@localhost:5432/khmer_micro_store
           APP=postgresql://khmer_micro_store_app:khmer_micro_store_app@localhost:5432/khmer_micro_store
-          docker run --rm --network host -e DATABASE_OWNER_URL=$OWNER kms-api pnpm db:deploy
-          docker run -d --name api --network host -e DATABASE_OWNER_URL=$OWNER -e DATABASE_URL=$APP -e NODE_ENV=development -e PORT=4000 kms-api
+          docker run --rm --network host -e DATABASE_OWNER_URL=$OWNER khmio-api pnpm db:deploy
+          docker run -d --name api --network host -e DATABASE_OWNER_URL=$OWNER -e DATABASE_URL=$APP -e NODE_ENV=development -e PORT=4000 khmio-api
           for i in $(seq 1 30); do
             if curl -fs http://localhost:4000/health; then exit 0; fi
             sleep 1

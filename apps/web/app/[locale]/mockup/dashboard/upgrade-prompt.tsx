@@ -1,7 +1,7 @@
 "use client";
 
-import type { PlanId } from "@khmer-micro-store/shared";
-import { Button, cn } from "@khmer-micro-store/ui";
+import type { PlanId } from "@khmio/shared";
+import { Button, cn } from "@khmio/ui";
 import { Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

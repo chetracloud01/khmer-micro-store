@@ -1,4 +1,4 @@
-import type { Currency } from "@khmer-micro-store/shared";
+import type { Currency } from "@khmio/shared";
 
 export type PaymentStatus = "pending" | "paid" | "failed" | "expired";
 

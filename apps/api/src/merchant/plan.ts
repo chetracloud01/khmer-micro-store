@@ -1,5 +1,5 @@
-import type { Tx } from "@khmer-micro-store/db";
-import { effectivePlan, type PlanId } from "@khmer-micro-store/shared";
+import type { Tx } from "@khmio/db";
+import { effectivePlan, type PlanId } from "@khmio/shared";
 import { AppException } from "../errors";
 
 /**

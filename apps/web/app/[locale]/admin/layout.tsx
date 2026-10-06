@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, SegmentedControl } from "@khmer-micro-store/ui";
+import { cn, SegmentedControl } from "@khmio/ui";
 import { Layers, LayoutDashboard, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

@@ -50,7 +50,7 @@ function securityHeaders() {
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@khmer-micro-store/shared", "@khmer-micro-store/ui"],
+  transpilePackages: ["@khmio/shared", "@khmio/ui"],
   async headers() {
     if (process.env.NODE_ENV !== "production") return [];
     return [{ source: "/:path*", headers: securityHeaders() }];

@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from "@nestjs/common";
-import { toFieldErrors, type FormErrorCode } from "@khmer-micro-store/shared";
+import { toFieldErrors, type FormErrorCode } from "@khmio/shared";
 import type { Logger } from "pino";
 import { ZodError } from "zod";
 import { RateLimitedException } from "./security/rate-limit";

@@ -7,7 +7,7 @@ import {
   type Currency,
   type InvoiceView,
   type PaymentAttemptStatus,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import type { ReactNode } from "react";
 import type { MockFailedCheck } from "@/mock/mock-admin-billing";
 

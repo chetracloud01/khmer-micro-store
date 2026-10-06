@@ -13,8 +13,8 @@ import {
   type OrderAction,
   type OrderStatus,
   type PaymentMethod,
-} from "@khmer-micro-store/shared";
-import { cn } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { cn } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 
 // One wording and one colour per order status, for the buyer's order page,

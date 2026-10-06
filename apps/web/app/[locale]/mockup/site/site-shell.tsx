@@ -1,7 +1,7 @@
 "use client";
 
-import { visibleSections, type WaitlistSignup } from "@khmer-micro-store/shared";
-import { AnnouncementBar, SegmentedControl, SiteFooter, SiteHeader, SiteSections, type SiteKitContext } from "@khmer-micro-store/ui";
+import { visibleSections, type WaitlistSignup } from "@khmio/shared";
+import { AnnouncementBar, SegmentedControl, SiteFooter, SiteHeader, SiteSections, type SiteKitContext } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { mockPlatformProducts } from "@/mock/mock-site";
@@ -22,7 +22,7 @@ function useSiteHref() {
   };
 }
 
-const WAITLIST_KEY = "khmer-micro-store:mockup-waitlist";
+const WAITLIST_KEY = "khmio:mockup-waitlist";
 
 /** Mockup only: keeps a sign-up on this device. The live site sends it to the API instead. */
 async function keepSignupOnDevice(signup: WaitlistSignup) {

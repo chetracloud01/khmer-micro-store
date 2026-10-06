@@ -1,4 +1,4 @@
-import { telegramLoginPayloadSchema, type TelegramLoginPayload } from "@khmer-micro-store/shared";
+import { telegramLoginPayloadSchema, type TelegramLoginPayload } from "@khmio/shared";
 
 const FIELDS = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"] as const;
 

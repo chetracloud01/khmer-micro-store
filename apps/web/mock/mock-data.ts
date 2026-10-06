@@ -21,7 +21,7 @@ import {
   type StockMovementType,
   type StoreSettings,
   type SubscriptionStatus,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 
 export interface MockStore {
   slug: string;

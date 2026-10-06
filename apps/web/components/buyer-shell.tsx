@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@khmer-micro-store/ui";
+import { cn } from "@khmio/ui";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";

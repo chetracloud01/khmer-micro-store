@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { createStoreInputSchema, isReservedSlug, shopSlugSchema } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { createStoreInputSchema, isReservedSlug, shopSlugSchema } from "@khmio/shared";
 import { Body, ConflictException, Controller, Get, Inject, Post, Query, UseGuards } from "@nestjs/common";
 import { SYSTEM_DB } from "../db";
 import { InvalidInputException } from "../errors";

@@ -16,8 +16,8 @@ import {
   type FormErrorCode,
   type Fulfilment,
   type PaymentMethod,
-} from "@khmer-micro-store/shared";
-import { Button, cn, Input, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, cn, Input, Select } from "@khmio/ui";
 import { AlertTriangle, Check, Clock, MapPin, Store, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

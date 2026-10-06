@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, SegmentedControl } from "@khmer-micro-store/ui";
+import { Button, SegmentedControl } from "@khmio/ui";
 import { CloudOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";

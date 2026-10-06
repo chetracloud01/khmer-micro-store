@@ -23,7 +23,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const PORTS = { proxy: 8090, api: 4200, web: 3200 };
 const S3 = "http://127.0.0.1:9000";
 const DATABASE = "kms_rehearsal";
-const LOGS = join(tmpdir(), "kms-rehearsal");
+const LOGS = join(tmpdir(), "khmio-rehearsal");
 const args = process.argv.slice(2).filter((arg) => arg !== "--");
 const fresh = args.includes("--fresh");
 const ownerIndex = args.indexOf("--owner");
@@ -46,7 +46,7 @@ process.on("SIGINT", () => {
 for (const name of ["TELEGRAM_BOT_TOKEN", "ADMIN_SECRETS_KEY", "DATABASE_URL", "DATABASE_OWNER_URL"]) {
   if (!process.env[name]) fail(`${name} isn't set in .env`);
 }
-if (!(await fetch(`${S3}/kms-photos/x`).then(() => true, () => false))) fail('The local S3 isn\'t running: start it with "pnpm s3:up" in another window.');
+if (!(await fetch(`${S3}/khmio-photos/x`).then(() => true, () => false))) fail('The local S3 isn\'t running: start it with "pnpm s3:up" in another window.');
 
 const inDatabase = (url, name) => Object.assign(new URL(url), { pathname: `/${name}` }).toString();
 const db = { app: inDatabase(process.env.DATABASE_URL, DATABASE), owner: inDatabase(process.env.DATABASE_OWNER_URL, DATABASE) };
@@ -110,7 +110,7 @@ if (!existsSync(cloudflared)) {
   const asset = process.platform === "win32" ? "cloudflared-windows-amd64.exe" : process.platform === "darwin" ? "cloudflared-darwin-amd64.tgz" : "cloudflared-linux-amd64";
   await step("Downloading cloudflared", "curl", ["-L", "--fail", "-o", cloudflared, `https://github.com/cloudflare/cloudflared/releases/latest/download/${asset}`]);
 }
-await startProxy({ port: PORTS.proxy, apiPort: PORTS.api, webPort: PORTS.web, s3Url: `${S3}/kms-photos` });
+await startProxy({ port: PORTS.proxy, apiPort: PORTS.api, webPort: PORTS.web, s3Url: `${S3}/khmio-photos` });
 process.stdout.write("• Opening the tunnel… ");
 const tunnel = service("tunnel", cloudflared, ["tunnel", "--no-autoupdate", "--url", `http://127.0.0.1:${PORTS.proxy}`], {});
 const origin = await new Promise((found) => {
@@ -132,17 +132,17 @@ const origin = await new Promise((found) => {
 console.log(origin);
 
 // 2. The database and the builds, for this address.
-if (fresh) await step("Emptying the rehearsal database", "pnpm", ["--filter", "@khmer-micro-store/db", "prisma", "migrate", "reset", "--force", "--skip-seed"], { env: { DATABASE_OWNER_URL: db.owner, DATABASE_URL: db.app } });
+if (fresh) await step("Emptying the rehearsal database", "pnpm", ["--filter", "@khmio/db", "prisma", "migrate", "reset", "--force", "--skip-seed"], { env: { DATABASE_OWNER_URL: db.owner, DATABASE_URL: db.app } });
 await step("Applying migrations", "pnpm", ["db:deploy"], { env: { DATABASE_OWNER_URL: db.owner, DATABASE_URL: db.app } });
 if (owner) await step("Adding the platform owner", "pnpm", ["admin:add-owner", "--", "--telegram-id", owner, "--name", "Owner"], { env: { DATABASE_OWNER_URL: db.owner, DATABASE_URL: db.app } });
-await step("Building the API and worker", "pnpm", ["--filter", "@khmer-micro-store/api", "--filter", "@khmer-micro-store/worker", "build"]);
-await step("Building the web app for this address", "pnpm", ["--filter", "@khmer-micro-store/web", "build"], {
+await step("Building the API and worker", "pnpm", ["--filter", "@khmio/api", "--filter", "@khmio/worker", "build"]);
+await step("Building the web app for this address", "pnpm", ["--filter", "@khmio/web", "build"], {
   // NODE_ENV from .env is "development"; Next.js must build as production.
   env: { NODE_ENV: "production", NEXT_PUBLIC_API_URL: `${origin}/api`, NEXT_PUBLIC_FILES_ORIGIN: origin, NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA" },
 });
 
 // 3. Everything as production runs it.
-const s3Env = { S3_ENDPOINT: S3, S3_REGION: "us-east-1", S3_ACCESS_KEY_ID: "localdev", S3_SECRET_ACCESS_KEY: "localdev-secret", S3_BUCKET: "kms-photos" };
+const s3Env = { S3_ENDPOINT: S3, S3_REGION: "us-east-1", S3_ACCESS_KEY_ID: "localdev", S3_SECRET_ACCESS_KEY: "localdev-secret", S3_BUCKET: "khmio-photos" };
 service("api", process.execPath, ["--enable-source-maps", "apps/api/dist/main.js"], {
   ...s3Env,
   NODE_ENV: "production",
@@ -163,7 +163,7 @@ service("worker", process.execPath, ["--enable-source-maps", "apps/worker/dist/i
   DATABASE_OWNER_URL: db.owner,
   WEB_ORIGIN: origin,
   BACKUPS: "on",
-  S3_BACKUP_BUCKET: "kms-rehearsal-backups",
+  S3_BACKUP_BUCKET: "khmio-rehearsal-backups",
   PG_DUMP_PATH: pgDump,
 });
 service("web", process.execPath, [join(ROOT, "apps/web/node_modules/next/dist/bin/next"), "start", "-p", String(PORTS.web)], { NODE_ENV: "production" }, join(ROOT, "apps/web"));

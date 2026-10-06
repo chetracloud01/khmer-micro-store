@@ -8,8 +8,8 @@ import {
   PHNOM_PENH_DISTRICTS,
   placeName,
   type DeliveryFee,
-} from "@khmer-micro-store/shared";
-import { BottomSheet } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet } from "@khmio/ui";
 import { Bus, ChevronRight, Phone, Store, Truck, Wallet, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";

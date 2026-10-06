@@ -1,5 +1,5 @@
 # The API (apps/api) for Railway, built from the repo root:
-#   docker build -f infra/docker/api.Dockerfile -t kms-api .
+#   docker build -f infra/docker/api.Dockerfile -t khmio-api .
 # Migrations run before each release (apps/api/railway.json: pnpm db:deploy),
 # so the image keeps the Prisma CLI. Settings come from the host's variables.
 
@@ -17,7 +17,7 @@ FROM base AS build
 COPY . .
 # Installing runs prisma generate (packages/db postinstall) for this Linux image.
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @khmer-micro-store/api build
+RUN pnpm --filter @khmio/api build
 
 FROM base
 ENV NODE_ENV=production

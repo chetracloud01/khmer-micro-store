@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card } from "@khmer-micro-store/ui";
+import { Button, Card } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";

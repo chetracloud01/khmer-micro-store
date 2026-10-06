@@ -1,5 +1,5 @@
 {
-  "name": "@khmer-micro-store/db",
+  "name": "@khmio/db",
   "version": "0.0.0",
   "private": true,
   "type": "module",

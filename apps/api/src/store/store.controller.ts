@@ -1,5 +1,5 @@
-import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { getMissingForSharing, storeDetailsSaveSchema, storeSettingsSchema } from "@khmer-micro-store/shared";
+import { withContext, type AppDb } from "@khmio/db";
+import { getMissingForSharing, storeDetailsSaveSchema, storeSettingsSchema } from "@khmio/shared";
 import { Body, Controller, Delete, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, UseGuards } from "@nestjs/common";
 import { APP_DB } from "../db";
 import { AppException, InvalidInputException } from "../errors";

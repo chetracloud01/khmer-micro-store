@@ -1,7 +1,7 @@
 "use client";
 
-import { canAddProduct } from "@khmer-micro-store/shared";
-import { Button } from "@khmer-micro-store/ui";
+import { canAddProduct } from "@khmio/shared";
+import { Button } from "@khmio/ui";
 import { ChevronRight, EyeOff, ImageOff, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

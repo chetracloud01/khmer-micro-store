@@ -8,7 +8,7 @@ import {
   type PlatformProductId,
   type SiteSectionOf,
   type WaitlistSignup,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import { useRef, useState, type FormEvent } from "react";
 import { Button } from "../Button";
 import { Input } from "../Input";

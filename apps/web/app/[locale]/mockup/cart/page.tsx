@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhr, formatUsd, maxOrderQuantity, type Currency } from "@khmer-micro-store/shared";
-import { Button, cn } from "@khmer-micro-store/ui";
+import { formatKhr, formatUsd, maxOrderQuantity, type Currency } from "@khmio/shared";
+import { Button, cn } from "@khmio/ui";
 import { AlertTriangle, ChevronDown, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

@@ -1,7 +1,7 @@
 "use client";
 
-import type { Currency } from "@khmer-micro-store/shared";
-import { cn } from "@khmer-micro-store/ui";
+import type { Currency } from "@khmio/shared";
+import { cn } from "@khmio/ui";
 
 /**
  * The KHQR payment card, laid out as NBC's KHQR guideline asks: red header

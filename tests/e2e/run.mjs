@@ -28,12 +28,12 @@ if (!existsSync(join(ROOT, "apps/api/dist/main.js"))) {
 // A stand-in for Telegram's Bot API: the bot's name for t.me links, "ok" for anything else.
 const telegram = createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify(req.url?.endsWith("/getMe") ? { ok: true, result: { id: 1, is_bot: true, username: "kms_e2e_bot" } } : { ok: true, result: true }));
+  res.end(JSON.stringify(req.url?.endsWith("/getMe") ? { ok: true, result: { id: 1, is_bot: true, username: "khmio_e2e_bot" } } : { ok: true, result: true }));
 });
 await new Promise((resolve) => telegram.listen(0, "127.0.0.1", resolve));
 const telegramUrl = `http://127.0.0.1:${telegram.address().port}`;
 
-const work = mkdtempSync(join(tmpdir(), "kms-e2e-"));
+const work = mkdtempSync(join(tmpdir(), "khmio-e2e-"));
 const apiLog = join(work, "api.log");
 const b1Log = join(work, "b1-api.log");
 const env = {

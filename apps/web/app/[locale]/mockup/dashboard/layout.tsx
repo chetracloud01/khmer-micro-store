@@ -1,7 +1,7 @@
 "use client";
 
-import { planHasFeature } from "@khmer-micro-store/shared";
-import { Badge, SegmentedControl, ThemeSwitcher } from "@khmer-micro-store/ui";
+import { planHasFeature } from "@khmio/shared";
+import { Badge, SegmentedControl, ThemeSwitcher } from "@khmio/ui";
 import {
   CreditCard,
   LayoutDashboard,

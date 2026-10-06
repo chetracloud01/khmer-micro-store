@@ -1,5 +1,5 @@
 import { NotFoundException, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
-import { phoneLoginSchema } from "@khmer-micro-store/shared";
+import { phoneLoginSchema } from "@khmio/shared";
 import { describe, expect, it } from "vitest";
 import { toErrorResponse } from "./errors";
 import { requestPath } from "./logger";

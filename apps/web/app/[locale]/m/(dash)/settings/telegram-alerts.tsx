@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card } from "@khmer-micro-store/ui";
+import { Button, Card } from "@khmio/ui";
 import { Check, ExternalLink, Send, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";

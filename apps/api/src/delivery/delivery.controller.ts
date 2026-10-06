@@ -1,5 +1,5 @@
-import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { deliverySettingsSchema } from "@khmer-micro-store/shared";
+import { withContext, type AppDb } from "@khmio/db";
+import { deliverySettingsSchema } from "@khmio/shared";
 import { Body, Controller, Get, Inject, Put, UseGuards } from "@nestjs/common";
 import { APP_DB } from "../db";
 import { assertStoreWritable } from "../merchant/plan";

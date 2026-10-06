@@ -1,7 +1,7 @@
 "use client";
 
-import { approximateIn, type Currency } from "@khmer-micro-store/shared";
-import { Button } from "@khmer-micro-store/ui";
+import { approximateIn, type Currency } from "@khmio/shared";
+import { Button } from "@khmio/ui";
 import { AlertTriangle, ImageOff, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

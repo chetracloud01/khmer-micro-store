@@ -1,4 +1,4 @@
-import type { AdminRole, SystemDb } from "@khmer-micro-store/db";
+import type { AdminRole, SystemDb } from "@khmio/db";
 import { createHash, randomBytes } from "node:crypto";
 import { hashToken } from "../auth/sessions";
 import { decryptSecret, encryptSecret, matchTotp, newBackupCodes, newTotpSecret, normalizeBackupCode, otpauthUri } from "./totp";
@@ -8,7 +8,7 @@ import { decryptSecret, encryptSecret, matchTotp, newBackupCodes, newTotpSecret,
 // developer's PC, the development login); step two is the authenticator
 // app's code. Only after both is a session "active".
 
-export const ADMIN_COOKIE = "kms_admin";
+export const ADMIN_COOKIE = "khmio_admin";
 /** Between step one and the code. */
 const PENDING_MS = 10 * 60_000;
 /** A working day; then sign in again. */

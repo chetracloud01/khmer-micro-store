@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhr, formatUsd, maxOrderQuantity } from "@khmer-micro-store/shared";
-import { BottomSheet, Button, cn, DiscountBadge, PriceTag } from "@khmer-micro-store/ui";
+import { formatKhr, formatUsd, maxOrderQuantity } from "@khmio/shared";
+import { BottomSheet, Button, cn, DiscountBadge, PriceTag } from "@khmio/ui";
 import { Check, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";

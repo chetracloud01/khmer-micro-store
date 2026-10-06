@@ -3,9 +3,9 @@ import { Kantumruy_Pro } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { THEME_BOOT_SCRIPT } from "@khmer-micro-store/ui";
+import { THEME_BOOT_SCRIPT } from "@khmio/ui";
 import { isValidLocale, routing } from "@/i18n/routing";
-import "@khmer-micro-store/ui/globals.css";
+import "@khmio/ui/globals.css";
 
 // Kantumruy Pro, downloaded at build time and served from this site: phones
 // don't need it installed, and no outside font address is needed (CSP).

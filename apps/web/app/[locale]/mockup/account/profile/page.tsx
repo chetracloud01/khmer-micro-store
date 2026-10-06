@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonVariants, Card, SegmentedControl } from "@khmer-micro-store/ui";
+import { buttonVariants, Card, SegmentedControl } from "@khmio/ui";
 import { Phone, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

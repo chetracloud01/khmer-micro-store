@@ -1,5 +1,5 @@
 # The worker (apps/worker) for Railway, built from the repo root:
-#   docker build -f infra/docker/worker.Dockerfile -t kms-worker .
+#   docker build -f infra/docker/worker.Dockerfile -t khmio-worker .
 # Includes pg_dump/pg_restore 17 for the nightly backup: a client must be at
 # least the server's version, and 17 also reads 16 servers.
 
@@ -21,7 +21,7 @@ WORKDIR /app
 FROM base AS build
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @khmer-micro-store/worker build
+RUN pnpm --filter @khmio/worker build
 
 FROM base
 ENV NODE_ENV=production

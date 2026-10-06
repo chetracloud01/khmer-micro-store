@@ -1,4 +1,4 @@
-import type { SiteIcon, SiteImage, SiteLink, SiteSection, SiteSectionOf } from "@khmer-micro-store/shared";
+import type { SiteIcon, SiteImage, SiteLink, SiteSection, SiteSectionOf } from "@khmio/shared";
 import {
   BellRing,
   Boxes,

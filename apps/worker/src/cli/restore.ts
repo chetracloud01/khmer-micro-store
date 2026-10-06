@@ -1,6 +1,6 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { createSystemDb } from "@khmer-micro-store/db";
-import { EnvError, loadEnv, workerEnvSchema } from "@khmer-micro-store/shared";
+import { createSystemDb } from "@khmio/db";
+import { EnvError, loadEnv, workerEnvSchema } from "@khmio/shared";
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -63,7 +63,7 @@ async function main() {
     const key = from === "latest" ? backups.at(-1)?.Key : backups.find((backup) => backup.Key === from)?.Key;
     if (!key) throw new Error(from === "latest" ? "no backups in the bucket" : "no backup with that name (pnpm db:backup -- --list)");
 
-    const dir = await mkdtemp(join(tmpdir(), "kms-restore-"));
+    const dir = await mkdtemp(join(tmpdir(), "khmio-restore-"));
     const file = join(dir, "backup.dump");
     try {
       const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));

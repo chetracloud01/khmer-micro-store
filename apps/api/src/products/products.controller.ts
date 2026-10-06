@@ -1,5 +1,5 @@
-import { withContext, type AppDb } from "@khmer-micro-store/db";
-import { planHasFeature } from "@khmer-micro-store/shared";
+import { withContext, type AppDb } from "@khmio/db";
+import { planHasFeature } from "@khmio/shared";
 import { Body, Controller, Delete, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { APP_DB } from "../db";

@@ -1,4 +1,4 @@
-import { createSystemDb } from "@khmer-micro-store/db";
+import { createSystemDb } from "@khmio/db";
 import { parseArgs } from "node:util";
 
 // pnpm admin:add-owner -- --telegram-id <id> --name "<name>" [--username <telegram username>]

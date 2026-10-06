@@ -1,4 +1,4 @@
-import { platformProductSchema, sitePageSchema } from "@khmer-micro-store/shared";
+import { platformProductSchema, sitePageSchema } from "@khmio/shared";
 import { describe, expect, it } from "vitest";
 import { mockComingSoonPages, mockHomePage, mockPlatformProducts, mockPricingPage, mockShopPage } from "./mock-site";
 

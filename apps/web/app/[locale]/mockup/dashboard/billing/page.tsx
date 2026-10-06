@@ -13,8 +13,8 @@ import {
   type Currency,
   type PlanFeature,
   type PlanId,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, cn, SegmentedControl } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, Card, cn, SegmentedControl } from "@khmio/ui";
 import { Check, Minus, QrCode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

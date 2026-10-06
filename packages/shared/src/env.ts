@@ -94,7 +94,7 @@ const apiFields = z.object({
   /**
    * The address photos are served from. Unset = this API's own /files
    * (local only). With S3: the bucket's public address — R2's custom domain
-   * (https://files.<domain>) or locally http://localhost:9000/kms-photos.
+   * (https://files.<domain>) or locally http://localhost:9000/khmio-photos.
    */
   FILES_PUBLIC_URL: optional(z.string().url("must be a URL")),
   /**

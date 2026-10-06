@@ -1,5 +1,5 @@
-import type { Prisma, Tx } from "@khmer-micro-store/db";
-import type { DeliveryFee, DeliverySettings } from "@khmer-micro-store/shared";
+import type { Prisma, Tx } from "@khmio/db";
+import type { DeliveryFee, DeliverySettings } from "@khmio/shared";
 
 // A store's delivery as packages/shared delivery.ts sees it, read from its
 // rows: zones with their districts, pickup and provinces (columns on stores),

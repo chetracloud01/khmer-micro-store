@@ -1,5 +1,5 @@
-import { withContext, type AppDb, type SystemDb } from "@khmer-micro-store/db";
-import { telegramLoginPayloadSchema } from "@khmer-micro-store/shared";
+import { withContext, type AppDb, type SystemDb } from "@khmio/db";
+import { telegramLoginPayloadSchema } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Post, Req, Res, ServiceUnavailableException, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { getEnv } from "../config";

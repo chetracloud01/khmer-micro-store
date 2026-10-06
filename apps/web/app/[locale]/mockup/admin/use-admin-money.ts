@@ -6,7 +6,7 @@ import {
   type InvoiceManualPayment,
   type InvoiceVoid,
   type SubscriptionState,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { MockAdminInvoice } from "@/mock/mock-admin-billing";

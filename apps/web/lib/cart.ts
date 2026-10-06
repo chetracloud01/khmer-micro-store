@@ -1,6 +1,6 @@
 "use client";
 
-import { computeOrderTotal, MAX_LINE_QUANTITY, type Currency, type DeliveryArea, type Fulfilment, type OrderTotal } from "@khmer-micro-store/shared";
+import { computeOrderTotal, MAX_LINE_QUANTITY, type Currency, type DeliveryArea, type Fulfilment, type OrderTotal } from "@khmio/shared";
 import { useCallback, useEffect, useState } from "react";
 import type { Product, ProductVariant, PublicShop } from "./api";
 
@@ -9,8 +9,8 @@ import type { Product, ProductVariant, PublicShop } from "./api";
 // tick "Remember my details" (docs/blueprint.md "Buyer checkout"). The order
 // itself is priced again by the API — these totals are for showing only.
 
-const cartKey = (slug: string) => `khmer-micro-store:cart:${slug}`;
-const BUYER_KEY = "khmer-micro-store:buyer";
+const cartKey = (slug: string) => `khmio:cart:${slug}`;
+const BUYER_KEY = "khmio:buyer";
 
 export interface StoredCart {
   /** variant id → how many. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { deliverySettingsSchema, type DeliverySettings } from "@khmer-micro-store/shared";
+import { deliverySettingsSchema, type DeliverySettings } from "@khmio/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { mockDeliverySettings } from "@/mock/mock-data";
@@ -24,8 +24,8 @@ const DeliverySettingsContext = createContext<DeliverySettingsContextValue | nul
 
 // Switching locale changes the [locale] URL segment, which remounts this
 // provider — localStorage is what survives that (and a page refresh).
-const STORAGE_KEY = "khmer-micro-store:mockup-delivery-settings";
-const CONFIGURED_KEY = "khmer-micro-store:mockup-delivery-configured";
+const STORAGE_KEY = "khmio:mockup-delivery-settings";
+const CONFIGURED_KEY = "khmio:mockup-delivery-configured";
 
 /** Zones, pickup, provinces and drivers — stands in for the store's delivery tables. */
 export function DeliverySettingsProvider({ children }: { children: ReactNode }) {

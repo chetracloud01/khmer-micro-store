@@ -1,7 +1,7 @@
 "use client";
 
-import type { SubscriptionStatus } from "@khmer-micro-store/shared";
-import { Button, Card, cn } from "@khmer-micro-store/ui";
+import type { SubscriptionStatus } from "@khmio/shared";
+import { Button, Card, cn } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";

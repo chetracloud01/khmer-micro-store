@@ -1,4 +1,4 @@
-import { applyAdminOverride, BILLING_PERIOD_DAYS, type AdminOverride, type PlanId, type SubscriptionStatus } from "@khmer-micro-store/shared";
+import { applyAdminOverride, BILLING_PERIOD_DAYS, type AdminOverride, type PlanId, type SubscriptionStatus } from "@khmio/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

@@ -1,5 +1,5 @@
-import type { Prisma, Tx } from "@khmer-micro-store/db";
-import { canAddProduct, planHasFeature, productSaveSchema, slugify, toFieldErrors, type FormErrorCode, type PlanId, type ProductSave } from "@khmer-micro-store/shared";
+import type { Prisma, Tx } from "@khmio/db";
+import { canAddProduct, planHasFeature, productSaveSchema, slugify, toFieldErrors, type FormErrorCode, type PlanId, type ProductSave } from "@khmio/shared";
 import { AppException, InvalidInputException } from "../errors";
 import { isStorePhotoKey, thumbKeyOf } from "../files/photos";
 

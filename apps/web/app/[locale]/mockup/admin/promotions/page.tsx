@@ -7,8 +7,8 @@ import {
   type FormErrorCode,
   type SiteSection,
   type SiteSectionOf,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, Select, Switch, cn } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, Card, Select, Switch, cn } from "@khmio/ui";
 import { Pencil, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

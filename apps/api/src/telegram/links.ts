@@ -1,4 +1,4 @@
-import { TELEGRAM_LINK_MINUTES, telegramStartLink } from "@khmer-micro-store/shared";
+import { TELEGRAM_LINK_MINUTES, telegramStartLink } from "@khmio/shared";
 import { createHash, randomBytes } from "node:crypto";
 import { getEnv } from "../config";
 import { AppException } from "../errors";

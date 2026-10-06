@@ -14,8 +14,8 @@ import {
   toFieldErrors,
   type FormErrorCode,
   type ProductFormInput,
-} from "@khmer-micro-store/shared";
-import { Button, Card, Input, Select, Switch, Textarea } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Card, Input, Select, Switch, Textarea } from "@khmio/ui";
 import { History, Languages, Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -54,7 +54,7 @@ function nextDraftId(): string {
 // A new product is kept on this device while it's being typed, so a phone
 // call or a closed tab doesn't lose it. Photos are left out: they're too big
 // for browser storage. The real app saves the draft (photos included) on the server.
-const DRAFT_STORAGE_KEY = "khmer-micro-store:mockup-product-draft";
+const DRAFT_STORAGE_KEY = "khmio:mockup-product-draft";
 
 interface ProductDraft {
   titleKm: string;

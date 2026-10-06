@@ -14,7 +14,7 @@ import { psql, ROOT } from "./lib.mjs";
 
 const PORT = 4106;
 const B = `http://localhost:${PORT}`;
-const LOG = process.env.E2E_B1_LOG ?? join(tmpdir(), "kms-e2e-b1-api.log");
+const LOG = process.env.E2E_B1_LOG ?? join(tmpdir(), "khmio-e2e-b1-api.log");
 const ALWAYS_FAILS = "2x0000000000000000000000000000000AA";
 const ALWAYS_PASSES = "1x0000000000000000000000000000000AA";
 const DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";

@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { BUSINESS_TYPE_DEFAULTS, DEFAULT_UNITS, PLANS, type CreateStoreInput } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { BUSINESS_TYPE_DEFAULTS, DEFAULT_UNITS, PLANS, type CreateStoreInput } from "@khmio/shared";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 

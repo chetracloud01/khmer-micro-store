@@ -1,7 +1,7 @@
 "use client";
 
-import { getSellerActions, type OrderAction } from "@khmer-micro-store/shared";
-import { Button } from "@khmer-micro-store/ui";
+import { getSellerActions, type OrderAction } from "@khmio/shared";
+import { Button } from "@khmio/ui";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { OrderRecord } from "@/mock/mock-orders";

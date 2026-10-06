@@ -11,7 +11,7 @@ import type {
   PlanId,
   SellerOrderAction,
   SubscriptionStatus,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 
 // The browser's way to the API (apps/api). The session lives in an HttpOnly
 // cookie the API sets, so every call sends cookies; page scripts never see it.

@@ -25,7 +25,7 @@ The decisions behind this guide are in `docs/platform-launch-plan.md` Stage 1. I
 | **Khmio Shop**, **Khmio Class**, **Khmio Rent** | Product names; a Khmer subtitle may sit underneath (Khmio Shop · ហាងអនឡាញ) |
 | **KHMIO** | Only where a system needs capitals (the name on KHQR bills) |
 
-Never: "Khmer Micro-Store" in public (it's only the code name), "KhMio", "Khmio's App", or a translated name.
+Never: "Khmer Micro-Store" (the project's old name), "KhMio", "Khmio's App", or a translated name.
 
 ## 3. Logo and app icon
 

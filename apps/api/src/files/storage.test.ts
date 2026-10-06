@@ -1,4 +1,4 @@
-import { loadEnv, apiEnvSchema } from "@khmer-micro-store/shared";
+import { loadEnv, apiEnvSchema } from "@khmio/shared";
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { isPhotoKey, isStorePhotoKey, thumbKeyOf } from "./photos";
@@ -24,7 +24,7 @@ describe("photo storage", () => {
         ...base,
         FILE_STORAGE: "s3",
         S3_ENDPOINT: "http://localhost:9000",
-        S3_BUCKET: "kms-photos",
+        S3_BUCKET: "khmio-photos",
         S3_ACCESS_KEY_ID: "id",
         S3_SECRET_ACCESS_KEY: "secret",
         FILES_PUBLIC_URL: "https://files.example.com/",

@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhr, formatUsd, PLANS, type Currency } from "@khmer-micro-store/shared";
-import { buttonVariants, Card, KhmioMark, cn } from "@khmer-micro-store/ui";
+import { formatKhr, formatUsd, PLANS, type Currency } from "@khmio/shared";
+import { buttonVariants, Card, KhmioMark, cn } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { mockPlatformProducts } from "@/mock/mock-site";

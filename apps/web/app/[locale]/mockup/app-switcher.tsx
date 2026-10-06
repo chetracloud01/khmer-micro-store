@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, KhmioMark } from "@khmer-micro-store/ui";
+import { cn, KhmioMark } from "@khmio/ui";
 import { Check, LayoutGrid } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

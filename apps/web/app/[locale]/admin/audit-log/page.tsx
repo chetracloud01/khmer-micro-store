@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, cn } from "@khmer-micro-store/ui";
+import { Button, Card, cn } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { AdminAuditEntry } from "@/lib/admin-api";

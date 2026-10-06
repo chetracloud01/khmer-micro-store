@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, buttonVariants, Mio } from "@khmer-micro-store/ui";
+import { Button, buttonVariants, Mio } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect } from "react";

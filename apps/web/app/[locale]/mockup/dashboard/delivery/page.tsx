@@ -11,8 +11,8 @@ import {
   toFieldErrors,
   type DeliverySettings,
   type FormErrorCode,
-} from "@khmer-micro-store/shared";
-import { Button, Card, cn, Input, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Card, cn, Input, Select } from "@khmio/ui";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";

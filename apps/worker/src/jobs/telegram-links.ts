@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { LINK_REPLIES, parseStopButton, TELEGRAM_LINK_CODE_PATTERN } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { LINK_REPLIES, parseStopButton, TELEGRAM_LINK_CODE_PATTERN } from "@khmio/shared";
 import { createHash } from "node:crypto";
 import type { IncomingMessage, MembershipChange } from "../telegram/client";
 

@@ -12,8 +12,8 @@ import {
   toFieldErrors,
   type FormErrorCode,
   type ProductFormInput,
-} from "@khmer-micro-store/shared";
-import { Button, Card, Input, Select, Switch, Textarea } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Card, Input, Select, Switch, Textarea } from "@khmio/ui";
 import { History, Loader2, Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -76,7 +76,7 @@ interface ProductDraft {
   photos: { key: string; url: string }[];
 }
 
-const draftStorageKey = (slug: string) => `khmer-micro-store:product-draft:${slug}`;
+const draftStorageKey = (slug: string) => `khmio:product-draft:${slug}`;
 
 function readDraft(slug: string): Partial<ProductDraft> | null {
   try {

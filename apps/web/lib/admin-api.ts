@@ -1,4 +1,4 @@
-import type { AdminRole, BusinessType, PlanId, PlatformSettingsSave, SubscriptionStatus } from "@khmer-micro-store/shared";
+import type { AdminRole, BusinessType, PlanId, PlatformSettingsSave, SubscriptionStatus } from "@khmio/shared";
 
 // What the admin API (apps/api admin/*) answers. Calls go through lib/api.ts
 // api(); the admin cookie is set by the API for its /admin routes only.

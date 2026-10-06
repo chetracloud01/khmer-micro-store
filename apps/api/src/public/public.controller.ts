@@ -1,5 +1,5 @@
-import { withPublicOrder, withPublicStore, type AppDb } from "@khmer-micro-store/db";
-import { canBuyerCancel, normalizeKhmerPhone, shopSlugSchema } from "@khmer-micro-store/shared";
+import { withPublicOrder, withPublicStore, type AppDb } from "@khmio/db";
+import { canBuyerCancel, normalizeKhmerPhone, shopSlugSchema } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, Post, Req, Res } from "@nestjs/common";
 import { readDeliverySettings } from "../delivery/delivery";
 import { AppException } from "../errors";

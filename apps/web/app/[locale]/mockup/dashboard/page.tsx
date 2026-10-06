@@ -1,7 +1,7 @@
 "use client";
 
-import { formatUsd, isCashOrder, needsSellerAction, type Currency } from "@khmer-micro-store/shared";
-import { Card, SegmentedControl, Skeleton } from "@khmer-micro-store/ui";
+import { formatUsd, isCashOrder, needsSellerAction, type Currency } from "@khmio/shared";
+import { Card, SegmentedControl, Skeleton } from "@khmio/ui";
 import { Banknote, CheckCircle2, ChevronRight, Inbox, Wallet, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

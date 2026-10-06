@@ -1,7 +1,7 @@
 "use client";
 
-import type { TelegramLoginPayload } from "@khmer-micro-store/shared";
-import { Button, Card } from "@khmer-micro-store/ui";
+import type { TelegramLoginPayload } from "@khmio/shared";
+import { Button, Card } from "@khmio/ui";
 import { FlaskConical, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";

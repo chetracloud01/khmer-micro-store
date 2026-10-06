@@ -10,8 +10,8 @@ import {
   type BusinessType,
   type DeliveryArea,
   type FormErrorCode,
-} from "@khmer-micro-store/shared";
-import { Button, Card, Input, SegmentedControl, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Card, Input, SegmentedControl, Select } from "@khmio/ui";
 import { ChevronRight, Loader2, LogOut, SlidersHorizontal, Truck, Upload, Wallet, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

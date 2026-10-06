@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { adminAlertText, ALERT_BUTTONS, buyerCancelledAlert, buyerUpdateText, confirmButtonData, newOrderAlert, STOP_BUTTON_LABEL, stopButtonData, type AdminAlert } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { adminAlertText, ALERT_BUTTONS, buyerCancelledAlert, buyerUpdateText, confirmButtonData, newOrderAlert, STOP_BUTTON_LABEL, stopButtonData, type AdminAlert } from "@khmio/shared";
 import type { Logger } from "pino";
 import { TelegramError, type InlineButton, type TelegramClient } from "../telegram/client";
 

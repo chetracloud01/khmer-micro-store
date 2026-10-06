@@ -1,6 +1,6 @@
 "use client";
 
-import type { ThemeSwitcherLabels } from "@khmer-micro-store/ui";
+import type { ThemeSwitcherLabels } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 
 /** Translated labels for the shared ThemeSwitcher, identical on every screen. */

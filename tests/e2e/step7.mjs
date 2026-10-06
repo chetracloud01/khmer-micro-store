@@ -48,7 +48,7 @@ const cookieOf = (setCookie) => setCookie.split(";")[0];
 
 // ---------------------------------------------------------------- step one, then enrolment
 const start = await call("/admin/auth/dev-login", { method: "POST" });
-check("step one: the development login starts an admin login and asks to set up the app", start.status === 200 && start.json?.next === "enrol" && /kms_admin=/.test(start.setCookie ?? ""), start.raw);
+check("step one: the development login starts an admin login and asks to set up the app", start.status === 200 && start.json?.next === "enrol" && /khmio_admin=/.test(start.setCookie ?? ""), start.raw);
 check("the admin cookie is only for /admin, HttpOnly and SameSite=Strict", /Path=\/admin/.test(start.setCookie) && /HttpOnly/.test(start.setCookie) && /SameSite=Strict/.test(start.setCookie));
 let admin = cookieOf(start.setCookie);
 check("after step one alone, the admin data stays shut", (await call("/admin/overview", { cookie: admin })).status === 401);
@@ -94,7 +94,7 @@ check("no cookie, no admin", (await call("/admin/merchants")).status === 401);
 const supportId = sql(`insert into admin_users (name, telegram_id, role) values ('Support test', '${String(Date.now()).slice(-12)}', 'support') returning id`).split(/\r?\n/)[0].trim();
 const supportToken = randomBytes(32).toString("base64url");
 sql(`insert into admin_sessions (admin_user_id, token_hash, stage, expires_at) values ('${supportId}', '${createHash("sha256").update(supportToken).digest("hex")}', 'active', now() + interval '1 hour')`);
-const support = `kms_admin=${supportToken}`;
+const support = `khmio_admin=${supportToken}`;
 check("Support can see merchants", (await call("/admin/merchants", { cookie: support })).status === 200);
 check("Support can't change platform settings (403)", (await call("/admin/settings", { method: "PUT", cookie: support, body: {} })).status === 403);
 sql(`update admin_users set disabled_at = now() where id = '${supportId}'`);

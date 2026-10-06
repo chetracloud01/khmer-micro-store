@@ -1,6 +1,6 @@
 "use client";
 
-import { formatKhr, formatUsd, PLAN_ORDER, PLANS, type PlanFeature, type PlanId, type SiteSectionOf } from "@khmer-micro-store/shared";
+import { formatKhr, formatUsd, PLAN_ORDER, PLANS, type PlanFeature, type PlanId, type SiteSectionOf } from "@khmio/shared";
 import { Check, Minus } from "lucide-react";
 import { useState } from "react";
 import { buttonVariants } from "../Button";

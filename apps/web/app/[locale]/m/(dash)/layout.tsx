@@ -1,6 +1,6 @@
 "use client";
 
-import { SegmentedControl } from "@khmer-micro-store/ui";
+import { SegmentedControl } from "@khmio/ui";
 import { LayoutDashboard, Package, ShoppingBag, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

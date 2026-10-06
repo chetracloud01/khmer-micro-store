@@ -1,8 +1,8 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { SESSION_TTL_DAYS } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { SESSION_TTL_DAYS } from "@khmio/shared";
 import { createHash, randomBytes } from "node:crypto";
 
-export const SESSION_COOKIE = "kms_session";
+export const SESSION_COOKIE = "khmio_session";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Only this is stored: a stolen database backup can't be turned back into a working cookie. */

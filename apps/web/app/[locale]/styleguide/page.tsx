@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Input, PriceTag } from "@khmer-micro-store/ui";
+import { Button, Card, Input, PriceTag } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 

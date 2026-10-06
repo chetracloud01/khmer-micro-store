@@ -10,8 +10,8 @@ import {
   type BusinessType,
   type DeliveryArea,
   type FormErrorCode,
-} from "@khmer-micro-store/shared";
-import { Button, Card, Input, SegmentedControl, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Card, Input, SegmentedControl, Select } from "@khmio/ui";
 import {
   Check,
   ChevronRight,

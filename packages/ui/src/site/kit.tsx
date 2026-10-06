@@ -1,4 +1,4 @@
-import type { LocalizedText, PlatformProduct } from "@khmer-micro-store/shared";
+import type { LocalizedText, PlatformProduct } from "@khmio/shared";
 import type { ReactNode } from "react";
 import { cn } from "../cn";
 import type { SitePlansLabels } from "./PlansSection";

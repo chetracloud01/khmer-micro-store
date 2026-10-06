@@ -1,4 +1,4 @@
-# Khmer Micro-Store — Project Blueprint
+# Khmio — Project Blueprint
 
 As of 2026-10-01 · the one document for the whole project, from the first idea to running the live platform
 
@@ -41,9 +41,9 @@ Updated at the end of every roadmap step.
 
 ## Overview
 
-Khmer Micro-Store lets a Telegram or Facebook seller open a mobile shop in under 10 minutes, get paid by KHQR or ABA PayWay, and manage every order from Telegram. Money goes straight to the merchant's own account; the platform earns from subscriptions.
+Khmio lets a Telegram or Facebook seller open a mobile shop in under 10 minutes, get paid by KHQR or ABA PayWay, and manage every order from Telegram. Money goes straight to the merchant's own account; the platform earns from subscriptions.
 
-**Brand.** Sellers and buyers know the platform as **Khmio** (`khmio.com`); this store is its first product, **Khmio Shop**. "Khmer Micro-Store" stays the project's code name in the repo. Brand details and the names to reserve: `docs/platform-launch-plan.md`, Stage 1.
+**Brand.** Sellers and buyers know the platform as **Khmio** (`khmio.com`); this store is its first product, **Khmio Shop**. Khmio is also the project's name in the code (`@khmio/*` packages) since 2026-10-06; it was "Khmer Micro-Store" before, and the database names and users still say `khmer_micro_store` on purpose (old migrations are never edited). Brand details and the names to reserve: `docs/platform-launch-plan.md`, Stage 1.
 
 **Problem.** Small sellers take orders in chat, check payment screenshots by hand, and copy addresses to drivers one by one. This wastes hours and invites fake-payment fraud.
 
@@ -307,7 +307,7 @@ TypeScript everywhere, one monorepo. One language for frontend, backend and shar
 | Errors/logs | Sentry + pino | See problems before merchants do |
 
 ```
-khmer-micro-store/
+khmio/
 ├── apps/
 │   ├── web/        # Next.js: /s/[slug] storefront, /m merchant, /admin
 │   ├── api/        # NestJS: modules below
@@ -961,11 +961,11 @@ Docker Desktop (`pnpm db:up`) works too on a PC that supports it; it isn't neede
 
 ### Part 2: Create the project (Day 1)
 
-The project lives at `D:\PROJECT\khmer-micro-store` and on GitHub at `github.com/chetracloud01/khmer-micro-store`. To set it up on a new PC:
+The project lives on GitHub at `github.com/chetracloud01/khmio` (renamed from `khmer-micro-store` on 2026-10-06; GitHub forwards the old address) and on the PC in `D:\PROJECT\khmio` (rename the old `khmer-micro-store` folder once, with VS Code closed). To set it up on a new PC:
 
 ```bash
-git clone https://github.com/chetracloud01/khmer-micro-store.git
-cd khmer-micro-store
+git clone https://github.com/chetracloud01/khmio.git
+cd khmio
 pnpm install
 copy .env.example .env      # then fill in the values; never commit .env
 pnpm db:deploy

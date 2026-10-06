@@ -1,7 +1,7 @@
 "use client";
 
-import { needsSellerAction } from "@khmer-micro-store/shared";
-import { Card } from "@khmer-micro-store/ui";
+import { needsSellerAction } from "@khmio/shared";
+import { Card } from "@khmio/ui";
 import { ChevronRight, Clock, ExternalLink, Link2, ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

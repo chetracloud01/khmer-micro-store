@@ -1,11 +1,11 @@
 "use client";
 
-import { BottomSheet, Button, Input, Select, Switch, Textarea, cn } from "@khmer-micro-store/ui";
+import { BottomSheet, Button, Input, Select, Switch, Textarea, cn } from "@khmio/ui";
 import { ArrowDown, ArrowUp, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { useFormErrorText } from "@/components/form-ui";
-import { LIBRARY_SRC_PREFIX, type FormErrorCode, type SiteSchema as ZodTypeAny } from "@khmer-micro-store/shared";
+import { LIBRARY_SRC_PREFIX, type FormErrorCode, type SiteSchema as ZodTypeAny } from "@khmio/shared";
 import { useWebsite } from "../../website-context";
 
 // One form for every site kit section (design/screens.md A10): it is built

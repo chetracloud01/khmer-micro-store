@@ -1,7 +1,7 @@
 "use client";
 
-import { deliveryFeeIn, formatKhmerPhoneLocal, PHNOM_PENH_DISTRICTS, placeName, type Currency, type DeliveryFee } from "@khmer-micro-store/shared";
-import { BottomSheet } from "@khmer-micro-store/ui";
+import { deliveryFeeIn, formatKhmerPhoneLocal, PHNOM_PENH_DISTRICTS, placeName, type Currency, type DeliveryFee } from "@khmio/shared";
+import { BottomSheet } from "@khmio/ui";
 import { Bus, ChevronRight, Phone, Store, Truck, Wallet, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";

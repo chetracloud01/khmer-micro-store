@@ -26,7 +26,7 @@ const suffix = Date.now().toString(36);
 
 check("signed out: /auth/me is refused", (await call("/auth/me")).status === 401);
 check("signed out: creating a store is refused", (await call("/stores", { method: "POST", body: {} })).status === 401);
-check("a forged session cookie is refused", (await call("/auth/me", { cookie: "kms_session=not-a-real-token" })).status === 401);
+check("a forged session cookie is refused", (await call("/auth/me", { cookie: "khmio_session=not-a-real-token" })).status === 401);
 
 const a = await login("a");
 check("merchant A signs in", a.status === 200 && !!a.cookie);

@@ -1,7 +1,7 @@
 "use client";
 
-import type { SubscriptionStatus } from "@khmer-micro-store/shared";
-import { Card, cn } from "@khmer-micro-store/ui";
+import type { SubscriptionStatus } from "@khmio/shared";
+import { Card, cn } from "@khmio/ui";
 import { Construction, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { MockKycStatus } from "@/mock/mock-data";

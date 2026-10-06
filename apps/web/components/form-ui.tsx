@@ -1,7 +1,7 @@
 "use client";
 
-import type { FormErrorCode } from "@khmer-micro-store/shared";
-import { Button, cn } from "@khmer-micro-store/ui";
+import type { FormErrorCode } from "@khmio/shared";
+import { Button, cn } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 

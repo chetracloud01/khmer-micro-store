@@ -1,6 +1,6 @@
 "use client";
 
-import type { TelegramLoginPayload } from "@khmer-micro-store/shared";
+import type { TelegramLoginPayload } from "@khmio/shared";
 import { useEffect, useRef } from "react";
 import { telegramLoginFromQuery, withoutTelegramLogin } from "@/lib/telegram-login";
 

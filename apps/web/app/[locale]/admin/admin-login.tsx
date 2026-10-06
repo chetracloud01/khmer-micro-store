@@ -1,7 +1,7 @@
 "use client";
 
-import type { TelegramLoginPayload } from "@khmer-micro-store/shared";
-import { Button, Card, Input, SegmentedControl } from "@khmer-micro-store/ui";
+import type { TelegramLoginPayload } from "@khmio/shared";
+import { Button, Card, Input, SegmentedControl } from "@khmio/ui";
 import { Copy, FlaskConical, KeyRound, ShieldCheck, ShieldHalf } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";

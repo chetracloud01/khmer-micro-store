@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@khmer-micro-store/ui";
+import { cn } from "@khmio/ui";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ADMIN_NAV, adminHref, type AdminBadge } from "./admin-nav";
 
-const CLOSED_GROUPS_KEY = "khmer-micro-store:mockup-admin-nav-closed";
+const CLOSED_GROUPS_KEY = "khmio:mockup-admin-nav-closed";
 
 interface Indicator {
   top: number;

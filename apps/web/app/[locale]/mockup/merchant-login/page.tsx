@@ -9,8 +9,8 @@ import {
   phoneLoginSchema,
   toFieldErrors,
   type FormErrorCode,
-} from "@khmer-micro-store/shared";
-import { Button, Input, Mio, SegmentedControl } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, Input, Mio, SegmentedControl } from "@khmio/ui";
 import { ArrowLeft, Phone, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";

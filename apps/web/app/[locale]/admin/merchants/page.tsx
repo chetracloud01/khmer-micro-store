@@ -1,7 +1,7 @@
 "use client";
 
-import { adminCan, adminExtendSchema, adminPlanChangeSchema, toFieldErrors, type FormErrorCode, type SubscriptionStatus } from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, cn, Input, SearchInput, Select } from "@khmer-micro-store/ui";
+import { adminCan, adminExtendSchema, adminPlanChangeSchema, toFieldErrors, type FormErrorCode, type SubscriptionStatus } from "@khmio/shared";
+import { BottomSheet, Button, Card, cn, Input, SearchInput, Select } from "@khmio/ui";
 import { ChevronRight, ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

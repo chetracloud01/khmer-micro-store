@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@khmer-micro-store/ui";
+import { Button } from "@khmio/ui";
 import { useEffect } from "react";
 
 /** Centered confirm for risky actions (rejecting KYC, etc.). Escape or the backdrop cancels. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@khmer-micro-store/ui";
+import { cn } from "@khmio/ui";
 import { BadgeCheck, CalendarPlus, CreditCard, Globe, History, Layers, ReceiptText, ShieldX, UserCog } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AdminAuditEntry } from "../../admin-context";

@@ -1,5 +1,5 @@
-import type { Prisma, Tx } from "@khmer-micro-store/db";
-import { decideOrderAction, getDispatchRoute, getSellerActions, type OrderActionRequest } from "@khmer-micro-store/shared";
+import type { Prisma, Tx } from "@khmio/db";
+import { decideOrderAction, getDispatchRoute, getSellerActions, type OrderActionRequest } from "@khmio/shared";
 import { NotFoundException } from "@nestjs/common";
 import { AppException } from "../errors";
 import type { MerchantStore } from "../merchant/store.guard";

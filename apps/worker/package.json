@@ -1,5 +1,5 @@
 {
-  "name": "@khmer-micro-store/worker",
+  "name": "@khmio/worker",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -15,8 +15,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3",
     "@aws-sdk/lib-storage": "^3",
-    "@khmer-micro-store/db": "workspace:^",
-    "@khmer-micro-store/shared": "workspace:*",
+    "@khmio/db": "workspace:^",
+    "@khmio/shared": "workspace:*",
     "@prisma/client": "5.22.0",
     "@sentry/node": "^8",
     "pg-boss": "^10",

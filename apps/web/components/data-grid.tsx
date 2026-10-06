@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, cn, SearchInput } from "@khmer-micro-store/ui";
+import { Button, Card, cn, SearchInput } from "@khmio/ui";
 import {
   ArrowDown,
   ArrowUp,
@@ -143,7 +143,7 @@ export function DataGrid<T>({
   useEffect(() => {
     if (!storageKey) return;
     try {
-      const raw = window.localStorage.getItem(`khmer-micro-store:grid:${storageKey}`);
+      const raw = window.localStorage.getItem(`khmio:grid:${storageKey}`);
       if (raw) {
         const prefs = JSON.parse(raw) as Partial<StoredPrefs>;
         if (prefs.hidden) setHidden(new Set(prefs.hidden));
@@ -160,7 +160,7 @@ export function DataGrid<T>({
     if (!storageKey || !prefsLoaded) return;
     try {
       const prefs: StoredPrefs = { hidden: [...hidden], density, pageSize };
-      window.localStorage.setItem(`khmer-micro-store:grid:${storageKey}`, JSON.stringify(prefs));
+      window.localStorage.setItem(`khmio:grid:${storageKey}`, JSON.stringify(prefs));
     } catch {
       // Storage unavailable — preferences just won't be remembered.
     }

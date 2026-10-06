@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhr, formatUsd, isStorefrontOpen, maxOrderQuantity, type Currency } from "@khmer-micro-store/shared";
-import { Badge, Button, cn, SearchInput, SegmentedControl, Skeleton, ThemeSwitcher } from "@khmer-micro-store/ui";
+import { formatKhr, formatUsd, isStorefrontOpen, maxOrderQuantity, type Currency } from "@khmio/shared";
+import { Badge, Button, cn, SearchInput, SegmentedControl, Skeleton, ThemeSwitcher } from "@khmio/ui";
 import { ChevronRight, Clock, Info, SearchX, ShoppingBag, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

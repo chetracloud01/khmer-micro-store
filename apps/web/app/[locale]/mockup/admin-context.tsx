@@ -18,7 +18,7 @@ import {
   type KycRejectReason,
   type KycSubmission,
   type PlanId,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
@@ -109,7 +109,7 @@ const AdminContext = createContext<AdminContextValue | null>(null);
 
 // Switching locale changes the [locale] URL segment, which remounts this
 // provider — localStorage is what survives that (and a page refresh).
-const STORAGE_KEY = "khmer-micro-store:mockup-admin";
+const STORAGE_KEY = "khmio:mockup-admin";
 
 interface PersistedAdmin {
   stores: MockAdminStore[];

@@ -1,7 +1,7 @@
 "use client";
 
-import { approximateIn, BUYER_ORDER_STEPS, formatKhmerPhoneLocal, getBuyerProgress } from "@khmer-micro-store/shared";
-import { Button, cn } from "@khmer-micro-store/ui";
+import { approximateIn, BUYER_ORDER_STEPS, formatKhmerPhoneLocal, getBuyerProgress } from "@khmio/shared";
+import { Button, cn } from "@khmio/ui";
 import { BellRing, Bus, Check, Clock, MapPin, PackageX, Phone, Send, Store, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import type { AdminAlert, WorkerEnv } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import type { AdminAlert, WorkerEnv } from "@khmio/shared";
 import type PgBoss from "pg-boss";
 import type { Logger } from "pino";
 import { pgDumpCommand, pruneBackups, runBackup, s3Client } from "../backup/backup";

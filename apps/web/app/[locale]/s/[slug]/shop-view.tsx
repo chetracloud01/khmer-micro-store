@@ -1,7 +1,7 @@
 "use client";
 
-import type { Currency } from "@khmer-micro-store/shared";
-import { Button, Card, cn, DiscountBadge, PriceTag, SearchInput, SegmentedControl } from "@khmer-micro-store/ui";
+import type { Currency } from "@khmio/shared";
+import { Button, Card, cn, DiscountBadge, PriceTag, SearchInput, SegmentedControl } from "@khmio/ui";
 import { Check, ChevronLeft, ChevronRight, ImageOff, SearchX, Share2, ShoppingBag, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

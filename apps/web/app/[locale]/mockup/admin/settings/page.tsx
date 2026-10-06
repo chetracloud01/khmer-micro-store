@@ -7,8 +7,8 @@ import {
   INVOICE_LEAD_DAYS,
   PLANS,
   type AdminSettings,
-} from "@khmer-micro-store/shared";
-import { Card, Input } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Card, Input } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useAdmin } from "../../admin-context";

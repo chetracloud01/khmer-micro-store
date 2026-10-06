@@ -11,8 +11,8 @@ import {
   type SitePage,
   type SiteSection,
   type SiteSectionType,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, buttonVariants, Card, SegmentedControl, Switch, cn } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, buttonVariants, Card, SegmentedControl, Switch, cn } from "@khmio/ui";
 import { ArrowDown, ArrowLeft, ArrowUp, Eye, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

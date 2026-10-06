@@ -46,12 +46,12 @@ sub-domain of it (docs/blueprint.md "Growth path", running other projects).
 
 ## 3. Photos and backups (Cloudflare R2)
 
-1. R2 → **Create bucket** `kms-photos` → Location: **Asia-Pacific** (location hint).
+1. R2 → **Create bucket** `khmio-photos` → Location: **Asia-Pacific** (location hint).
    Settings → Public access → **Connect domain** → `files.<domain>`.
-2. R2 → **Create bucket** `kms-backups` → Asia-Pacific. **No** public access, ever:
+2. R2 → **Create bucket** `khmio-backups` → Asia-Pacific. **No** public access, ever:
    it holds every buyer's phone and address.
 3. R2 → Manage API tokens → **Create API token**: permission *Object Read & Write*,
-   **only** the buckets `kms-photos` and `kms-backups`. Note the Access Key ID,
+   **only** the buckets `khmio-photos` and `khmio-backups`. Note the Access Key ID,
    Secret Access Key and the S3 endpoint (`https://<account id>.r2.cloudflarestorage.com`)
    for step 6 — paste them straight into Railway.
 4. Rules → Transform rules → **Modify response header** for `files.<domain>`:
@@ -100,7 +100,7 @@ Keep the test bot for your PC; production gets its own.
      | `FILE_STORAGE` | `s3` |
      | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | from step 3 |
      | `S3_REGION` | `auto` |
-     | `S3_BUCKET` | `kms-photos` |
+     | `S3_BUCKET` | `khmio-photos` |
      | `FILES_PUBLIC_URL` | `https://files.<domain>` |
      | `TRUST_PROXY_HOPS` | `2` with Cloudflare's proxy in front (orange cloud), `1` without — check it in step 12 |
      | `SENTRY_DSN` | from sentry.io (free), optional |
@@ -110,7 +110,7 @@ Keep the test bot for your PC; production gets its own.
    - Config-as-code path: `/apps/worker/railway.json` (never two copies at once). Region: **Singapore**.
    - Variables: `NODE_ENV`, `DATABASE_OWNER_URL`, `WEB_ORIGIN`, `TELEGRAM_BOT_TOKEN`,
      `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (same values as the API),
-     `BACKUPS=on`, `S3_BACKUP_BUCKET=kms-backups`, optional `SENTRY_DSN`. No domain.
+     `BACKUPS=on`, `S3_BACKUP_BUCKET=khmio-backups`, optional `SENTRY_DSN`. No domain.
 5. Both services deploy. The API's log shows the migrations, then `API listening`; the
    worker's shows `worker started` with `telegram: on, backups: on`. A missing or wrong
    setting stops the start and names it (never its value).

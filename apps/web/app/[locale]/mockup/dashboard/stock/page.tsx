@@ -13,8 +13,8 @@ import {
   toFieldErrors,
   type FormErrorCode,
   type StockAdjustmentReason,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, Input, SegmentedControl, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, Card, Input, SegmentedControl, Select } from "@khmio/ui";
 import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

@@ -1,7 +1,7 @@
 "use client";
 
-import { adminCan, platformSettingsSaveSchema, toFieldErrors, type FormErrorCode } from "@khmer-micro-store/shared";
-import { Card, Input, Switch } from "@khmer-micro-store/ui";
+import { adminCan, platformSettingsSaveSchema, toFieldErrors, type FormErrorCode } from "@khmio/shared";
+import { Card, Input, Switch } from "@khmio/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";

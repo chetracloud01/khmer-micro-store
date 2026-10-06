@@ -1,5 +1,5 @@
-import { createSystemDb } from "@khmer-micro-store/db";
-import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } from "@khmer-micro-store/shared";
+import { createSystemDb } from "@khmio/db";
+import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } from "@khmio/shared";
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";

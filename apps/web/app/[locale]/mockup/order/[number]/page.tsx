@@ -6,8 +6,8 @@ import {
   formatKhmerPhoneLocal,
   getBuyerProgress,
   type OrderStatus,
-} from "@khmer-micro-store/shared";
-import { Button, cn } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, cn } from "@khmio/ui";
 import {
   AlertTriangle,
   Bus,

@@ -1,4 +1,4 @@
-import type { AppDb } from "@khmer-micro-store/db";
+import type { AppDb } from "@khmio/db";
 import { Inject, Injectable } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import { getEnv } from "../config";

@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonVariants, Mio } from "@khmer-micro-store/ui";
+import { buttonVariants, Mio } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 

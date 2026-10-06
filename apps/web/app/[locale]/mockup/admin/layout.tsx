@@ -1,7 +1,7 @@
 "use client";
 
-import { getInvoiceView } from "@khmer-micro-store/shared";
-import { cn, SegmentedControl, ThemeSwitcher } from "@khmer-micro-store/ui";
+import { getInvoiceView } from "@khmio/shared";
+import { cn, SegmentedControl, ThemeSwitcher } from "@khmio/ui";
 import { ChevronRight, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldHalf, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -17,7 +17,7 @@ import { AdminNavMenu } from "./admin-nav-menu";
 import { useAdminData } from "./use-admin-data";
 import { useAdminInvoices } from "./use-admin-money";
 
-const COLLAPSED_KEY = "khmer-micro-store:mockup-admin-sidebar-collapsed";
+const COLLAPSED_KEY = "khmio:mockup-admin-sidebar-collapsed";
 
 // Mock only: the real admin area sits behind admin login with 2FA
 // (docs/blueprint.md Security). Every admin page renders inside this shell.

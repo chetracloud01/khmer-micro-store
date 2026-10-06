@@ -6,8 +6,8 @@ import {
   formatKhr,
   formatUsd,
   getMinimumPlanForProductCount,
-} from "@khmer-micro-store/shared";
-import { Button } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button } from "@khmio/ui";
 import { ChevronRight, EyeOff, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

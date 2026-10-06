@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createSystemDb, type SystemDb } from "@khmer-micro-store/db";
+import { createSystemDb, type SystemDb } from "@khmio/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { cleanUpOnce } from "./cleanup";
 

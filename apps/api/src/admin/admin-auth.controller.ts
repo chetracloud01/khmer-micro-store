@@ -1,5 +1,5 @@
-import type { SystemDb } from "@khmer-micro-store/db";
-import { adminCodeSchema, telegramLoginPayloadSchema } from "@khmer-micro-store/shared";
+import type { SystemDb } from "@khmio/db";
+import { adminCodeSchema, telegramLoginPayloadSchema } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Post, Req, Res, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import { readCookie } from "../auth/sessions";
 import { checkTelegramLogin } from "../auth/telegram";

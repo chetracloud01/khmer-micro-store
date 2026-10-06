@@ -34,7 +34,7 @@ Do not start a stage until the one before it is "Done when" true — except soci
 
 ## Stage 1 — Brand and domain (now)
 
-**Decided (2026-10-06): the brand is Khmio, the domain `khmio.com`.** "Khmer Micro-Store" stays the project's code name (repo, packages, bucket names); everything a seller or buyer sees says Khmio.
+**Decided (2026-10-06): the brand is Khmio, the domain `khmio.com`.** Since 2026-10-06 the code says Khmio too (`@khmio/*` packages, `khmio-photos` and `khmio-backups` buckets); only the database names and users keep the old name `khmer_micro_store`, because old migrations are never edited.
 
 ### The brand
 

@@ -1,4 +1,4 @@
-import type { PlatformProduct, SitePage } from "@khmer-micro-store/shared";
+import type { PlatformProduct, SitePage } from "@khmio/shared";
 
 // Sample website content for the platform website mockups (design/screens.md
 // "Platform website"). Shaped exactly like the content the admin will edit

@@ -1,7 +1,7 @@
 "use client";
 
-import { maxOrderQuantity, type BuyerStockState, type Currency } from "@khmer-micro-store/shared";
-import { Card, cn, DiscountBadge, PriceTag } from "@khmer-micro-store/ui";
+import { maxOrderQuantity, type BuyerStockState, type Currency } from "@khmio/shared";
+import { Card, cn, DiscountBadge, PriceTag } from "@khmio/ui";
 import type { ReactNode } from "react";
 import {
   getStartingVariant,

@@ -12,8 +12,8 @@ import {
   type FormErrorCode,
   type OrderAction,
   type OrderCancelReason,
-} from "@khmer-micro-store/shared";
-import { BottomSheet, Button, Card, Input, Select } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { BottomSheet, Button, Card, Input, Select } from "@khmio/ui";
 import { ArrowLeft, Bus, MapPin, Phone, Printer, Store, Truck, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

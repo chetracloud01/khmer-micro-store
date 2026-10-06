@@ -1,6 +1,6 @@
 "use client";
 
-import { getPlanPrice, type AdminOverride, type KycRejection } from "@khmer-micro-store/shared";
+import { getPlanPrice, type AdminOverride, type KycRejection } from "@khmio/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { mockStore, type MockAdminStore } from "@/mock/mock-data";

@@ -1,4 +1,4 @@
-import type { SystemDb } from "@khmer-micro-store/db";
+import type { SystemDb } from "@khmio/db";
 import type PgBoss from "pg-boss";
 import type { Logger } from "pino";
 

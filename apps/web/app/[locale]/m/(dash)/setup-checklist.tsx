@@ -1,7 +1,7 @@
 "use client";
 
-import { getMissingForSharing, SHARE_REQUIREMENTS, type ShareRequirement } from "@khmer-micro-store/shared";
-import { Card, cn } from "@khmer-micro-store/ui";
+import { getMissingForSharing, SHARE_REQUIREMENTS, type ShareRequirement } from "@khmio/shared";
+import { Card, cn } from "@khmio/ui";
 import { Check, ChevronRight, ImagePlus, Lock, PackagePlus, Phone, Share2, Truck, Wallet, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

@@ -1,6 +1,6 @@
 # Platform Roadmap — from one store to many products
 
-As of 2026-10-06 · how Khmer Micro-Store can grow into a main platform that controls several sub-projects with one login, without paying the cost of microservices before it is needed
+As of 2026-10-06 · how Khmio can grow into a main platform that controls several sub-projects with one login, without paying the cost of microservices before it is needed
 
 ## Why this document exists
 
@@ -24,7 +24,7 @@ This is **not** a decision to build microservices. Microservices solve a team-si
 | Already in the code | Why it matters later |
 | --- | --- |
 | `Merchant` + `MerchantIdentity` (packages/db) | The account is separate from the login method (Telegram). One account can later have many login methods and open many products. |
-| `Session` table + `kms_session` HttpOnly cookie (apps/api/src/auth) | Server-side sessions are easy to share across products on the same domain, and easy to revoke everywhere at once. |
+| `Session` table + `khmio_session` HttpOnly cookie (apps/api/src/auth) | Server-side sessions are easy to share across products on the same domain, and easy to revoke everywhere at once. |
 | `OutboxEvent` + pg-boss worker | An event system already exists. Products can later talk by events ("order paid", "account created") instead of calling each other. |
 | `packages/payments`, `packages/shared`, `packages/db` | Reusable building blocks for every future product. |
 | `Subscription` + `packages/shared/plans.ts` | The start of "what each customer pays for" — the base for entitlements. |

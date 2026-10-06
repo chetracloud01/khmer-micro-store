@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { EnvError, type ApiEnv } from "@khmer-micro-store/shared";
+import { EnvError, type ApiEnv } from "@khmio/shared";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { getEnv } from "./config";

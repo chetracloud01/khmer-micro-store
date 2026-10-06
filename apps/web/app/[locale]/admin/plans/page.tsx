@@ -1,7 +1,7 @@
 "use client";
 
-import { BILLING_PERIOD_DAYS, formatKhr, formatUsd, GRACE_PERIOD_DAYS, INVOICE_LEAD_DAYS, PLAN_ORDER, PLANS, type PlanFeature } from "@khmer-micro-store/shared";
-import { Card } from "@khmer-micro-store/ui";
+import { BILLING_PERIOD_DAYS, formatKhr, formatUsd, GRACE_PERIOD_DAYS, INVOICE_LEAD_DAYS, PLAN_ORDER, PLANS, type PlanFeature } from "@khmio/shared";
+import { Card } from "@khmio/ui";
 import { Check, Minus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "../admin-ui";

@@ -1,7 +1,7 @@
 "use client";
 
-import { getMissingForSharing } from "@khmer-micro-store/shared";
-import { Button, Card } from "@khmer-micro-store/ui";
+import { getMissingForSharing } from "@khmio/shared";
+import { Button, Card } from "@khmio/ui";
 import { Check, Copy, Download, Share2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import QRCode from "qrcode";

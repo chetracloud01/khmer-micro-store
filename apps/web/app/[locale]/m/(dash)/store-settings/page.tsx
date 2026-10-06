@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhr, MAX_VAT_PERCENT, storeSettingsSchema, toFieldErrors, type FormErrorCode } from "@khmer-micro-store/shared";
-import { Card, Input, SegmentedControl } from "@khmer-micro-store/ui";
+import { formatKhr, MAX_VAT_PERCENT, storeSettingsSchema, toFieldErrors, type FormErrorCode } from "@khmio/shared";
+import { Card, Input, SegmentedControl } from "@khmio/ui";
 import { ChevronRight, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

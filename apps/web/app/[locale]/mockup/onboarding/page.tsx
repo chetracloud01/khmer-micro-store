@@ -9,8 +9,8 @@ import {
   toFieldErrors,
   type BusinessType,
   type ShareRequirement,
-} from "@khmer-micro-store/shared";
-import { Button, cn, Input, SegmentedControl } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, cn, Input, SegmentedControl } from "@khmio/ui";
 import {
   Check,
   ChevronRight,

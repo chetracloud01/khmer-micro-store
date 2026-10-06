@@ -1,7 +1,7 @@
 "use client";
 
-import { formatKhmerPhoneLocal, getOrderTab, getSellerActions, ORDER_TABS, type OrderTab, type SellerOrderAction } from "@khmer-micro-store/shared";
-import { Button, Card, cn } from "@khmer-micro-store/ui";
+import { formatKhmerPhoneLocal, getOrderTab, getSellerActions, ORDER_TABS, type OrderTab, type SellerOrderAction } from "@khmio/shared";
+import { Button, Card, cn } from "@khmio/ui";
 import { ChevronRight, Phone, ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

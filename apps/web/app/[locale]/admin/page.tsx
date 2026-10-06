@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@khmer-micro-store/ui";
+import { Card } from "@khmio/ui";
 import { AlertTriangle, CalendarClock, ChevronRight, PauseCircle, ShoppingBag, Sparkles, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";

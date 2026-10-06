@@ -8,8 +8,8 @@ import {
   toFieldErrors,
   type BusinessType,
   type FormErrorCode,
-} from "@khmer-micro-store/shared";
-import { Button, cn, Input } from "@khmer-micro-store/ui";
+} from "@khmio/shared";
+import { Button, cn, Input } from "@khmio/ui";
 import { Check, LayoutGrid, Store, UtensilsCrossed, Wrench, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";

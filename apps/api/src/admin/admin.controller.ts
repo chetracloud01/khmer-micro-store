@@ -1,5 +1,5 @@
-import type { Prisma, SystemDb } from "@khmer-micro-store/db";
-import { adminExtendSchema, adminPlanChangeSchema, platformSettingsSaveSchema } from "@khmer-micro-store/shared";
+import type { Prisma, SystemDb } from "@khmio/db";
+import { adminExtendSchema, adminPlanChangeSchema, platformSettingsSaveSchema } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { SYSTEM_DB } from "../db";

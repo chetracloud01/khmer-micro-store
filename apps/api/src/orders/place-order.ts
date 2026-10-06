@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { asOrderBuyer, Prisma, withPublicStore, type AppDb, type Tx } from "@khmer-micro-store/db";
+import { asOrderBuyer, Prisma, withPublicStore, type AppDb, type Tx } from "@khmio/db";
 import {
   checkoutInputSchema,
   computeOrderTotal,
@@ -11,7 +11,7 @@ import {
   type CheckoutInput,
   type FormErrorCode,
   type PlaceOrderRequest,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import { readDeliverySettings } from "../delivery/delivery";
 import { AppException, InvalidInputException } from "../errors";
 

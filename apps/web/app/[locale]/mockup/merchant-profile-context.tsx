@@ -5,7 +5,7 @@ import {
   deliveryAreaSchema,
   type BusinessType,
   type DeliveryArea,
-} from "@khmer-micro-store/shared";
+} from "@khmio/shared";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 
@@ -43,7 +43,7 @@ const MerchantProfileContext = createContext<MerchantProfileContextValue | null>
 
 // Switching locale changes the [locale] URL segment, which remounts this
 // provider — localStorage is what survives that (and a page refresh).
-const STORAGE_KEY = "khmer-micro-store:mockup-merchant-profile";
+const STORAGE_KEY = "khmio:mockup-merchant-profile";
 
 interface PersistedProfile {
   businessType: BusinessType;
