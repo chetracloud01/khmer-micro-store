@@ -3,7 +3,7 @@
 What each screen contains. How it must look and behave is in
 `design/design-standard.md`. Phone first (360 px), then tablet and desktop.
 
-Status: **Built** = matches the docs · **Change** = exists, needs the
+Status: **Built** = matches the docs · **Mockup** = built as a mockup, backend later · **Change** = exists, needs the
 changes listed · **New** = not built yet.
 Phase: from `docs/blueprint.md` "Market and how we win" — L = launch, 2 = delivery and
 switching, 3 = growth.
@@ -214,7 +214,7 @@ Phone first; sidebar from tablet width; tables on desktop.
 - New role **Website editor** (with A10–A12): may edit, preview and publish
   website content, nothing else — no shops, money or settings.
 
-### A10. Website pages — New · Website
+### A10. Website pages — Mockup · Website
 - List of pages (Home, each product page, Pricing, Help, Terms, Privacy):
   status (published / draft changes), last published, by whom.
 - A page: its sections in order, each with on/off, move up/down, edit,
@@ -303,7 +303,7 @@ Pages P1–P4 below list their starting sections, in order; the admin can
 change their content, switch them off, reorder them or add a promotion
 banner anywhere.
 
-### P1. Home — New · Website
+### P1. Home — Mockup · Website
 - Hero: Mio (coin pose), the tagline លក់ងាយ ទទួលលុយរហ័ស with its English
   line, one sentence on what Khmio does, "Start free" and "See pricing".
 - How it works in 3 steps: open your shop → share the link → get paid by
@@ -316,7 +316,7 @@ banner anywhere.
   seller agrees.
 - Closing band: "Start free — 14 days, no card" and the button.
 
-### P2. Product page: Khmio Shop — New · Website
+### P2. Product page: Khmio Shop — Mockup · Website
 - Title, Khmer subtitle (ហាងអនឡាញ), one-line promise, "Start free".
 - Features, each with a phone picture (a real screenshot later, a framed
   placeholder now) and two lines: shop link; KHQR checked by itself;
@@ -326,7 +326,7 @@ banner anywhere.
 - Questions: three or four answers (Do I need a website? Which banks? Is
   my money safe? Can I cancel?).
 
-### P3. Product page: coming soon (Class, Rent) — New · Website
+### P3. Product page: coming soon (Class, Rent) — Mockup · Website
 - One page for every product not built yet (`/products/class`,
   `/products/rent`), filled from the product list.
 - Title, Khmer subtitle, "Coming soon", what it will do in three points.
@@ -338,7 +338,7 @@ banner anywhere.
 - The mockup keeps sign-ups on the device only; the real form saves them
   (one platform table, bot check and rate limit) when the site is built.
 
-### P4. Pricing — New · Website
+### P4. Pricing — Mockup · Website
 - Khmio Shop plans (the Plans section — not editable prices): Free, Basic, Pro, Advance, from `plans.ts`: monthly
   price, in USD or riel by a toggle (never both added), product limit,
   the trial for Free, and the plan's features.

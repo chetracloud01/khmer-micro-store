@@ -1,9 +1,12 @@
 import {
   AlertTriangle,
   CreditCard,
+  Globe,
+  Images,
   KeyRound,
   LayoutDashboard,
   Layers,
+  Megaphone,
   ReceiptText,
   Repeat,
   ScrollText,
@@ -57,6 +60,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { key: "payments", segment: "payments", icon: CreditCard },
       { key: "failedChecks", segment: "failed-checks", icon: AlertTriangle, badge: "failedChecks" },
+    ],
+  },
+  {
+    key: "groupWebsite",
+    items: [
+      { key: "website", segment: "website", icon: Globe },
+      { key: "promotions", segment: "promotions", icon: Megaphone, comingSoon: true },
+      { key: "pictures", segment: "pictures", icon: Images, comingSoon: true },
     ],
   },
   {

@@ -170,6 +170,25 @@ export const siteSectionSchema = z.union([
   waitlistSectionSchema,
 ]);
 export type SiteSection = z.infer<typeof siteSectionSchema>;
+
+/** Each section type's rules, by type: the admin builds its edit form from these (A10). */
+export const SITE_SECTION_SCHEMAS = {
+  announcement: announcementSectionSchema,
+  hero: heroSectionSchema,
+  steps: stepsSectionSchema,
+  productCards: productCardsSectionSchema,
+  features: featuresSectionSchema,
+  promotion: promotionSectionSchema,
+  plans: plansSectionSchema,
+  questions: questionsSectionSchema,
+  sellerStory: sellerStorySectionSchema,
+  closing: closingSectionSchema,
+  waitlist: waitlistSectionSchema,
+} as const;
+export const SITE_SECTION_TYPES = Object.keys(SITE_SECTION_SCHEMAS) as (keyof typeof SITE_SECTION_SCHEMAS)[];
+
+/** The link preview's rules, edited with the same form. */
+export const siteSeoSchema = z.object({ title: localizedTextSchema(70), description: localizedTextSchema(160), image: siteImageSchema.optional() });
 export type SiteSectionType = SiteSection["type"];
 export type SiteSectionOf<T extends SiteSectionType> = Extract<SiteSection, { type: T }>;
 
@@ -177,7 +196,7 @@ export const sitePageSchema = z.object({
   /** "" is the home page; otherwise the path without a leading slash ("pricing", "products/shop"). */
   slug: z.string().regex(/^[a-z0-9\-/]*$/, "slug_invalid"),
   /** The link preview on Facebook and Telegram. */
-  seo: z.object({ title: localizedTextSchema(70), description: localizedTextSchema(160), image: siteImageSchema.optional() }),
+  seo: siteSeoSchema,
   sections: z.array(siteSectionSchema),
 });
 export type SitePage = z.infer<typeof sitePageSchema>;
@@ -222,3 +241,6 @@ export const waitlistSignupSchema = z.object({
   businessType: z.enum(WAITLIST_BUSINESS_TYPES, { errorMap: () => ({ message: "required" }) }),
 });
 export type WaitlistSignup = z.infer<typeof waitlistSignupSchema>;
+
+/** The schema type, for code that reads a schema to build a form (the admin's site editor). */
+export type { ZodTypeAny as SiteSchema } from "zod";

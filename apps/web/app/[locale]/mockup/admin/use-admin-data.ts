@@ -84,6 +84,7 @@ export function useAuditText() {
   const t = useTranslations("Admin");
   const tPlan = useTranslations("Plans");
   const tKyc = useTranslations("Kyc");
+  const tSite = useTranslations("SiteEditor");
   const locale = useLocale();
   return (entry: AdminAuditEntry) => {
     const store = locale === "km" ? entry.storeNameKm : entry.storeNameEn;
@@ -98,6 +99,9 @@ export function useAuditText() {
     if (entry.action === "adminRoleChanged") return t("auditAdminRole", { name: store, role: entry.role ? t(`role_${entry.role}`) : "" });
     if (entry.action === "adminDisabled") return t("auditAdminDisabled", { name: store });
     if (entry.action === "adminEnabled") return t("auditAdminEnabled", { name: store });
+    // Website entries carry the page's key, and the version number as their detail.
+    if (entry.action === "websitePublished") return t("auditWebsitePublished", { page: tSite(`page_${entry.storeNameEn}`), version: entry.detail ?? "" });
+    if (entry.action === "websiteRestored") return t("auditWebsiteRestored", { page: tSite(`page_${entry.storeNameEn}`), version: entry.detail ?? "" });
     if (entry.reason) return t("auditKycRejectedReason", { store, reason: tKyc(`reason_${entry.reason}`) });
     return t("auditKycRejected", { store });
   };

@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { mockComingSoonPages } from "@/mock/mock-site";
 import { SitePageView } from "../../site-shell";
 
 // P3. Product page for a product not built yet — Class and Rent share it
@@ -7,5 +6,5 @@ import { SitePageView } from "../../site-shell";
 export default function SiteComingSoonMockupPage({ params }: { params: { product: string } }) {
   const id = params.product;
   if (id !== "class" && id !== "rent") notFound();
-  return <SitePageView page={mockComingSoonPages[id]} product={id} />;
+  return <SitePageView pageKey={id} />;
 }

@@ -1,7 +1,6 @@
-import { mockPricingPage } from "@/mock/mock-site";
 import { SitePageView } from "../site-shell";
 
-// P4. Pricing (design/screens.md "Platform website"), drawn from sample content; prices from plans.ts.
+// P4. Pricing (design/screens.md "Platform website"): what the admin last published (A10); prices from plans.ts.
 export default function SitePricingMockupPage() {
-  return <SitePageView page={mockPricingPage} />;
+  return <SitePageView pageKey="pricing" />;
 }

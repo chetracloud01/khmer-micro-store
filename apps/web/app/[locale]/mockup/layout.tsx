@@ -9,6 +9,7 @@ import { MerchantProfileProvider } from "./merchant-profile-context";
 import { MerchantSubscriptionProvider } from "./merchant-subscription-context";
 import { OrdersProvider } from "./orders-context";
 import { StoreSettingsProvider } from "./store-settings-context";
+import { WebsiteProvider } from "./website-context";
 
 // Mock data stores, outermost first. One that reads another must sit inside
 // it: store settings read the admin's rate band; the cart reads store and
@@ -24,7 +25,9 @@ export default function MockupLayout({ children }: { children: ReactNode }) {
                 <StoreSettingsProvider>
                   <DeliverySettingsProvider>
                     <OrdersProvider>
-                      <CartProvider>{children}</CartProvider>
+                      <CartProvider>
+                        <WebsiteProvider>{children}</WebsiteProvider>
+                      </CartProvider>
                     </OrdersProvider>
                   </DeliverySettingsProvider>
                 </StoreSettingsProvider>

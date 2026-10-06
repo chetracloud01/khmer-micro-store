@@ -1,10 +1,11 @@
 "use client";
 
-import { visibleSections, type PlatformProductId, type SitePage, type WaitlistSignup } from "@khmer-micro-store/shared";
+import { visibleSections, type WaitlistSignup } from "@khmer-micro-store/shared";
 import { AnnouncementBar, SegmentedControl, SiteFooter, SiteHeader, SiteSections, type SiteKitContext } from "@khmer-micro-store/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { mockPlatformProducts } from "@/mock/mock-site";
+import { SITE_PAGE_INFO, useWebsite, type SitePageKey } from "../website-context";
 import { useFormErrorText } from "@/components/form-ui";
 
 /**
@@ -34,8 +35,14 @@ async function keepSignupOnDevice(signup: WaitlistSignup) {
   }
 }
 
-/** One platform website page: the announcement bar, header, the page's sections and the footer. */
-export function SitePageView({ page, product }: { page: SitePage; product?: PlatformProductId }) {
+/**
+ * One platform website page: the announcement bar, header, the page's sections
+ * and the footer. Shows what is published; the admin's Preview shows the draft.
+ */
+export function SitePageView({ pageKey, mode = "published" }: { pageKey: SitePageKey; mode?: "published" | "draft" }) {
+  const website = useWebsite();
+  const page = website.pages[pageKey][mode];
+  const product = SITE_PAGE_INFO[pageKey].product;
   const t = useTranslations("Site");
   const errorText = useFormErrorText();
   const tMascot = useTranslations("Mascot");
