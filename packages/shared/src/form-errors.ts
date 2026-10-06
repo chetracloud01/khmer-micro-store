@@ -40,6 +40,8 @@ export const FORM_ERROR_CODES = [
   "product_unavailable",
   "delivery_unavailable",
   "payment_unavailable",
+  "link_invalid",
+  "ends_before_start",
 ] as const;
 
 export type FormErrorCode = (typeof FORM_ERROR_CODES)[number];

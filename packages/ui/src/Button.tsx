@@ -6,7 +6,7 @@ import { forwardRef } from "react";
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "./cn";
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   "inline-flex min-h-touch items-center justify-center gap-2 rounded-DEFAULT px-6 text-base font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
