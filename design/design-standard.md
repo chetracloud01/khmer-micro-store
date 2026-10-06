@@ -3,7 +3,8 @@
 The rules every screen follows. Read this before building or changing a
 screen; `design/screens.md` says *what* each screen contains, this file says
 *how* it must look and behave. Source document: `docs/blueprint.md` (the
-one plan for the whole project).
+one plan for the whole project). The brand outside the app — logo, Mio,
+marketing colours and fonts, social media — is in `design/brand-guide.md`.
 
 ## 1. What the app is for
 

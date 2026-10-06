@@ -4,6 +4,8 @@ As of 2026-10-01 · the one document for the whole project, from the first idea 
 
 ## How to read this blueprint
 
+New to the project? Start with `docs/handbook.md`: it maps every document, the whole journey and how to work day to day, and points back here for the details.
+
 This is the only plan document. Everything about the project — why it exists, how each workflow runs, how it is built, the order it is built in, and how it is run after launch — lives here. `CLAUDE.md` holds the short rules for every coding session and points back to sections of this file; `design/screens.md` holds the text spec of each screen. When a decision changes, change it here first.
 
 The document follows the project from start to end:

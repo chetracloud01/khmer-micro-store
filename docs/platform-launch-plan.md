@@ -50,6 +50,8 @@ Do not start a stage until the one before it is "Done when" true — except soci
 | Mascot | **Mio**, a rabbit (ទន្សាយ) — quick and clever like the rabbit of Khmer folk tales; the name comes from Khm**io** | Decided 2026-10-06 |
 | App icon | Option C: the letter "k" on teal with Mio's ears (`apps/web/app/icon.svg`) | Decided 2026-10-06 |
 
+How the brand is used everywhere — logo rules, colours with hex values, fonts, Mio's poses, social media sizes and a designer brief — is in `design/brand-guide.md`.
+
 ### Mio, the mascot
 
 - One component draws Mio everywhere: `Mio` in `packages/ui` (poses `face` and `coin`). Never redraw Mio inside a screen.

@@ -14,7 +14,7 @@
 :root {
   --font-khmer: var(--font-kantumruy, "Kantumruy Pro"), "Noto Sans Khmer", system-ui, sans-serif;
 
-  --color-brand: 8 145 178; /* teal accent: cyan-700 */
+  --color-brand: 14 116 144; /* Khmio Teal #0E7490 (design/brand-guide.md); white text on it is 5.4:1 */
   --color-on-brand: 255 255 255;
   --color-success: 22 163 74;
   --color-warning: 180 83 9;

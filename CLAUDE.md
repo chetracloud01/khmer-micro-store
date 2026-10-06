@@ -49,4 +49,7 @@ pnpm admin:add-owner -- --telegram-id <id> --name "<name>" (make/reset a platfor
 - Payment providers only through packages/payments. Never trust a callback
   alone: always confirm with the provider's status API.
 - Mobile-first 360px, tap targets 44px, Khmer font Kantumruy Pro, line-height 1.5+.
+- Brand is Khmio (code name Khmer Micro-Store); mascot Mio, drawn only by the
+  Mio component in packages/ui. Brand, colours, fonts, marketing:
+  design/brand-guide.md. Doc map, prompts, error playbook: docs/handbook.md.
 - Never print, log or commit secrets. Never edit an old migration.
