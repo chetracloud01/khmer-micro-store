@@ -138,6 +138,17 @@ Social media post → website (home or product page) → "Start free"
 
 For a product not built yet, "Start free" becomes "Join the waitlist". Waitlist counts per product are the evidence for Stage 5.
 
+### Edited from the admin, not in code (decided 2026-10-06)
+
+The website's text, pictures, promotions and product cards are **content in the database**, edited in the admin panel (screens A10–A12 in `design/screens.md`) — no code and no deploy to change them.
+
+- **Fill in the blanks, not a page builder:** each page is a list of sections from one fixed **site kit** (Hero, Steps, Product cards, Features, Promotion banner, Plans, Questions, Seller story, Closing band, Announcement bar, Waitlist form). The admin edits a section's content, switches it on or off and reorders sections; the code always decides the layout, so every page stays on the design standard on a phone.
+- **One kit for every product:** each section is one component plus one Zod schema in the shared packages; the schema also builds its admin form. Khmio Class and Khmio Rent get their pages from the same kit, colours, font and Mio — new content, no new design.
+- **Inside our own admin, not a separate CMS:** same login with 2FA, roles and audit log; pictures in the existing R2 storage; Khmer and English handled like the rest of the app; no extra service to pay for or secure.
+- **Prices stay in code:** the Plans section always reads `packages/shared/plans.ts`, so the website can't show a price billing doesn't charge.
+- **Safe publishing:** draft → preview → publish; every published version kept and restorable; promotions with start and end times; a new **Website editor** admin role that can touch content only; every change in the audit log.
+- **Fast:** published content is cached and refreshed on publish.
+
 ### Rules
 
 - Prices come only from `packages/shared/plans.ts`; the pricing page reads it, so it never shows a wrong price.
@@ -145,16 +156,16 @@ For a product not built yet, "Start free" becomes "Join the waitlist". Waitlist 
 - Links in social posts carry a source tag (`?utm_source=tiktok`) so sign-ups can be traced to a channel.
 - Waitlist form: Turnstile and rate limits (built in step 8, part B1), Zod validation, phone rules from `CLAUDE.md`. The waitlist is a platform table with no `store_id`, written through SystemDb; never log phone numbers.
 - Fast on a 360 px phone, Khmer first, rendered on the server so search engines can read it.
-- No hard-coded text: everything in `messages/km.json` and `messages/en.json`.
+- No hard-coded text: the site's fixed words (menus, form labels, buttons the code owns) live in `messages/km.json` and `messages/en.json`; everything the admin edits is content, stored in both languages and refused at publish if either is missing.
 
 ### Build order (the `CLAUDE.md` method)
 
-1. Write the page specs in `design/screens.md`.
-2. Build each page as a mockup in `apps/web/app/mockup/` with sample data; approve each one.
-3. Build the real pages. The only new backend piece is the waitlist: one table, one API endpoint, one admin list.
+1. Write the page specs in `design/screens.md` — done 2026-10-06 (site kit, P1–P4, A10–A12, account hub H1–H4).
+2. Mockups with sample data, each approved before the next: the site kit sections, then P1–P4 fed by sample content shaped like the future database, then the admin screens A10–A12.
+3. Build the real thing as its own roadmap step, after go-live: platform content tables (pages, sections, versions, promotions, pictures — no `store_id`, admin routes only, with the Website editor permission), publishing with cache refresh, the waitlist (one table, one endpoint, bot check and rate limit), then the real pages.
 4. Lint, typecheck, tests; check every page on a phone in Khmer and English.
 
-**Done when:** someone finds the platform on TikTok, opens the website on their phone, understands the product and starts a free shop without help; the waitlist form works and the admin can see the list.
+**Done when:** you change the home page's promotion from the admin panel, without code, and it shows on your phone within a minute; someone finds the platform on TikTok, opens the website on their phone, understands the product and starts a free shop without help; the waitlist form works and the admin can see the list.
 
 ## Stage 4 — Paid subscriptions (blueprint Release 2, steps 10–13)
 
