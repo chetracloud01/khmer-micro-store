@@ -202,7 +202,7 @@ export function ProductCard({
         )}
       </div>
       {/* Two lines reserved (Khmer needs line-height 1.5), so every card in a row lines up. */}
-      <button type="button" onClick={() => onOpen(product)} className="line-clamp-2 min-h-[3em] text-left text-sm font-medium leading-normal">
+      <button type="button" onClick={() => onOpen(product)} className="line-clamp-2 min-h-touch text-left text-sm font-medium leading-normal">
         {title}
       </button>
       <div className="flex flex-col">

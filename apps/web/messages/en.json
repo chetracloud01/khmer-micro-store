@@ -1766,5 +1766,16 @@
     "switcherHub": "My Khmio",
     "switcherHubHint": "All your apps, subscriptions and account",
     "mockNote": "Mockup — the data comes from the sample shop on this device."
+  },
+  "NotFound": {
+    "title": "We can't find this page",
+    "body": "The link may be mistyped, or the shop may have closed or changed its link. Ask the seller for the new link.",
+    "home": "Go to Khmio"
+  },
+  "ErrorPage": {
+    "title": "Something went wrong",
+    "body": "The page couldn't load right now. Your order and your data are safe — try again in a moment.",
+    "retry": "Try again",
+    "home": "Go to Khmio"
   }
 }

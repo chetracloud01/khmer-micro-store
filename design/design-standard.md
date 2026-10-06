@@ -89,7 +89,8 @@ icon or a word ("Sold out", not just grey).
 
 Line height 1.5 or more for any Khmer text (`leading-normal`; never
 `leading-tight` or `leading-snug`) or the vowels above and below are cut
-off. Khmer labels run 30–40% longer than English: every button and tab
+off. Every text size already carries at least 1.5 (`fontSize` in
+`apps/web/tailwind.config.ts`), so `text-xs`/`text-sm` are safe as they are. Khmer labels run 30–40% longer than English: every button and tab
 must be checked in Khmer at 360 px and stay on one line, or be reworded.
 Numbers that change or line up (prices, quantities, countdowns) use
 `tabular-nums`.

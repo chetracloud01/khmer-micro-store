@@ -45,7 +45,7 @@ export function StatCard({ icon: Icon, label, value, tone = "brand" }: { icon: L
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className="text-2xl font-bold tabular-nums">{value}</span>
-      <span className="text-xs leading-snug text-muted">{label}</span>
+      <span className="text-xs leading-normal text-muted">{label}</span>
     </Card>
   );
 }

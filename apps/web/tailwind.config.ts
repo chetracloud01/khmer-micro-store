@@ -9,6 +9,21 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Khmer vowels sit above and below the line and get cut off under ~1.5
+      // (design/design-standard.md §3). Tailwind's own line heights for these
+      // sizes are 1.0–1.43, so every size carries at least 1.5 here; an explicit
+      // leading-* class can still override it where a design needs that.
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.125rem" }],
+        sm: ["0.875rem", { lineHeight: "1.3125rem" }],
+        base: ["1rem", { lineHeight: "1.5rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.875rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2.25rem" }],
+        "3xl": ["1.875rem", { lineHeight: "2.8125rem" }],
+        "4xl": ["2.25rem", { lineHeight: "3.375rem" }],
+        "5xl": ["3rem", { lineHeight: "4.5rem" }],
+      },
       fontFamily: {
         khmer: ["var(--font-kantumruy)", "Kantumruy Pro", "Noto Sans Khmer", "system-ui", "sans-serif"],
       },
