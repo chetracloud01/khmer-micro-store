@@ -232,7 +232,13 @@ function PageEditor({ pageKey }: { pageKey: SitePageKey }) {
                     >
                       <Pencil className="h-4 w-4" aria-hidden="true" />
                     </IconButton>
-                    <IconButton label={t("removeSection")} onClick={() => setRemoving(index)} className="hover:text-danger">
+                    {/* Promotions are switched off, never removed: the record of what ran when is kept (A11). */}
+                    <IconButton
+                      label={section.type === "promotion" ? t("promoKept") : t("removeSection")}
+                      disabled={section.type === "promotion"}
+                      onClick={() => setRemoving(index)}
+                      className="hover:text-danger"
+                    >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </IconButton>
                   </div>

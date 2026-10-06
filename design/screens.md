@@ -230,12 +230,19 @@ Phone first; sidebar from tablet width; tables on desktop.
   that version the new draft. Publish, restore and remove go to the audit
   log.
 
-### A11. Promotions — New · Website
-- List: title, where it shows (page and position), start and end, status
-  (scheduled / showing / ended), on/off.
-- Form: title, line, picture, button text and link (Khmer and English),
-  pages, start and end date and time (Phnom Penh time). An end before the
-  start is refused. Ended promotions stay in the list, never deleted.
+### A11. Promotions — Mockup · Website
+- A promotion is a "Promotion banner" section of one website page, so A10
+  and A11 always show the same thing; edits go to that page's draft and go
+  live when the page is published (a "Publish <page>" button here).
+- List with filters: title, where it shows (page and position), start and
+  end, status (showing / scheduled / ended / switched off / not published
+  yet), "changes not published", on/off.
+- Form: page (when new) and position, then title, line, picture, button
+  text and link (Khmer and English), start and end date and time (Phnom
+  Penh time). A new one starts at the next full hour and runs a week. An
+  end before the start is refused.
+- Promotions are switched off, never removed — here or in A10 — so the
+  record of what ran when is kept.
 
 ### A12. Pictures — New · Website
 - Library of uploaded pictures: thumbnail, description (Khmer and English),

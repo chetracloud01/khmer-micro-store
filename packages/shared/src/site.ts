@@ -224,6 +224,12 @@ export function isPromotionLive(promo: Pick<SiteSectionOf<"promotion">, "startsA
   return time >= Date.parse(promo.startsAt) && time < Date.parse(promo.endsAt);
 }
 
+/** Where a promotion is in its time window: not started, running, or over. */
+export function promotionTiming(promo: Pick<SiteSectionOf<"promotion">, "startsAt" | "endsAt">, now: Date): "scheduled" | "showing" | "ended" {
+  if (now.getTime() < Date.parse(promo.startsAt)) return "scheduled";
+  return isPromotionLive(promo, now) ? "showing" : "ended";
+}
+
 /** The sections a visitor sees right now: switched on, and promotions only while they run. */
 export function visibleSections(page: Pick<SitePage, "sections">, now: Date): SiteSection[] {
   return page.sections.filter((section) => section.visible && (section.type !== "promotion" || isPromotionLive(section, now)));

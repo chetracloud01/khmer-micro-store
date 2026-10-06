@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toFieldErrors } from "./form-errors";
-import { isPromotionLive, siteLinkSchema, siteSectionSchema, visibleSections, waitlistSignupSchema } from "./site";
+import { isPromotionLive, promotionTiming, siteLinkSchema, siteSectionSchema, visibleSections, waitlistSignupSchema } from "./site";
 
 const text = (km: string, en: string) => ({ km, en });
 
@@ -43,6 +43,12 @@ describe("site content", () => {
     expect(isPromotionLive(promotion, new Date("2026-10-31T23:59:59+07:00"))).toBe(false);
     expect(isPromotionLive(promotion, new Date("2026-11-01T00:00:00+07:00"))).toBe(true);
     expect(isPromotionLive(promotion, new Date("2026-12-01T00:00:00+07:00"))).toBe(false);
+  });
+
+  it("tells scheduled, showing and ended promotions apart", () => {
+    expect(promotionTiming(promotion, new Date("2026-10-15T12:00:00+07:00"))).toBe("scheduled");
+    expect(promotionTiming(promotion, new Date("2026-11-15T12:00:00+07:00"))).toBe("showing");
+    expect(promotionTiming(promotion, new Date("2026-12-01T00:00:00+07:00"))).toBe("ended");
   });
 
   it("leaves out switched-off sections and promotions that aren't running", () => {
