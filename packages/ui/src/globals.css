@@ -16,7 +16,7 @@
 
   --color-brand: 14 116 144; /* Khmio Teal #0E7490 (design/brand-guide.md); white text on it is 5.4:1 */
   --color-on-brand: 255 255 255;
-  --color-success: 22 163 74;
+  --color-success: 21 112 54; /* #157036: 6.2:1 on white, 5.3:1 on its own 10% tint (badges) */
   --color-warning: 180 83 9;
   --color-info: 37 99 235;
   --color-danger: 220 38 38;

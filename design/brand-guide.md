@@ -69,7 +69,7 @@ Rules:
 | Canvas | `#F4F6FA` | Page and post backgrounds |
 | White | `#FFFFFF` | Cards, text on teal |
 | Coin Gold | `#FBBF24` | The riel coin and rare highlights — never as a background for white text |
-| Success Green | `#16A34A` | "Paid", "Done" |
+| Success Green | `#157036` | "Paid", "Done" |
 
 Readability (contrast) checked: white on Khmio Teal is about 5.4 : 1 and Ink on Canvas is far above, both pass for normal text. Light Teal and Coin Gold are too light for text on white: use them only for shapes and highlights.
 
@@ -79,7 +79,9 @@ Readability (contrast) checked: white on Khmio Teal is about 5.4 : 1 and Ink on 
 
 The app uses named colour tokens (`brand`, `success`, `warning`, `danger`, `info` …), light and dark mode, and five accent choices for each viewer. The rules are in `design/design-standard.md` §3; the values are in `packages/ui/src/globals.css`.
 
-The app's default (teal) `brand` token in light mode is Khmio Teal `#0E7490`, so the app, the icon and the marketing use one teal. It replaced the lighter `#0891B2` on 2026-10-06, on which white button text reached only about 3.7 : 1.
+The app's default (teal) `brand` token in light mode is Khmio Teal `#0E7490`, so the app, the icon and the marketing use one teal. It replaced the lighter `#0891B2` on 2026-10-06, on which white button text reached only about 3.7 : 1. The same day, the `success` green became `#157036` (was `#16A34A`, about 3 : 1 on its light badges, now above 5 : 1).
+
+**Still borderline (open):** on their light-tinted badges, `danger` (4.1 : 1), `warning` (4.4 : 1) and `info` (4.5 : 1) sit just under or at the 4.5 : 1 small text needs. They pass on white. Fix by darkening each light-mode token slightly, checked the same way.
 
 ## 6. Fonts
 
