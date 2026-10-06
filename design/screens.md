@@ -365,23 +365,28 @@ banner anywhere.
 
 After login, the one place a customer sees and controls every product they
 use, from docs/platform-roadmap.md Phase 1. Mockups under
-`/mockup/account`. Built after the website mockups are approved.
+`/mockup/account`: a header with the logo, language, theme and the app
+switcher, and three tabs (My apps · Subscriptions · Account).
 
-### H1. My apps — New · Hub
+### H1. My apps — Mockup · Hub
 - A card per product: Khmio Shop (shop name, plan, status, "Open
   dashboard"); Class and Rent ("Join the waitlist", or "On the waitlist ✓").
 
-### H2. My subscriptions — New · Hub
+### H2. My subscriptions — Mockup · Hub
 - Per product: plan, status (trial / active / payment due / paused), next
   bill date and amount, "Pay by KHQR", "Change plan"; payment history.
-  The rules are the Shop's S12 and blueprint "Subscription life cycle".
+  The rules are the Shop's S12 and blueprint "Subscription life cycle", so
+  "Pay by KHQR" and "Change plan" open the Shop's billing page (S12): the
+  money logic lives in one place. Products not built yet say "coming soon".
 
-### H3. Account — New · Hub
+### H3. Account — Mockup · Hub
 - Name, login methods (Telegram, phone), language.
 
-### H4. App switcher — New · Hub
-- In the seller dashboard header: Shop · Class · Rent · My Khmio; products
-  not open to this account show "Coming soon".
+### H4. App switcher — Mockup · Hub
+- In the seller dashboard (sidebar and phone header) and in My Khmio: Shop ·
+  Class · Rent · My Khmio; the current one is ticked; products not open to
+  this account show "Coming soon" and lead to their website page. On a phone
+  the menu spans the screen.
 
 ## Build order
 

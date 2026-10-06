@@ -20,6 +20,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { mockStore } from "@/mock/mock-data";
 import { useAdmin } from "../admin-context";
+import { AppSwitcher } from "../app-switcher";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
 import { useStorePayments, useStoreSettings } from "../store-settings-context";
@@ -140,7 +141,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-canvas md:flex-row">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-6 border-r border-border bg-bg p-4 md:flex">
-        {shopIdentity}
+        <div className="flex items-center justify-between gap-2">
+          {shopIdentity}
+          <AppSwitcher current="shop" />
+        </div>
 
         <nav className="flex flex-1 flex-col gap-1">
           {navItems.map((item) => (
@@ -166,7 +170,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-bg p-4 md:hidden">
         {shopIdentity}
-        {languageToggle("down")}
+        <div className="flex items-center gap-1">
+          {languageToggle("down")}
+          <AppSwitcher current="shop" align="right" />
+        </div>
       </header>
 
       <main className="min-w-0 flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-4">
