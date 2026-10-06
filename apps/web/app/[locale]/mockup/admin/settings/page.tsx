@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
           />
           <Input
             label={t("settingsSupportTelegram")}
-            placeholder="@kms_support"
+            placeholder="@khmio_support"
             value={draft.supportTelegram}
             onChange={(e) => update("supportTelegram", e.target.value)}
             error={errors.supportTelegram}

@@ -162,5 +162,5 @@ export const LINK_REPLIES = {
     `✅ អ្នកនឹងទទួលព័ត៌មានថ្មីៗសម្រាប់ការបញ្ជាទិញ #${orderNumber} ពី ${shopName}\n\nYou'll get updates for order #${orderNumber} from ${shopName}.`,
   stopped: "🔕 បានឈប់ផ្ញើព័ត៌មានថ្មីៗ។\n\nUpdates stopped.",
   badCode: "⚠️ តំណនេះផុតកំណត់ ឬបានប្រើរួចហើយ។ សូមយកតំណថ្មីពីគេហទំព័រ។\n\nThis link has expired or was already used. Get a new one from the website.",
-  hello: "👋 សួស្តី! បូតនេះផ្ញើការជូនដំណឹងពី Khmer Micro-Store។\n\nHello! This bot sends Khmer Micro-Store notifications.",
+  hello: "👋 សួស្តី! បូតនេះផ្ញើការជូនដំណឹងពី Khmio។\n\nHello! This bot sends Khmio notifications.",
 } as const;

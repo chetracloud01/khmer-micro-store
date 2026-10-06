@@ -10,8 +10,8 @@ import {
   toFieldErrors,
   type FormErrorCode,
 } from "@khmer-micro-store/shared";
-import { Button, Input, SegmentedControl } from "@khmer-micro-store/ui";
-import { ArrowLeft, Phone, Send, Store } from "lucide-react";
+import { Button, Input, Mio, SegmentedControl } from "@khmer-micro-store/ui";
+import { ArrowLeft, Phone, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -28,6 +28,7 @@ type Step = "choose" | "phone" | "code";
 // number with an SMS code works for everyone else. Google comes later.
 export default function MerchantLoginMockupPage() {
   const t = useTranslations("MerchantLogin");
+  const tMascot = useTranslations("Mascot");
   const errorText = useFormErrorText();
   const locale = useLocale();
   const router = useRouter();
@@ -151,9 +152,7 @@ export default function MerchantLoginMockupPage() {
         {step === "choose" && (
           <>
             <div className="flex flex-col items-center gap-3 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-on-brand">
-                <Store className="h-8 w-8" aria-hidden="true" />
-              </span>
+              <Mio size={88} label={tMascot("label")} />
               <h1 className="text-xl font-bold">{t("title")}</h1>
               <p className="text-sm text-muted">{t("subtitle")}</p>
             </div>

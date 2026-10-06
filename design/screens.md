@@ -8,6 +8,19 @@ changes listed · **New** = not built yet.
 Phase: from `docs/blueprint.md` "Market and how we win" — L = launch, 2 = delivery and
 switching, 3 = growth.
 
+## Mascot
+
+Mio, the Khmio rabbit (docs/platform-launch-plan.md, Stage 1), drawn only
+by the `Mio` component in `packages/ui`. Decoration unless it says
+something: then it gets a label from the translation files.
+
+| Screen | Mio | Status |
+| --- | --- | --- |
+| S1 Login | Mio's face above the sign-in buttons | Mockup |
+| S4 Orders list, empty | Mio above "No orders yet" | Mockup |
+| B5 KHQR payment, paid | Mio with a riel coin, a small hop, "Paid!", then B6 | Mockup |
+| Telegram bot photo, stickers | From the designer's final artwork | Later |
+
 ## Buyer
 
 Flow: Shop → (Product) → Cart → Checkout → Pay → Order status.
@@ -65,7 +78,8 @@ Flow: Shop → (Product) → Cart → Checkout → Pay → Order status.
 - Official KHQR card: red header with the KHQR mark, shop name, amount,
   currency, dashed divider, QR with the Bakong mark in the centre.
 - Countdown (10:00); "Open bank app"; "Save QR".
-- Moves to B6 by itself when paid. Expired state with "Try again".
+- Moves to B6 by itself when paid, after a 1.5-second "Paid!" moment with
+  Mio (see Mascot). Expired state with "Try again".
 - Time bar and "pay within 10 minutes or the order is cancelled"; three
   "how to pay" steps.
 - The QR is scannable but its content is a mock until Bakong is connected.
@@ -89,6 +103,7 @@ Phone first; sidebar from tablet width; tables on desktop.
 
 ### S1. Login — Built · L
 - Continue with Telegram; Continue with phone (SMS code). Google later.
+- Mio's face at the top (see Mascot).
 
 ### S2. Onboarding — Built · L
 - Step 1 business type; step 2 shop name, link, optional logo.
@@ -113,7 +128,7 @@ Phone first; sidebar from tablet width; tables on desktop.
 - Search by order number, buyer name or phone; date filter.
 - Card (phone/tablet) or table row (desktop): order number, buyer, total,
   payment (KHQR paid / COD), delivery or pickup, time, status, next button.
-- Uses the shared data grid.
+- Uses the shared data grid. Empty list: Mio above "No orders yet".
 
 ### S5. Order detail — Built · L (delivery booking: 2)
 - Status header with the one next button (design standard §7).

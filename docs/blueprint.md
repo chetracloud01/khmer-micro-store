@@ -41,6 +41,8 @@ Updated at the end of every roadmap step.
 
 Khmer Micro-Store lets a Telegram or Facebook seller open a mobile shop in under 10 minutes, get paid by KHQR or ABA PayWay, and manage every order from Telegram. Money goes straight to the merchant's own account; the platform earns from subscriptions.
 
+**Brand.** Sellers and buyers know the platform as **Khmio** (`khmio.com`); this store is its first product, **Khmio Shop**. "Khmer Micro-Store" stays the project's code name in the repo. Brand details and the names to reserve: `docs/platform-launch-plan.md`, Stage 1.
+
 **Problem.** Small sellers take orders in chat, check payment screenshots by hand, and copy addresses to drivers one by one. This wastes hours and invites fake-payment fraud.
 
 **Users.**
@@ -283,6 +285,8 @@ flowchart LR
 The web app, API and worker are three processes from one Git repo. The worker does everything slow or repeated: checking KHQR payments, renewing the Bakong token, sending Telegram messages, and expiring unpaid orders.
 
 **Order flow in one line:** buyer checks out → API reserves stock and creates a payment → buyer pays → worker (KHQR) or PayWay callback confirms → order becomes Paid → Telegram alert → merchant packs and dispatches.
+
+**Growing beyond the store:** how this monolith can later become a platform with one login for several products (and when, if ever, to split into services) is in `docs/platform-roadmap.md`. The order of work for that growth — brand, platform website, social media, and choosing and building the second product — is in `docs/platform-launch-plan.md`.
 
 ## Tech stack and repo structure
 

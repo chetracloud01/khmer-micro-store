@@ -12,7 +12,7 @@ import "@khmer-micro-store/ui/globals.css";
 const kantumruy = Kantumruy_Pro({ subsets: ["khmer", "latin"], display: "swap", variable: "--font-kantumruy" });
 
 export const metadata: Metadata = {
-  title: "Khmer Micro-Store",
+  title: "Khmio",
 };
 
 // viewport-fit=cover lets pages use the full screen on notched phones; fixed

@@ -5,6 +5,7 @@ export * from "./Card";
 export * from "./cn";
 export * from "./DiscountBadge";
 export * from "./Input";
+export * from "./Mio";
 export * from "./PriceTag";
 export * from "./SearchInput";
 export * from "./Select";

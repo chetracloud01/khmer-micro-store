@@ -1,6 +1,6 @@
 {
   "Home": {
-    "title": "Khmer Micro-Store",
+    "title": "Khmio",
     "subtitle": "Foundation is ready"
   },
   "Styleguide": {
@@ -172,7 +172,12 @@
     "howTitle": "How to pay",
     "how1": "Open any bank app — ABA, ACLEDA, Wing, Bakong…",
     "how2": "Scan this QR. On this phone: save it, then upload it in the app.",
-    "how3": "Check the amount and confirm. This page updates by itself."
+    "how3": "Check the amount and confirm. This page updates by itself.",
+    "paidTitle": "Paid!",
+    "paidBody": "Thank you — {shop} has your order. Opening your order…"
+  },
+  "Mascot": {
+    "label": "Mio, the Khmio rabbit"
   },
   "MerchantLogin": {
     "title": "Sell online in minutes",
@@ -859,7 +864,7 @@
   "AdminNav": {
     "menuLabel": "Admin menu",
     "breadcrumbLabel": "Breadcrumb",
-    "brand": "Khmer Micro-Store",
+    "brand": "Khmio",
     "area": "Super admin",
     "groupMain": "Main",
     "groupMerchants": "Merchants",
@@ -1326,7 +1331,7 @@
     "cantScan": "Can't scan? Type this key into the app",
     "confirmCode": "Confirm and sign in",
     "codeTitle": "Enter your code",
-    "codeBody": "Open your authenticator app and type the 6-digit code for Khmer Micro-Store Admin. Lost your phone? Use a backup code.",
+    "codeBody": "Open your authenticator app and type the 6-digit code for Khmio Admin. Lost your phone? Use a backup code.",
     "signIn": "Sign in",
     "startOver": "Start again",
     "backupTitle": "Save your backup codes",

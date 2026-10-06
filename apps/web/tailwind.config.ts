@@ -64,6 +64,13 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(16px)" },
           to: { opacity: "1", transform: "none" },
         },
+        // Mio's little jump on the "Paid!" screen.
+        hop: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "30%": { transform: "translateY(-14px)" },
+          "55%": { transform: "translateY(0)" },
+          "70%": { transform: "translateY(-5px)" },
+        },
       },
       animation: {
         bump: "bump 300ms ease-out",
@@ -71,6 +78,7 @@ const config: Config = {
         "page-in": "page-in 220ms ease-out both",
         "drawer-in": "drawer-in 250ms ease-out both",
         "fade-in": "fade-in 200ms ease-out both",
+        hop: "hop 900ms ease-out both",
       },
       boxShadow: {
         card: "0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06)",

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatKhmerPhoneLocal, getOrderTab, ORDER_TABS } from "@khmer-micro-store/shared";
+import { Mio } from "@khmer-micro-store/ui";
 import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -174,6 +175,7 @@ function OrdersList() {
         exportFileName="orders"
         storageKey="merchant-orders"
         emptyTitle={t("noOrders")}
+        emptyArt={<Mio size={80} />}
       />
     </div>
   );

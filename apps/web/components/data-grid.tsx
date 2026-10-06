@@ -92,6 +92,7 @@ export function DataGrid<T>({
   exportFileName,
   storageKey,
   emptyTitle,
+  emptyArt,
 }: {
   rows: T[];
   getRowId: (row: T) => string;
@@ -117,6 +118,8 @@ export function DataGrid<T>({
   /** Remembers column, density and page-size choices per viewer. */
   storageKey?: string;
   emptyTitle?: string;
+  /** A picture above the empty message, such as Mio. */
+  emptyArt?: ReactNode;
 }) {
   const t = useTranslations("DataGrid");
   const [search, setSearch] = useState(initialSearch);
@@ -502,6 +505,7 @@ export function DataGrid<T>({
 
       {pageRows.length === 0 ? (
         <div className="flex flex-col items-center gap-1 px-4 py-12 text-center">
+          {emptyArt && <div className="mb-2">{emptyArt}</div>}
           <p className="font-medium text-fg">{emptyTitle ?? t("noResults")}</p>
           <p className="text-sm text-muted">{t("noResultsBody")}</p>
         </div>

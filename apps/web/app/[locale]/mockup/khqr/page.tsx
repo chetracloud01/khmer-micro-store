@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@khmer-micro-store/ui";
+import { Button, Mio } from "@khmer-micro-store/ui";
 import { Download, Landmark } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -16,8 +16,9 @@ import { useOrders } from "../orders-context";
 import { KhqrCard } from "./khqr-card";
 
 const QR_LIFETIME_SECONDS = 600; // 10 minutes, NBC's maximum for a KHQR code.
+const PAID_PAUSE_MS = 1500; // How long the "Paid!" moment shows before the order page.
 
-type PaymentStatus = "pending" | "expired";
+type PaymentStatus = "pending" | "paid" | "expired";
 
 function formatCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
@@ -70,6 +71,7 @@ function KhqrPayment() {
 function PayOrder({ order, orderHref }: { order: OrderRecord; orderHref: string }) {
   const t = useTranslations("Khqr");
   const tCart = useTranslations("Cart");
+  const tMascot = useTranslations("Mascot");
   const locale = useLocale();
   const router = useRouter();
   const { act } = useOrders();
@@ -124,11 +126,23 @@ function PayOrder({ order, orderHref }: { order: OrderRecord; orderHref: string 
     link.click();
   }
 
+  // A short "Paid!" moment with Mio, then the order page. The order is only
+  // marked paid when the pause ends: marking it earlier would send this page
+  // straight to the order page (see notPayable above) and skip the moment.
+  useEffect(() => {
+    if (status !== "paid") return;
+    const timer = setTimeout(() => {
+      if (act(order.orderNumber, "pay")) router.push(orderHref);
+      else setStatus("pending");
+    }, PAID_PAUSE_MS);
+    return () => clearTimeout(timer);
+  }, [status, act, order.orderNumber, router, orderHref]);
+
   // Dev-only: stands in for the worker polling Bakong every few seconds and
   // confirming payment (see docs/blueprint.md "Flow A: Bakong KHQR"). Once
   // that's wired up, this happens by itself on a real "paid" poll result.
   function handleSimulatePayment() {
-    if (act(order.orderNumber, "pay")) router.push(orderHref);
+    setStatus("paid");
   }
 
   return (
@@ -137,80 +151,89 @@ function PayOrder({ order, orderHref }: { order: OrderRecord; orderHref: string 
         <BuyerSteps steps={[tCart("stepCart"), tCart("stepCheckout"), tCart("stepPay")]} current={2} />
       </BuyerTopBar>
 
-      <div className="flex flex-col items-center gap-5 p-4 pb-8">
-        <KhqrCard
-          merchantName={storeName}
-          amountMinor={order.total}
-          currency={order.currency}
-          qrDataUrl={qrDataUrl}
-          qrAlt={t("qrAlt", { amount: formatMoney(order.total, order.currency), shop: storeName })}
-          dimmed={status === "expired"}
-        />
+      {status === "paid" ? (
+        <div className="flex flex-col items-center gap-3 px-4 py-16 text-center" role="status">
+          {/* Small on purpose: on the buyer's side the seller's shop comes first. */}
+          <Mio pose="coin" size={112} label={tMascot("label")} className="animate-hop motion-reduce:animate-none" />
+          <p className="text-2xl font-bold text-success">{t("paidTitle")}</p>
+          <p className="max-w-[300px] text-sm text-muted">{t("paidBody", { shop: storeName })}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-5 p-4 pb-8">
+          <KhqrCard
+            merchantName={storeName}
+            amountMinor={order.total}
+            currency={order.currency}
+            qrDataUrl={qrDataUrl}
+            qrAlt={t("qrAlt", { amount: formatMoney(order.total, order.currency), shop: storeName })}
+            dimmed={status === "expired"}
+          />
 
-        {status === "expired" ? (
-          <div className="flex w-full max-w-[300px] flex-col items-center gap-3 text-center" role="status">
-            <p className="font-semibold text-danger">{t("expiredTitle")}</p>
-            <p className="text-sm text-muted">{t("expiredBody")}</p>
-            <Button variant="primary" onClick={handleTryAgain} className="w-full">
-              {t("tryAgain")}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex w-full max-w-[300px] flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-muted">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-warning motion-reduce:animate-none" aria-hidden="true" />
-                  {t("waiting")}
-                </span>
-                <span className="font-semibold tabular-nums" role="timer" aria-label={t("expiresIn")}>
-                  {formatCountdown(secondsLeft)}
-                </span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-border/40" aria-hidden="true">
-                <div
-                  className="h-full rounded-full bg-brand transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
-                  style={{ width: `${(secondsLeft / QR_LIFETIME_SECONDS) * 100}%` }}
-                />
-              </div>
-              <p className="text-sm text-muted">{t("payWithin", { minutes: QR_LIFETIME_SECONDS / 60 })}</p>
-            </div>
-
-            {/* On the phone that shows the QR you can't scan it: save it, then upload it in the bank app. */}
-            <div className="grid gap-3">
-              <Button variant="primary" className="w-full">
-                <Landmark className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {t("openBankApp")}
-              </Button>
-              <Button variant="secondary" className="w-full" onClick={handleSaveQr} disabled={!qrDataUrl}>
-                <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {t("saveQr")}
+          {status === "expired" ? (
+            <div className="flex w-full max-w-[300px] flex-col items-center gap-3 text-center" role="status">
+              <p className="font-semibold text-danger">{t("expiredTitle")}</p>
+              <p className="text-sm text-muted">{t("expiredBody")}</p>
+              <Button variant="primary" onClick={handleTryAgain} className="w-full">
+                {t("tryAgain")}
               </Button>
             </div>
-
-            <ol className="flex flex-col gap-2 rounded-2xl border border-border p-4 text-sm">
-              <li className="font-semibold">{t("howTitle")}</li>
-              {[t("how1"), t("how2"), t("how3")].map((step, index) => (
-                <li key={step} className="flex items-start gap-2 text-muted">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
-                    {index + 1}
+          ) : (
+            <div className="flex w-full max-w-[300px] flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-muted">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-warning motion-reduce:animate-none" aria-hidden="true" />
+                    {t("waiting")}
                   </span>
-                  {step}
-                </li>
-              ))}
-            </ol>
+                  <span className="font-semibold tabular-nums" role="timer" aria-label={t("expiresIn")}>
+                    {formatCountdown(secondsLeft)}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-border/40" aria-hidden="true">
+                  <div
+                    className="h-full rounded-full bg-brand transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+                    style={{ width: `${(secondsLeft / QR_LIFETIME_SECONDS) * 100}%` }}
+                  />
+                </div>
+                <p className="text-sm text-muted">{t("payWithin", { minutes: QR_LIFETIME_SECONDS / 60 })}</p>
+              </div>
 
-            <p className="text-center text-xs text-muted">{t("mockQrNote")}</p>
-            <button
-              type="button"
-              onClick={handleSimulatePayment}
-              className="min-h-touch w-full rounded-DEFAULT border border-dashed border-border px-4 text-xs text-muted"
-            >
-              {t("simulatePayment")}
-            </button>
-          </div>
-        )}
-      </div>
+              {/* On the phone that shows the QR you can't scan it: save it, then upload it in the bank app. */}
+              <div className="grid gap-3">
+                <Button variant="primary" className="w-full">
+                  <Landmark className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t("openBankApp")}
+                </Button>
+                <Button variant="secondary" className="w-full" onClick={handleSaveQr} disabled={!qrDataUrl}>
+                  <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t("saveQr")}
+                </Button>
+              </div>
+
+              <ol className="flex flex-col gap-2 rounded-2xl border border-border p-4 text-sm">
+                <li className="font-semibold">{t("howTitle")}</li>
+                {[t("how1"), t("how2"), t("how3")].map((step, index) => (
+                  <li key={step} className="flex items-start gap-2 text-muted">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+
+              <p className="text-center text-xs text-muted">{t("mockQrNote")}</p>
+              <button
+                type="button"
+                onClick={handleSimulatePayment}
+                className="min-h-touch w-full rounded-DEFAULT border border-dashed border-border px-4 text-xs text-muted"
+              >
+                {t("simulatePayment")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </BuyerShell>
   );
 }
