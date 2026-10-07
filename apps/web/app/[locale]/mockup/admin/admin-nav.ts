@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CreditCard,
+  DatabaseBackup,
   Globe,
   Images,
   KeyRound,
@@ -74,6 +75,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     key: "groupSystem",
     items: [
       { key: "auditLog", segment: "audit-log", icon: ScrollText },
+      { key: "backups", segment: "backups", icon: DatabaseBackup },
       { key: "admins", segment: "admins", icon: UserCog },
       { key: "settings", segment: "settings", icon: Settings },
     ],
