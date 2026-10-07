@@ -13,7 +13,7 @@ import {
   type FormErrorCode,
   type ProductFormInput,
 } from "@khmio/shared";
-import { Button, Card, Input, Select, Switch, Textarea } from "@khmio/ui";
+import { Button, Card, Input, PageHeader, Select, Switch, Textarea } from "@khmio/ui";
 import { History, Loader2, Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -584,7 +584,7 @@ function ProductForm({ catalog, existing, onReset }: { catalog: Catalog; existin
 
   return (
     <div ref={formRef} className="flex flex-col gap-5 p-4">
-      <h1 className="text-lg font-semibold">{isNew ? t("newTitle") : t("editTitle")}</h1>
+      <PageHeader title={isNew ? t("newTitle") : t("editTitle")} />
 
       {draftRestored && (
         <div role="status" className="flex flex-wrap items-center gap-3 rounded-DEFAULT border border-info/40 bg-info/5 p-3 text-sm">

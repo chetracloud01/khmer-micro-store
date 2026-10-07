@@ -1,7 +1,7 @@
 "use client";
 
 import { canAddProduct } from "@khmio/shared";
-import { Button, ConfirmDialog } from "@khmio/ui";
+import { Button, ConfirmDialog, PageHeader } from "@khmio/ui";
 import { ChevronRight, EyeOff, ImageOff, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -173,25 +173,25 @@ export default function ProductsPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted">{t("description")}</p>
-        </div>
-        {atLimit ? (
-          <Button variant="primary" disabled>
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            {t("addProduct")}
-          </Button>
-        ) : (
-          <Link href={`/${locale}/m/products/new`}>
-            <Button variant="primary">
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        actions={
+          atLimit ? (
+            <Button variant="primary" disabled>
               <Plus className="h-4 w-4" aria-hidden="true" />
               {t("addProduct")}
             </Button>
-          </Link>
-        )}
-      </div>
+          ) : (
+            <Link href={`/${locale}/m/products/new`}>
+              <Button variant="primary">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                {t("addProduct")}
+              </Button>
+            </Link>
+          )
+        }
+      />
 
       {atLimit && <p className="rounded-DEFAULT border border-warning/40 bg-warning/5 p-3 text-sm">{tApp("productLimit", { count: products.length })}</p>}
       {deleteError && (

@@ -13,7 +13,7 @@ import {
   type DeliverySettings,
   type FormErrorCode,
 } from "@khmio/shared";
-import { Button, Card, cn, Input, Select } from "@khmio/ui";
+import { Button, Card, cn, Input, PageHeader, Select } from "@khmio/ui";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -195,10 +195,7 @@ function DeliveryForm({ initial, configured: initiallyConfigured }: { initial: D
 
   return (
     <div ref={formRef} className="flex flex-col gap-5 p-4">
-      <div>
-        <h1 className="text-xl font-bold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("description")}</p>
-      </div>
+      <PageHeader title={t("title")} description={t("description")} />
 
       {!configured && (
         <p role="status" className="rounded-DEFAULT border border-info/40 bg-info/5 p-3 text-sm">

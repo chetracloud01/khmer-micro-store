@@ -1,7 +1,7 @@
 "use client";
 
 import { getMissingForSharing, SHARE_REQUIREMENTS, type ShareRequirement } from "@khmio/shared";
-import { Card, cn } from "@khmio/ui";
+import { Card, cn, TONE_STYLES } from "@khmio/ui";
 import { Check, ChevronRight, ImagePlus, Lock, PackagePlus, Phone, Share2, Truck, Wallet, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -82,7 +82,7 @@ export function SetupChecklist() {
         <span
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-            item.done ? "bg-success/10 text-success" : isNext ? "bg-brand text-on-brand" : "bg-border/30 text-muted",
+            item.done ? TONE_STYLES.success : isNext ? "bg-brand text-on-brand" : TONE_STYLES.muted,
           )}
         >
           {item.done ? (

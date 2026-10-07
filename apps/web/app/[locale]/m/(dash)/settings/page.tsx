@@ -11,7 +11,7 @@ import {
   type DeliveryArea,
   type FormErrorCode,
 } from "@khmio/shared";
-import { Button, Card, Input, SegmentedControl, Select } from "@khmio/ui";
+import { Button, Card, Input, PageHeader, SegmentedControl, Select } from "@khmio/ui";
 import { ChevronRight, Loader2, LogOut, SlidersHorizontal, Truck, Upload, Wallet, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -148,7 +148,7 @@ export default function ShopSettingsPage() {
 
   return (
     <div ref={formRef} className="flex flex-col gap-5 p-4">
-      <h1 className="text-lg font-semibold">{tApp("shopDetailsTitle")}</h1>
+      <PageHeader title={tApp("shopDetailsTitle")} />
 
       {/* Delivery and store settings: their own pages, reached from here on a phone. */}
       <nav aria-label={t("moreSettings")} className="overflow-hidden rounded-DEFAULT border border-border bg-bg shadow-card">
@@ -185,9 +185,12 @@ export default function ShopSettingsPage() {
                     update("logoUrl", null);
                   }}
                   aria-label={t("removeLogo")}
-                  className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-bg"
+                  // A 44 px tap area around the small red circle (design-standard: no tap target under 44 px).
+                  className="absolute -right-3 -top-3 flex h-11 w-11 items-center justify-center rounded-full"
                 >
-                  <X className="h-4 w-4" aria-hidden="true" />
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-danger text-bg">
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </span>
                 </button>
               </div>
             ) : (

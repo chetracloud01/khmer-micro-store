@@ -14,7 +14,7 @@ import {
   type OrderStatus,
   type PaymentMethod,
 } from "@khmio/shared";
-import { cn } from "@khmio/ui";
+import { cn, StatusPill, type Tone } from "@khmio/ui";
 import { useLocale, useTranslations } from "next-intl";
 
 // One wording and one colour per order status, for the buyer's order page,
@@ -30,18 +30,19 @@ export interface OrderFactsForText {
   provinceId?: string | null;
 }
 
-export const ORDER_STATUS_TONE: Record<OrderStatus, string> = {
-  awaiting_payment: "bg-warning/10 text-warning",
-  paid: "bg-success/10 text-success",
-  cod_pending: "bg-warning/10 text-warning",
-  confirmed: "bg-info/10 text-info",
-  packing: "bg-info/10 text-info",
-  waiting_for_driver: "bg-info/10 text-info",
-  out_for_delivery: "bg-info/10 text-info",
-  delivered: "bg-success/10 text-success",
-  completed: "bg-success/10 text-success",
-  cancelled: "bg-danger/10 text-danger",
-  failed_delivery: "bg-danger/10 text-danger",
+/** Each status's colour role (design/design-standard.md §7): waiting = warning, moving = info, done = success, stopped = danger. */
+export const ORDER_STATUS_TONE: Record<OrderStatus, Tone> = {
+  awaiting_payment: "warning",
+  paid: "success",
+  cod_pending: "warning",
+  confirmed: "info",
+  packing: "info",
+  waiting_for_driver: "info",
+  out_for_delivery: "info",
+  delivered: "success",
+  completed: "success",
+  cancelled: "danger",
+  failed_delivery: "danger",
 };
 
 export function formatMoney(amount: number, currency: Currency): string {
@@ -112,14 +113,8 @@ export function useOrderText() {
 export function OrderStatusPill({ order, className }: { order: Pick<OrderFactsForText, "status" | "fulfilment">; className?: string }) {
   const { statusLabel } = useOrderText();
   return (
-    <span
-      className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold",
-        ORDER_STATUS_TONE[order.status],
-        className,
-      )}
-    >
+    <StatusPill tone={ORDER_STATUS_TONE[order.status]} className={className}>
       {statusLabel(order)}
-    </span>
+    </StatusPill>
   );
 }

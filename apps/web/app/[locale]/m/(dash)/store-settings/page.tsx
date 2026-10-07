@@ -1,7 +1,7 @@
 "use client";
 
 import { formatKhr, MAX_VAT_PERCENT, storeSettingsSchema, toFieldErrors, type FormErrorCode } from "@khmio/shared";
-import { Card, Input, SegmentedControl } from "@khmio/ui";
+import { Card, Input, PageHeader, SegmentedControl } from "@khmio/ui";
 import { ChevronRight, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -111,10 +111,7 @@ function SettingsForm({ initial }: { initial: StoreSettingsResponse }) {
 
   return (
     <div ref={formRef} className="flex flex-col gap-5 p-4">
-      <div>
-        <h1 className="text-lg font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("description")}</p>
-      </div>
+      <PageHeader title={t("title")} description={t("description")} />
 
       <Card className="flex flex-col p-4">
         <FormSection stacked title={t("sectionCurrency")} description={t("sectionCurrencyHelp")}>

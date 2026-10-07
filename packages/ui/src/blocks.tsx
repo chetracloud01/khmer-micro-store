@@ -70,11 +70,12 @@ export function StatCard({ icon: Icon, label, value, tone = "brand" }: { icon: L
   );
 }
 
-/** Nothing here yet: an optional icon, one sentence, and the next step. */
-export function EmptyState({ icon: Icon, title, body, action }: { icon?: LucideIcon; title: string; body?: string; action?: ReactNode }) {
+/** Nothing here yet: an optional icon (or a picture such as Mio), one sentence, and the next step. */
+export function EmptyState({ icon: Icon, art, title, body, action }: { icon?: LucideIcon; art?: ReactNode; title: string; body?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-      {Icon && (
+      {art}
+      {!art && Icon && (
         <span className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-border/20">
           <Icon className="h-6 w-6 text-muted" aria-hidden="true" />
         </span>

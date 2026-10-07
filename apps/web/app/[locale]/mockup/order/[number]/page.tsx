@@ -7,7 +7,7 @@ import {
   getBuyerProgress,
   type OrderStatus,
 } from "@khmio/shared";
-import { Button, cn, ConfirmDialog } from "@khmio/ui";
+import { Button, cn, ConfirmDialog, TONE_STYLES } from "@khmio/ui";
 import {
   AlertTriangle,
   Bus,
@@ -122,7 +122,7 @@ function OrderStatus({ order }: { order: OrderRecord }) {
   return (
     <BuyerShell className="gap-4 p-4 pb-32">
       <header className="flex flex-col items-center gap-2 pt-4 text-center">
-        <span className={cn("flex h-16 w-16 items-center justify-center rounded-full", ORDER_STATUS_TONE[order.status])}>
+        <span className={cn("flex h-16 w-16 items-center justify-center rounded-full", TONE_STYLES[ORDER_STATUS_TONE[order.status]])}>
           <Icon className="h-8 w-8" aria-hidden="true" />
         </span>
         <h1 className="text-xl font-bold leading-normal" role="status">

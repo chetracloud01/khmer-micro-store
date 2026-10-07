@@ -170,7 +170,7 @@ function OrderDetail({
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold leading-normal">
+          <h1 className="truncate text-xl font-semibold leading-normal">
             {t("orderNumber")} #{order.orderNumber}
           </h1>
           <p className="text-sm text-muted">{timeAgo(order.createdAt)}</p>

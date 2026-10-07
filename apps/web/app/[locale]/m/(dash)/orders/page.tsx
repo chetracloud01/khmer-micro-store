@@ -1,7 +1,7 @@
 "use client";
 
 import { formatKhmerPhoneLocal, getOrderTab, getSellerActions, ORDER_TABS, type OrderTab, type SellerOrderAction } from "@khmio/shared";
-import { Button, Card, cn, Mio } from "@khmio/ui";
+import { Button, Card, cn, EmptyState, Mio, PageHeader } from "@khmio/ui";
 import { ChevronRight, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -76,10 +76,7 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("description")}</p>
-      </div>
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
         {chip("all", tStore("categoryAll"), orders.length)}
@@ -93,10 +90,7 @@ export default function OrdersPage() {
       )}
 
       {shown.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <Mio size={80} />
-          <p className="text-sm text-muted">{t("noOrders")}</p>
-        </div>
+        <EmptyState art={<Mio size={80} />} title={t("noOrders")} />
       ) : (
         <ul className="flex flex-col gap-3">
           {shown.map((order) => {
