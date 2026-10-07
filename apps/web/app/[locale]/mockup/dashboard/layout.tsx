@@ -24,7 +24,7 @@ import { AppSwitcher } from "../app-switcher";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
 import { useStorePayments, useStoreSettings } from "../store-settings-context";
-import { useThemeLabels } from "../use-theme-labels";
+import { useThemeLabels } from "@/components/use-theme-labels";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Dashboard");

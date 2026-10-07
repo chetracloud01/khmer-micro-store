@@ -71,11 +71,26 @@ colours (`amber-500`, `text-white`, hex codes) in screens.
 | `info` | Neutral in-progress states: packing, out for delivery |
 | `bg`, `canvas`, `border` | Surfaces, page background, lines |
 | `fg`, `muted` | Text, secondary text |
-| `nav-*` | The admin's dark sidebar and dark overlays on images |
+| `nav-*` | The admin's dark sidebar (Deep Khmio Teal `#0A2A33`, a dark shade of the viewer's accent) and dark overlays on images; `nav-accent` is the current-page bar and logo square, `nav-badge` the menu's count badges |
 
 Every screen must read correctly in light and dark mode and with all five
 accent colours. Meaning is never carried by colour alone: pair it with an
-icon or a word ("Sold out", not just grey).
+icon or a word ("Sold out", not just grey). Readability is tested, not
+eyeballed: `apps/web/components/theme-contrast.test.ts` reads `globals.css`
+and checks every text pair (4.5 : 1) and shape (3 : 1) in light, dark and
+"follow the device", for every accent. A colour change that fails it doesn't
+ship.
+
+**One kit, no copies.** Every screen — admin, seller, buyer and their
+mockups — is built from the shared building blocks in `packages/ui`
+(`blocks.tsx`: `PageHeader`, `SectionTitle`, `StatCard`, `StatusPill` with
+the tones `brand` `success` `warning` `danger` `info` `muted`, `EmptyState`,
+`LoadingBlocks`, `ErrorState`, `DetailList`, `ConfirmDialog`; plus `Button`,
+`Card`, `Input`, `BottomSheet` …), the admin frame in
+`apps/web/components/admin-frame` and the data grid in
+`apps/web/components/data-grid.tsx`. A page never re-creates one of these; a
+block that's missing is added to the kit, shown on `/styleguide`, then used.
+The kit holds no words — every label comes from `messages/*.json`.
 
 **Type** — Kantumruy Pro for Khmer, system sans for Latin.
 

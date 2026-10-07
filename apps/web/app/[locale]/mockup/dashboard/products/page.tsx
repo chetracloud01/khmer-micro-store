@@ -7,14 +7,13 @@ import {
   formatUsd,
   getMinimumPlanForProductCount,
 } from "@khmio/shared";
-import { Button } from "@khmio/ui";
+import { Button, ConfirmDialog } from "@khmio/ui";
 import { ChevronRight, EyeOff, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getStartingVariant, getUnitKhr, getUnitUsdCents, type MockProduct } from "@/mock/mock-data";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { useMerchantProducts } from "../../merchant-products-context";
 import { useMerchantSubscription } from "../../merchant-subscription-context";

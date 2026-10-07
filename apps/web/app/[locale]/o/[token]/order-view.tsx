@@ -1,14 +1,13 @@
 "use client";
 
 import { approximateIn, BUYER_ORDER_STEPS, formatKhmerPhoneLocal, getBuyerProgress } from "@khmio/shared";
-import { Button, cn } from "@khmio/ui";
+import { Button, cn, ConfirmDialog } from "@khmio/ui";
 import { BellRing, Bus, Check, Clock, MapPin, PackageX, Phone, Send, Store, Truck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BuyerShell } from "@/components/buyer-shell";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
 import { api, ApiError, type PublicOrder, type TelegramLink } from "@/lib/api";
 

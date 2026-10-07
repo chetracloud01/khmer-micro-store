@@ -4,10 +4,11 @@ import { cn } from "@khmio/ui";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { ADMIN_NAV, adminHref, type AdminBadge } from "./admin-nav";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ADMIN_NAV, adminPath, isComingSoon, type AdminArea, type AdminBadge, type AdminNavGroup } from "./admin-nav";
 
-const CLOSED_GROUPS_KEY = "khmio:mockup-admin-nav-closed";
+/** Every page not built yet in this admin, gathered at the bottom and folded until opened. */
+const COMING_LATER = "groupComingLater";
 
 interface Indicator {
   top: number;
@@ -15,43 +16,59 @@ interface Indicator {
   visible: boolean;
 }
 
-function readClosedGroups(): Set<string> {
+/** Folded groups are remembered per viewer, apart for the live admin and the mockup. */
+const closedGroupsKey = (area: AdminArea) => `khmio:${area}-admin-nav-closed`;
+
+function readClosedGroups(area: AdminArea): Set<string> {
   try {
-    const raw = window.localStorage.getItem(CLOSED_GROUPS_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    const raw = window.localStorage.getItem(closedGroupsKey(area));
+    const parsed: unknown = raw ? JSON.parse(raw) : [COMING_LATER];
     return new Set(Array.isArray(parsed) ? parsed.filter((key): key is string => typeof key === "string") : []);
   } catch {
-    return new Set();
+    return new Set([COMING_LATER]);
   }
 }
 
 /**
- * The admin menu: groups fold open and closed, one highlight slides to the
- * current page, and the current page is scrolled into view. `compact` is the
- * icon-only sidebar, where every item stays visible.
+ * The admin menu, working pages first: each group holds only the pages built
+ * in this admin, and the rest wait in one "Coming later" group at the bottom,
+ * folded — so the pages in use fit a laptop screen without scrolling. Groups
+ * fold open and closed, one highlight slides to the current page, and the
+ * current page is scrolled into view. `compact` is the icon-only sidebar: every
+ * working page stays visible there, and "Coming later" is left out.
  */
 export function AdminNavMenu({
   compact,
-  locale,
+  area,
+  base,
   activeKey,
-  activeGroupKey,
   badgeCount,
 }: {
   compact: boolean;
-  locale: string;
+  area: AdminArea;
+  /** "/km/admin" or "/km/mockup/admin". */
+  base: string;
   activeKey: string | undefined;
-  activeGroupKey: string | undefined;
-  badgeCount: Record<AdminBadge, number>;
+  badgeCount: Partial<Record<AdminBadge, number>>;
 }) {
   const t = useTranslations("AdminNav");
   const idPrefix = useId();
   const navRef = useRef<HTMLElement>(null);
   const activeRef = useRef<HTMLAnchorElement>(null);
   // Only rendered in the browser (the shell waits for saved data).
-  const [closedGroups, setClosedGroups] = useState(readClosedGroups);
+  const [closedGroups, setClosedGroups] = useState(() => readClosedGroups(area));
   const [indicator, setIndicator] = useState<Indicator>({ top: 0, height: 0, visible: false });
   // Slide only after the first measurement, so the highlight doesn't fly in on load.
   const [animate, setAnimate] = useState(false);
+
+  const groups: AdminNavGroup[] = useMemo(() => {
+    const working = ADMIN_NAV.map((group) => ({ ...group, items: group.items.filter((item) => !isComingSoon(item, area)) })).filter(
+      (group) => group.items.length > 0,
+    );
+    const later = ADMIN_NAV.flatMap((group) => group.items).filter((item) => isComingSoon(item, area));
+    return later.length > 0 && !compact ? [...working, { key: COMING_LATER, items: later }] : working;
+  }, [area, compact]);
+  const activeGroupKey = groups.find((group) => group.items.some((item) => item.key === activeKey))?.key;
 
   // Landing on a page opens the group it lives in.
   useEffect(() => {
@@ -70,7 +87,7 @@ export function AdminNavMenu({
       if (next.has(key)) next.delete(key);
       else next.add(key);
       try {
-        window.localStorage.setItem(CLOSED_GROUPS_KEY, JSON.stringify([...next]));
+        window.localStorage.setItem(closedGroupsKey(area), JSON.stringify([...next]));
       } catch {
         // Storage unavailable — the choice just won't be remembered.
       }
@@ -82,7 +99,8 @@ export function AdminNavMenu({
     const nav = navRef.current;
     const link = activeRef.current;
     if (!nav || !link) {
-      setIndicator((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      // Back to the top too: a highlight left far down would stretch the menu and make it scroll.
+      setIndicator((prev) => (prev.visible || prev.top !== 0 ? { top: 0, height: 0, visible: false } : prev));
       return;
     }
     const navBox = nav.getBoundingClientRect();
@@ -120,15 +138,16 @@ export function AdminNavMenu({
         style={{ transform: `translateY(${indicator.top}px)`, height: indicator.height }}
         className={cn(
           "pointer-events-none absolute inset-x-0 top-0 rounded-DEFAULT bg-nav-fg/10",
-          "before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-brand",
+          "before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-nav-accent",
           animate && "transition-[transform,height,opacity] duration-300 ease-out motion-reduce:transition-none",
           indicator.visible ? "opacity-100" : "opacity-0",
         )}
       />
 
-      {ADMIN_NAV.map((group) => {
-        // A one-item group (the overview) has nothing to fold.
-        const foldable = !compact && group.items.length > 1;
+      {groups.map((group) => {
+        // A one-item group (the overview) has nothing to fold; "Coming later" always folds.
+        const foldable = !compact && (group.items.length > 1 || group.key === COMING_LATER);
+        const label = group.key === COMING_LATER ? t("groupComingLater", { count: group.items.length }) : t(group.key);
         const open = !foldable || !closedGroups.has(group.key);
         const panelId = `${idPrefix}-${group.key}`;
         const holdsActive = group.key === activeGroupKey;
@@ -143,10 +162,10 @@ export function AdminNavMenu({
                 onClick={() => toggleGroup(group.key)}
                 aria-expanded={open}
                 aria-controls={panelId}
-                className="group flex min-h-touch items-center gap-2 rounded-DEFAULT px-3 text-[11px] font-semibold uppercase tracking-wider text-nav-muted/80 transition-colors hover:text-nav-fg"
+                className="group flex min-h-touch items-center gap-2 rounded-DEFAULT px-3 text-xs font-semibold uppercase tracking-wider text-nav-muted/80 transition-colors hover:text-nav-fg"
               >
-                <span className="flex-1 text-left">{t(group.key)}</span>
-                {holdsActive && !open && <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />}
+                <span className="flex-1 text-left">{label}</span>
+                {holdsActive && !open && <span className="h-1.5 w-1.5 rounded-full bg-nav-accent" aria-hidden="true" />}
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 transition-transform duration-200 motion-reduce:transition-none",
@@ -156,9 +175,7 @@ export function AdminNavMenu({
                 />
               </button>
             ) : (
-              <p className="flex min-h-9 items-center px-3 text-[11px] font-semibold uppercase tracking-wider text-nav-muted/80">
-                {t(group.key)}
-              </p>
+              <p className="flex min-h-9 items-center px-3 text-xs font-semibold uppercase tracking-wider text-nav-muted/80">{label}</p>
             )}
 
             {/* Grid rows 0fr ↔ 1fr animates to the content's real height.
@@ -174,35 +191,32 @@ export function AdminNavMenu({
               <div className="flex min-h-0 flex-col gap-1 overflow-hidden">
                 {group.items.map((item) => {
                   const isActive = activeKey === item.key;
-                  const count = item.badge ? badgeCount[item.badge] : 0;
+                  const count = item.badge ? (badgeCount[item.badge] ?? 0) : 0;
+                  const soon = isComingSoon(item, area);
                   return (
                     <Link
                       key={item.key}
                       ref={isActive ? activeRef : undefined}
-                      href={adminHref(locale, item.segment)}
+                      href={adminPath(base, item.segment)}
                       aria-current={isActive ? "page" : undefined}
                       title={compact ? t(item.key) : undefined}
                       className={cn(
                         "relative flex min-h-touch shrink-0 items-center gap-3 rounded-DEFAULT px-3 text-sm font-medium transition-colors",
                         compact && "justify-center px-0",
                         isActive ? "text-nav-fg" : "text-nav-muted hover:bg-nav-fg/5 hover:text-nav-fg",
+                        soon && !isActive && "opacity-70",
                       )}
                     >
                       <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                       {!compact && <span className="flex-1 truncate">{t(item.key)}</span>}
                       {count > 0 &&
                         (compact ? (
-                          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-warning" aria-label={String(count)} />
+                          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-nav-badge" aria-label={String(count)} />
                         ) : (
-                          <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">
+                          <span className="rounded-full bg-nav-badge/15 px-2 py-0.5 text-xs font-semibold text-nav-badge">
                             {count}
                           </span>
                         ))}
-                      {!compact && item.comingSoon && (
-                        <span className="rounded bg-nav-fg/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-nav-muted">
-                          {t("soon")}
-                        </span>
-                      )}
                     </Link>
                   );
                 })}

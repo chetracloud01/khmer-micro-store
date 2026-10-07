@@ -7,7 +7,7 @@ import {
   getBuyerProgress,
   type OrderStatus,
 } from "@khmio/shared";
-import { Button, cn } from "@khmio/ui";
+import { Button, cn, ConfirmDialog } from "@khmio/ui";
 import {
   AlertTriangle,
   Bus,
@@ -31,7 +31,6 @@ import { useState } from "react";
 import { mockStore } from "@/mock/mock-data";
 import { orderLineLabel, type OrderRecord } from "@/mock/mock-orders";
 import { BuyerBottomBar, BuyerShell } from "@/components/buyer-shell";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useMerchantProducts } from "../../merchant-products-context";
 import { useMerchantProfile } from "../../merchant-profile-context";
 import { formatMoney, ORDER_STATUS_TONE, useOrderText } from "@/components/order-ui";

@@ -2,6 +2,7 @@ import { Prisma, type SystemDb } from "@khmio/db";
 import {
   adminExtendSchema,
   adminPlanChangeSchema,
+  backupIsStale,
   platformProductIdSchema,
   platformSettingsSaveSchema,
   type BackupFailure,
@@ -56,6 +57,18 @@ export class AdminController {
       this.db.outboxEvent.count({ where: { sentAt: null, attempts: { gte: MAX_ATTEMPTS_FOR_ADMIN }, kind: { not: "admin_alert" } } }),
     ]);
     return { shops, newThisWeek, paused, trialsEndingSoon, ordersToday, waitingOrders, messagesGaveUp };
+  }
+
+  /** The menu's red counts (admin frame): what needs a look, cheap enough to ask on every page change. */
+  @Get("badges")
+  @AdminPermissionNeeded("audit_view")
+  async badges() {
+    const now = new Date();
+    const [trialsEnding, latestDone] = await Promise.all([
+      this.db.subscription.count({ where: { status: "trialing", trialEndsAt: { gte: now, lte: new Date(now.getTime() + 3 * DAY_MS) } } }),
+      this.db.backupRun.findFirst({ where: { status: "done" }, orderBy: { finishedAt: "desc" }, select: { finishedAt: true } }),
+    ]);
+    return { trialsEnding, backupsStale: backupIsStale(latestDone?.finishedAt ?? null, now) ? 1 : 0 };
   }
 
   @Get("merchants")

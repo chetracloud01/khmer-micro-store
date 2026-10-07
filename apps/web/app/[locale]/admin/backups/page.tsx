@@ -1,21 +1,20 @@
 "use client";
 
 import { adminCan, backupIsStale, RESTORE_TEST_LATE_DAYS, type BackupRunView } from "@khmio/shared";
-import { Button, Card, cn } from "@khmio/ui";
+import { Button, Card, cn, ConfirmDialog, TONE_STYLES } from "@khmio/ui";
 import { AlertTriangle, ArchiveRestore, CircleCheck, DatabaseBackup, ExternalLink, Lock, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import type { AdminBackups } from "@/lib/admin-api";
 import { api, ApiError } from "@/lib/api";
 import { useAdminMe } from "../admin-context";
 import { LoadState, PageHeader, Pill, useDateText } from "../admin-ui";
 
 const STATUS_STYLES: Record<BackupRunView["status"], string> = {
-  queued: "bg-border/30 text-muted",
-  running: "bg-brand/10 text-brand",
-  done: "bg-success/10 text-success",
-  failed: "bg-danger/10 text-danger",
+  queued: TONE_STYLES.muted,
+  running: TONE_STYLES.brand,
+  done: TONE_STYLES.success,
+  failed: TONE_STYLES.danger,
 };
 /** While a backup waits or runs, the page asks again this often. */
 const REFRESH_MS = 3_000;

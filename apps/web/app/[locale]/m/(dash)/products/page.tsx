@@ -1,13 +1,12 @@
 "use client";
 
 import { canAddProduct } from "@khmio/shared";
-import { Button } from "@khmio/ui";
+import { Button, ConfirmDialog } from "@khmio/ui";
 import { ChevronRight, EyeOff, ImageOff, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { api, ApiError, type Catalog, type Product } from "@/lib/api";
 import { priceText, startingVariant, usdValue } from "@/lib/product-price";

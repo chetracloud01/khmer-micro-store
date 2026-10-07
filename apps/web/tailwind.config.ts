@@ -55,6 +55,8 @@ const config: Config = {
           fg: "rgb(var(--color-nav-fg) / <alpha-value>)",
           muted: "rgb(var(--color-nav-muted) / <alpha-value>)",
           border: "rgb(var(--color-nav-border) / <alpha-value>)",
+          accent: "rgb(var(--color-nav-accent) / <alpha-value>)",
+          badge: "rgb(var(--color-nav-badge) / <alpha-value>)",
         },
       },
       keyframes: {

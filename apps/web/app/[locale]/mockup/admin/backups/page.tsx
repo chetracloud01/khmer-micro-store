@@ -1,11 +1,10 @@
 "use client";
 
 import { adminRoleSchema, type AdminRole } from "@khmio/shared";
-import { BottomSheet, Button, Card, cn, Input, SegmentedControl, Switch } from "@khmio/ui";
+import { BottomSheet, Button, Card, cn, ConfirmDialog, Input, SegmentedControl, Switch, TONE_STYLES } from "@khmio/ui";
 import { AlertTriangle, ArchiveRestore, CircleCheck, DatabaseBackup, ExternalLink, Lock, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import {
   BACKUP_ALWAYS_KEEP,
@@ -26,10 +25,10 @@ import { useAdminData, useTimeAgo } from "../use-admin-data";
 
 const ROLES = adminRoleSchema.options;
 const STATUS_STYLES: Record<MockBackup["status"], string> = {
-  queued: "bg-border/30 text-muted",
-  running: "bg-brand/10 text-brand",
-  done: "bg-success/10 text-success",
-  failed: "bg-danger/10 text-danger",
+  queued: TONE_STYLES.muted,
+  running: TONE_STYLES.brand,
+  done: TONE_STYLES.success,
+  failed: TONE_STYLES.danger,
 };
 const CHANGES: MockCatalogChange["change"][] = ["back", "removed", "changed"];
 /** The monthly restore test (blueprint "The routine") is late after this. */

@@ -12,13 +12,12 @@ import {
   type SiteSection,
   type SiteSectionType,
 } from "@khmio/shared";
-import { BottomSheet, Button, buttonVariants, Card, SegmentedControl, Switch, cn } from "@khmio/ui";
+import { BottomSheet, Button, buttonVariants, Card, cn, ConfirmDialog, SegmentedControl, Switch } from "@khmio/ui";
 import { ArrowDown, ArrowLeft, ArrowUp, Eye, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
 import { useAdmin } from "../../../admin-context";
 import { SITE_PAGE_INFO, SITE_PAGE_KEYS, useWebsite, type SitePageKey } from "../../../website-context";

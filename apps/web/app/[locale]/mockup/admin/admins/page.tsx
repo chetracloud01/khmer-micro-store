@@ -10,13 +10,12 @@ import {
   type AdminRole,
   type FormErrorCode,
 } from "@khmio/shared";
-import { BottomSheet, Button, Card, Input, Select } from "@khmio/ui";
+import { BottomSheet, Button, Card, ConfirmDialog, Input, Select, TONE_STYLES } from "@khmio/ui";
 import { Check, ChevronRight, Minus, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CURRENT_ADMIN_ID, type MockAdminUser } from "@/mock/mock-admin-billing";
 import { useAdmin } from "../../admin-context";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { useFormErrorText } from "@/components/form-ui";
 import { PageHeader, Pill, SectionTitle } from "../admin-ui";
@@ -27,9 +26,9 @@ const ROLES = adminRoleSchema.options;
 type AdminState = "active" | "invited" | "disabled";
 
 const STATE_STYLES: Record<AdminState, string> = {
-  active: "bg-success/10 text-success",
-  invited: "bg-warning/10 text-warning",
-  disabled: "bg-border/30 text-muted",
+  active: TONE_STYLES.success,
+  invited: TONE_STYLES.warning,
+  disabled: TONE_STYLES.muted,
 };
 
 function stateOf(admin: MockAdminUser): AdminState {

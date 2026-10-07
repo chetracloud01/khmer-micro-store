@@ -14,7 +14,7 @@ import { useDeliverySettings } from "../delivery-settings-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
 import { useOnlineStock } from "../online-stock";
 import { useCheckoutTotal } from "../use-checkout-total";
-import { useThemeLabels } from "../use-theme-labels";
+import { useThemeLabels } from "@/components/use-theme-labels";
 import { CategoryChip, ProductCard } from "../shared-ui";
 import { useShopIdentity } from "../shop-identity";
 import { useShopProducts } from "../shop-products";

@@ -1,11 +1,10 @@
 "use client";
 
 import { sitePictureDetailsSchema, toFieldErrors, type FormErrorCode } from "@khmio/shared";
-import { BottomSheet, Button, Card, cn } from "@khmio/ui";
+import { BottomSheet, Button, Card, cn, ConfirmDialog } from "@khmio/ui";
 import { ImagePlus, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ACCEPTED_IMAGE_TYPES, compressImage } from "@/components/compress-image";
 import { focusFirstInvalidField } from "@/components/form-ui";
 import type { MockPicture } from "@/mock/mock-site";

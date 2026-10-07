@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppSwitcher } from "../app-switcher";
-import { useThemeLabels } from "../use-theme-labels";
+import { useThemeLabels } from "@/components/use-theme-labels";
 
 // My Khmio (design/screens.md "Account hub"): after login, the one place a
 // customer sees and controls every Khmio product — apps, subscriptions and

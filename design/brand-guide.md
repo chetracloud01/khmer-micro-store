@@ -83,6 +83,8 @@ The app's default (teal) `brand` token in light mode is Khmio Teal `#0E7490`, so
 
 Also on 2026-10-06, `danger` became `#C81E1E` (was `#DC2626`), `warning` `#A34B08` (was `#B45309`) and `info` `#1D5AE0` (was `#2563EB`): on their light-tinted badges they had been just under the 4.5 : 1 small text needs, and now reach about 5 : 1. Every light-mode status colour now passes on white, on the page background and on its own badge. When a colour token changes, check those three backgrounds the same way.
 
+On 2026-10-07 the admin sidebar became **Deep Khmio Teal** `#0A2A33` (was the plain navy `#0F172A`), with a bright teal `#2DD4BF` bar on the current page and gold `#FBBF24` count badges; with another accent chosen it takes a dark shade of that accent. The same day three colours moved a shade to pass 4.5 : 1: grey text `#627288` (was `#64748B`), the rose accent `#D11B43` (was `#E11D48`) and dark-mode `danger` `#F15A5A` (was `#EF4444`). These checks now run automatically: `apps/web/components/theme-contrast.test.ts`.
+
 ## 6. Fonts
 
 **One family everywhere: Kantumruy Pro** (free from Google Fonts, under the SIL Open Font License). It has Khmer and Latin letters, so a mixed sentence looks like one voice. The app already uses it; use the same in Canva, CapCut, Figma and print.

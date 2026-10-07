@@ -8,12 +8,11 @@ import {
   type SiteSection,
   type SiteSectionOf,
 } from "@khmio/shared";
-import { BottomSheet, Button, Card, Select, Switch, cn } from "@khmio/ui";
+import { BottomSheet, Button, Card, cn, ConfirmDialog, Select, Switch, TONE_STYLES } from "@khmio/ui";
 import { Pencil, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { focusFirstInvalidField } from "@/components/form-ui";
 import { useAdmin } from "../../admin-context";
 import { SITE_PAGE_KEYS, useWebsite, type SitePageKey } from "../../website-context";
@@ -32,11 +31,11 @@ const FILTERS = ["all", "showing", "scheduled", "ended", "off", "unpublished"] a
 type Filter = (typeof FILTERS)[number];
 
 const STATUS_STYLE: Record<Status, string> = {
-  showing: "bg-success/10 text-success",
-  scheduled: "bg-info/10 text-info",
+  showing: TONE_STYLES.success,
+  scheduled: TONE_STYLES.info,
   ended: "bg-border/40 text-muted",
   off: "bg-border/40 text-muted",
-  unpublished: "bg-warning/10 text-warning",
+  unpublished: TONE_STYLES.warning,
 };
 
 interface Row {

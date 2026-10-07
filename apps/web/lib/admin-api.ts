@@ -62,6 +62,12 @@ export interface AdminMerchantDetail {
 
 export type AdminSettings = PlatformSettingsSave;
 
+/** GET /admin/badges: the menu's red counts. */
+export interface AdminBadges {
+  trialsEnding: number;
+  backupsStale: number;
+}
+
 /** GET /admin/backups (A13): one page of runs, newest first, the newest good one, and the last restore test. */
 export interface AdminBackups {
   runs: BackupRunView[];
