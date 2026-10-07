@@ -1,10 +1,11 @@
 "use client";
 
 import { adminCan, backupIsStale, RESTORE_TEST_LATE_DAYS, type BackupRunView } from "@khmio/shared";
-import { Button, Card, cn, ConfirmDialog, TONE_STYLES } from "@khmio/ui";
+import { Button, Card, cn, ConfirmDialog, EmptyState, SectionTitle, TONE_STYLES } from "@khmio/ui";
 import { AlertTriangle, ArchiveRestore, CircleCheck, DatabaseBackup, ExternalLink, Lock, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import type { AdminBackups } from "@/lib/admin-api";
 import { api, ApiError } from "@/lib/api";
 import { useAdminMe } from "../admin-context";
@@ -118,6 +119,24 @@ export default function BackupsPage() {
   const waitingTooLong = active?.status === "queued" && Date.now() - Date.parse(active.createdAt) > WAITING_TOO_LONG_MS;
   const testAt = data.restoreTestPassedAt;
   const testLate = !testAt || Date.now() - Date.parse(testAt) > RESTORE_TEST_LATE_DAYS * DAY_MS;
+  const when = (run: BackupRunView) => dateTime(run.startedAt ?? run.createdAt);
+
+  const columns: DataGridColumn<BackupRunView>[] = [
+    {
+      key: "when",
+      header: t("colWhen"),
+      hideable: false,
+      sortable: true,
+      value: (run) => Date.parse(run.startedAt ?? run.createdAt),
+      exportValue: (run) => run.startedAt ?? run.createdAt,
+      cell: (run) => <span className="whitespace-nowrap font-medium tabular-nums">{when(run)}</span>,
+    },
+    { key: "kind", header: t("bakColKind"), sortable: true, value: kind, cell: (run) => <span className="text-muted">{kind(run)}</span> },
+    { key: "size", header: t("bakColSize"), align: "right", sortable: true, value: (run) => run.sizeBytes ?? 0, exportValue: size, cell: (run) => <span className="tabular-nums">{size(run)}</span> },
+    { key: "took", header: t("bakColDuration"), align: "right", value: took, cell: (run) => <span className="tabular-nums text-muted">{took(run)}</span> },
+    { key: "status", header: t("colStatus"), sortable: true, value: (run) => t(`bakStatus_${run.status}`), cell: statusPill },
+    { key: "file", header: t("bakColKept"), value: file, cell: (run) => <span className="text-muted">{file(run)}</span> },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -177,26 +196,43 @@ export default function BackupsPage() {
         <p className="text-muted">{t("bakNoDownload")}</p>
       </div>
 
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{t("bakListTitle")}</h2>
+      <SectionTitle>{t("bakListTitle")}</SectionTitle>
       {data.runs.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted">{t("bakEmpty")}</Card>
-      ) : (
         <Card className="p-0">
-          <ul className="flex flex-col divide-y divide-border">
-            {data.runs.map((run) => (
-              <li key={run.id} className="flex flex-col gap-1 p-4 text-sm md:flex-row md:items-center md:gap-4">
-                <span className="shrink-0 font-medium tabular-nums md:w-36">{dateTime(run.startedAt ?? run.createdAt)}</span>
-                <span className="min-w-0 flex-1 truncate text-muted">{kind(run)}</span>
-                <span className="flex flex-wrap items-center gap-x-3 gap-y-1 md:contents">
-                  <span className="tabular-nums md:w-20 md:text-right">{size(run)}</span>
-                  <span className="tabular-nums text-muted md:w-24 md:text-right">{took(run)}</span>
-                  <span className="md:w-56">{statusPill(run)}</span>
-                  <span className="text-muted md:w-28">{file(run)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <EmptyState icon={DatabaseBackup} title={t("bakEmpty")} />
         </Card>
+      ) : (
+        <DataGrid
+          rows={data.runs}
+          getRowId={(run) => run.id}
+          columns={columns}
+          searchText={(run) => `${kind(run)} ${t(`bakStatus_${run.status}`)}`}
+          searchPlaceholder={t("bakSearch")}
+          chips={[
+            { value: "failed", label: t("bakStatus_failed"), predicate: (run: BackupRunView) => run.status === "failed" },
+            { value: "manual", label: t("bakKind_manual"), predicate: (run: BackupRunView) => run.kind === "manual" },
+          ]}
+          initialSort={{ key: "when", direction: "desc" }}
+          renderCard={(run) => (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium tabular-nums">{when(run)}</p>
+                  <p className="truncate text-sm text-muted">{kind(run)}</p>
+                </div>
+                <span className="shrink-0 font-semibold tabular-nums">{size(run)}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                {statusPill(run)}
+                <span className="tabular-nums">{took(run)}</span>
+                <span>{file(run)}</span>
+              </div>
+            </div>
+          )}
+          exportFileName="backups"
+          storageKey="admin-live-backups"
+          emptyTitle={t("noMatches")}
+        />
       )}
       {data.more && (
         <Button

@@ -1,15 +1,21 @@
 "use client";
 
-import { formatKhmerPhoneLocal, PLATFORM_PRODUCT_IDS, type PlatformProductId } from "@khmio/shared";
-import { Button, Card, cn } from "@khmio/ui";
+import { formatKhmerPhoneLocal, PLATFORM_PRODUCT_IDS, WAITLIST_BUSINESS_TYPES, type PlatformProductId } from "@khmio/shared";
+import { Button, Card, EmptyState } from "@khmio/ui";
+import { ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import type { AdminWaitlist } from "@/lib/admin-api";
 import { api, ApiError } from "@/lib/api";
 import { SITE_PRODUCTS } from "@/site/content";
 import { LoadState, PageHeader, Pill, useDateText } from "../admin-ui";
 
+type Signup = AdminWaitlist["signups"][number];
 const productName = (id: PlatformProductId) => SITE_PRODUCTS.find((product) => product.id === id)?.name ?? id;
+const COMING_SOON = PLATFORM_PRODUCT_IDS.filter((id) => SITE_PRODUCTS.find((entry) => entry.id === id)?.status === "coming_soon");
+/** Loaded at a time; the grid searches and filters what's loaded, "Load older" adds the next page. */
+const BATCH = 500;
 
 // A14. The website waitlist (design/screens.md): who asked to hear when a
 // coming-soon product opens, and how many per product — the evidence for
@@ -17,103 +23,121 @@ const productName = (id: PlatformProductId) => SITE_PRODUCTS.find((product) => p
 // Read-only. Owner and support only: it holds phone numbers.
 export default function WaitlistPage() {
   const t = useTranslations("AdminApp");
+  const tAdmin = useTranslations("Admin");
   const tSite = useTranslations("Site");
   const { dateTime } = useDateText();
-  const [product, setProduct] = useState<PlatformProductId | "">("");
   const [data, setData] = useState<AdminWaitlist | null>(null);
   const [failed, setFailed] = useState(false);
   const [notAllowed, setNotAllowed] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback((filter: PlatformProductId | "", before?: string) => {
+  const load = useCallback((before?: string) => {
     setFailed(false);
-    const query = new URLSearchParams({ ...(filter ? { product: filter } : {}), ...(before ? { before } : {}) }).toString();
-    return api<AdminWaitlist>(`/admin/waitlist${query ? `?${query}` : ""}`).then(
+    const query = new URLSearchParams({ limit: String(BATCH), ...(before ? { before } : {}) }).toString();
+    return api<AdminWaitlist>(`/admin/waitlist?${query}`).then(
       (page) => setData((previous) => (before && previous ? { ...page, signups: [...previous.signups, ...page.signups] } : page)),
       (error: unknown) => (error instanceof ApiError && error.status === 403 ? setNotAllowed(true) : setFailed(true)),
     );
   }, []);
   useEffect(() => {
-    setData(null);
-    void load(product);
-  }, [product, load]);
+    void load();
+  }, [load]);
 
-  const businessType = (type: AdminWaitlist["signups"][number]["businessType"]) =>
+  const businessType = (type: Signup["businessType"]) =>
     ({ teacher: tSite("waitlistTeacher"), school: tSite("waitlistSchool"), landlord: tSite("waitlistLandlord"), other: tSite("waitlistOther") })[type];
 
-  if (notAllowed) {
-    return (
-      <div className="flex flex-col gap-4">
-        <PageHeader title={t("waitlistTitle")} />
-        <Card className="p-8 text-center text-sm text-muted">{t("waitlistNotAllowed")}</Card>
-      </div>
-    );
-  }
-
-  const filters: { value: PlatformProductId | ""; label: string }[] = [
-    { value: "", label: t("waitlistAllProducts") },
-    ...PLATFORM_PRODUCT_IDS.filter((id) => SITE_PRODUCTS.find((entry) => entry.id === id)?.status === "coming_soon").map((id) => ({
-      value: id,
-      label: `${productName(id)} · ${data?.counts[id] ?? 0}`,
-    })),
+  const columns: DataGridColumn<Signup>[] = [
+    {
+      key: "when",
+      header: tAdmin("colWhen"),
+      sortable: true,
+      value: (signup) => Date.parse(signup.createdAt),
+      exportValue: (signup) => signup.createdAt,
+      cell: (signup) => <span className="whitespace-nowrap tabular-nums text-muted">{dateTime(signup.createdAt)}</span>,
+    },
+    { key: "name", header: t("waitlistColName"), hideable: false, sortable: true, value: (signup) => signup.name, cell: (signup) => <span className="font-medium">{signup.name}</span> },
+    {
+      key: "phone",
+      header: t("waitlistColPhone"),
+      value: (signup) => formatKhmerPhoneLocal(signup.phone),
+      cell: (signup) => (
+        <a href={`tel:+${signup.phone}`} onClick={(event) => event.stopPropagation()} className="inline-flex min-h-touch items-center tabular-nums text-brand hover:underline">
+          {formatKhmerPhoneLocal(signup.phone)}
+        </a>
+      ),
+    },
+    { key: "type", header: t("waitlistColType"), sortable: true, value: (signup) => businessType(signup.businessType), cell: (signup) => businessType(signup.businessType) },
+    {
+      key: "product",
+      header: t("waitlistColProduct"),
+      sortable: true,
+      value: (signup) => productName(signup.product),
+      cell: (signup) => <Pill tone="brand">{productName(signup.product)}</Pill>,
+    },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <PageHeader title={t("waitlistTitle")} description={t("waitlistDescription")} />
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-        {filters.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={product === option.value}
-            onClick={() => setProduct(option.value)}
-            className={cn(
-              "min-h-touch shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-medium",
-              product === option.value ? "border-brand bg-brand text-on-brand" : "border-border bg-bg text-muted hover:text-fg",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {!data ? (
-        <LoadState failed={failed} onRetry={() => void load(product)} />
+      {notAllowed ? (
+        <Card className="p-8 text-center text-sm text-muted">{t("waitlistNotAllowed")}</Card>
+      ) : !data ? (
+        <LoadState failed={failed} onRetry={() => void load()} />
       ) : data.signups.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted">{t("waitlistEmpty")}</Card>
+        <EmptyState icon={ListChecks} title={t("waitlistEmpty")} />
       ) : (
-        <Card className="p-0">
-          <ul className="flex flex-col divide-y divide-border">
-            {data.signups.map((signup) => (
-              <li key={signup.id} className="flex flex-col gap-1 p-4 text-sm md:flex-row md:items-baseline md:gap-4">
-                <span className="w-32 shrink-0 text-xs text-muted tabular-nums">{dateTime(signup.createdAt)}</span>
-                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{signup.name}</span>
-                  <a href={`tel:+${signup.phone}`} className="inline-flex min-h-touch items-center text-brand tabular-nums md:min-h-0">
-                    {formatKhmerPhoneLocal(signup.phone)}
-                  </a>
-                  <span className="text-muted">{businessType(signup.businessType)}</span>
+        <>
+          <DataGrid
+            rows={data.signups}
+            getRowId={(signup) => signup.id}
+            columns={columns}
+            searchText={(signup) => `${signup.name} ${signup.phone} ${formatKhmerPhoneLocal(signup.phone)}`}
+            searchPlaceholder={t("waitlistSearch")}
+            chips={COMING_SOON.map((id) => ({ value: id, label: productName(id), predicate: (signup: Signup) => signup.product === id }))}
+            filters={[
+              {
+                key: "type",
+                label: t("waitlistColType"),
+                options: WAITLIST_BUSINESS_TYPES.map((type) => ({ value: type, label: businessType(type) })),
+                predicate: (signup, value) => signup.businessType === value,
+              },
+            ]}
+            initialSort={{ key: "when", direction: "desc" }}
+            renderCard={(signup) => (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 truncate font-medium">{signup.name}</span>
+                  <Pill tone="brand">{productName(signup.product)}</Pill>
+                </div>
+                <span className="text-sm text-muted">
+                  {businessType(signup.businessType)} · {dateTime(signup.createdAt)}
                 </span>
-                <Pill className="self-start bg-brand/10 text-brand">{productName(signup.product)}</Pill>
-              </li>
-            ))}
-          </ul>
-        </Card>
+              </div>
+            )}
+            renderCardAction={(signup) => (
+              <a href={`tel:+${signup.phone}`} className="inline-flex min-h-touch items-center px-4 font-medium tabular-nums text-brand">
+                {formatKhmerPhoneLocal(signup.phone)}
+              </a>
+            )}
+            exportFileName="waitlist"
+            storageKey="admin-live-waitlist"
+            emptyTitle={tAdmin("noMatches")}
+          />
+          {data.more && (
+            <Button
+              variant="secondary"
+              className="self-center"
+              loading={loadingMore}
+              onClick={() => {
+                setLoadingMore(true);
+                void load(data.signups[data.signups.length - 1]?.createdAt).finally(() => setLoadingMore(false));
+              }}
+            >
+              {t("older")}
+            </Button>
+          )}
+        </>
       )}
-      {data?.more && (
-        <Button
-          variant="secondary"
-          className="self-center"
-          loading={loadingMore}
-          onClick={() => {
-            setLoadingMore(true);
-            void load(product, data.signups[data.signups.length - 1]?.createdAt).finally(() => setLoadingMore(false));
-          }}
-        >
-          {t("older")}
-        </Button>
-      )}
-    </div>
+    </>
   );
 }

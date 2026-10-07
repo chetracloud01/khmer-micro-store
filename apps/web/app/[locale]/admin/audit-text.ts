@@ -18,6 +18,10 @@ const KNOWN = new Set([
   "store.details_saved",
   "store.settings_saved",
   "store.delivery_saved",
+  "store.telegram_group_linked",
+  "store.telegram_group_unlinked",
+  "store.created",
+  "merchant.signed_up",
   "backup.started",
   "backup.restore_test_passed",
 ]);

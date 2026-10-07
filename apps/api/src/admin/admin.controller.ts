@@ -20,14 +20,17 @@ import { MAX_ATTEMPTS_FOR_ADMIN } from "./outbox-limits";
 import { applyOverrideToDates, periodEnd } from "./subscription-override";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** How many rows a list page asks for: PAGE by default, at most 500 (the admin tables load a big page and filter it in the browser). */
+const limitSchema = z.coerce.number().int().min(1).max(500).optional();
 const auditQuerySchema = z.object({
   storeId: z.string().uuid().optional(),
   action: z.string().max(60).optional(),
   before: z.string().datetime().optional(),
+  limit: limitSchema,
 });
-const waitlistQuerySchema = z.object({ product: platformProductIdSchema.optional(), before: z.string().datetime().optional() });
+const waitlistQuerySchema = z.object({ product: platformProductIdSchema.optional(), before: z.string().datetime().optional(), limit: limitSchema });
 const merchantsQuerySchema = z.object({ q: z.string().trim().max(60).optional() });
-const backupsQuerySchema = z.object({ before: z.string().datetime().optional() });
+const backupsQuerySchema = z.object({ before: z.string().datetime().optional(), limit: limitSchema });
 const PAGE = 100;
 
 /**
@@ -179,11 +182,11 @@ export class AdminController {
   @Get("audit-log")
   @AdminPermissionNeeded("audit_view")
   async auditLog(@Query() query: unknown) {
-    const { storeId, action, before } = auditQuerySchema.parse(query);
+    const { storeId, action, before, limit = PAGE } = auditQuerySchema.parse(query);
     const rows = await this.db.auditLog.findMany({
       where: { ...(storeId ? { storeId } : {}), ...(action ? { action: { startsWith: action } } : {}), ...(before ? { at: { lt: new Date(before) } } : {}) },
       orderBy: { at: "desc" },
-      take: PAGE,
+      take: limit,
     });
     // Names for the people and shops in this page, read once.
     const adminIds = rows.filter((row) => row.actorType === "admin" && row.actorId).map((row) => row.actorId!);
@@ -210,7 +213,7 @@ export class AdminController {
         after: row.after,
       })),
       // For "older": pass the last entry's time as `before`.
-      more: rows.length === PAGE,
+      more: rows.length === limit,
     };
   }
 
@@ -218,13 +221,13 @@ export class AdminController {
   @Get("waitlist")
   @AdminPermissionNeeded("merchants_manage")
   async waitlist(@Query() query: unknown) {
-    const { product, before } = waitlistQuerySchema.parse(query);
+    const { product, before, limit = PAGE } = waitlistQuerySchema.parse(query);
     const [counts, rows] = await Promise.all([
       this.db.waitlistSignup.groupBy({ by: ["product"], _count: { _all: true } }),
       this.db.waitlistSignup.findMany({
         where: { ...(product ? { product } : {}), ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
         orderBy: { createdAt: "desc" },
-        take: PAGE,
+        take: limit,
         select: { id: true, product: true, name: true, phone: true, businessType: true, createdAt: true },
       }),
     ]);
@@ -232,7 +235,7 @@ export class AdminController {
       counts: Object.fromEntries(counts.map((row) => [row.product, row._count._all])),
       signups: rows,
       // For "older": pass the last sign-up's time as `before`.
-      more: rows.length === PAGE,
+      more: rows.length === limit,
     };
   }
 
@@ -240,9 +243,9 @@ export class AdminController {
   @Get("backups")
   @AdminPermissionNeeded("backups_view")
   async backups(@Query() query: unknown) {
-    const { before } = backupsQuerySchema.parse(query);
+    const { before, limit = PAGE } = backupsQuerySchema.parse(query);
     const [rows, latestDone, settings] = await Promise.all([
-      this.db.backupRun.findMany({ where: before ? { createdAt: { lt: new Date(before) } } : {}, orderBy: { createdAt: "desc" }, take: PAGE }),
+      this.db.backupRun.findMany({ where: before ? { createdAt: { lt: new Date(before) } } : {}, orderBy: { createdAt: "desc" }, take: limit }),
       this.db.backupRun.findFirst({ where: { status: "done" }, orderBy: { finishedAt: "desc" } }),
       this.db.platformSettings.findUniqueOrThrow({ where: { id: 1 }, select: { restoreTestPassedAt: true } }),
     ]);
@@ -266,7 +269,7 @@ export class AdminController {
       latestDone: latestDone ? view(latestDone) : null,
       restoreTestPassedAt: settings.restoreTestPassedAt?.toISOString() ?? null,
       // For "older": pass the last run's createdAt as `before`.
-      more: rows.length === PAGE,
+      more: rows.length === limit,
     };
   }
 
