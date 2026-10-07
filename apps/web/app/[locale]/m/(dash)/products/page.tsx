@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
+import { SELLER_PAGE } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, type Catalog, type Product } from "@/lib/api";
 import { priceText, startingVariant, usdValue } from "@/lib/product-price";
 import { useMerchant } from "../merchant-context";
@@ -172,7 +173,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className={`${SELLER_PAGE} gap-4`}>
       <PageHeader
         title={t("title")}
         description={t("description")}

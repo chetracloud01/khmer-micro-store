@@ -21,6 +21,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useFormErrorText } from "@/components/form-ui";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
+import { SELLER_FORM } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, type DeliveryResponse, type SellerOrderDetail } from "@/lib/api";
 import { PageLoading, PageOffline } from "../../page-states";
 
@@ -164,7 +165,7 @@ function OrderDetail({
   const text = (km: string, en: string) => (locale === "km" ? km || en : en || km);
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className={`${SELLER_FORM} gap-4`}>
       <div className="flex items-center gap-1">
         <Link href={`/${locale}/m/orders`} aria-label={t("backToOrders")} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-border/30 print:hidden">
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
@@ -361,7 +362,7 @@ function OrderDetail({
             {dispatch.route === "driver" ? (
               <span>
                 <span className="block font-medium">{dispatch.driverName}</span>
-                <a href={`tel:+${dispatch.driverPhone}`} className="block text-brand tabular-nums">
+                <a href={`tel:+${dispatch.driverPhone}`} className="flex min-h-touch items-center text-brand tabular-nums">
                   {formatKhmerPhoneLocal(dispatch.driverPhone)}
                 </a>
               </span>

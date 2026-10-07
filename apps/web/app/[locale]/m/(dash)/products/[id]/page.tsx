@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { ACCEPTED_IMAGE_TYPES, compressImageToBlob } from "@/components/compress-image";
 import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
+import { SELLER_FORM, SELLER_FORM_BAR } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, uploadPhoto, type Catalog, type CatalogName, type Product } from "@/lib/api";
 import { useMerchant } from "../../merchant-context";
 
@@ -583,7 +584,7 @@ function ProductForm({ catalog, existing, onReset }: { catalog: Catalog; existin
     );
 
   return (
-    <div ref={formRef} className="flex flex-col gap-5 p-4">
+    <div ref={formRef} className={`${SELLER_FORM} gap-5`}>
       <PageHeader title={isNew ? t("newTitle") : t("editTitle")} />
 
       {draftRestored && (
@@ -970,7 +971,7 @@ function ProductForm({ catalog, existing, onReset }: { catalog: Catalog; existin
           saveLabel={saving ? tApp("saving") : uploading ? tApp("photoUploading") : t("saveProduct")}
           cancelLabel={t("cancel")}
           status={dirty ? t(isNew ? "draftSaved" : "unsavedChanges") : undefined}
-          className="bottom-above-nav -mb-4 rounded-b-DEFAULT"
+          className={SELLER_FORM_BAR}
         />
       </Card>
     </div>

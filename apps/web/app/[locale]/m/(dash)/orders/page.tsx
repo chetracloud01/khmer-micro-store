@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
+import { SELLER_PAGE } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, type SellerOrder } from "@/lib/api";
 import { PageLoading, PageOffline } from "../page-states";
 
@@ -75,7 +76,7 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className={`${SELLER_PAGE} gap-4`}>
       <PageHeader title={t("title")} description={t("description")} />
 
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">

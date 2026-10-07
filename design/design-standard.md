@@ -87,7 +87,10 @@ mockups — is built from the shared building blocks in `packages/ui`
 the tones `brand` `success` `warning` `danger` `info` `muted`, `EmptyState`,
 `LoadingBlocks`, `ErrorState`, `DetailList`, `ConfirmDialog`; plus `Button`,
 `Card`, `Input`, `BottomSheet` …), the admin frame in
-`apps/web/components/admin-frame` and the data grid in
+`apps/web/components/admin-frame`, the seller frame in
+`apps/web/components/seller-frame` (bottom tabs on a phone, a sidebar from
+768 px; pages use its `SELLER_PAGE` / `SELLER_FORM` widths and
+`SELLER_FORM_BAR`) and the data grid in
 `apps/web/components/data-grid.tsx`. A page never re-creates one of these; a
 block that's missing is added to the kit, shown on `/styleguide`, then used.
 The kit holds no words — every label comes from `messages/*.json`.

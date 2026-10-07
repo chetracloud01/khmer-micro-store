@@ -20,6 +20,7 @@ import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { ACCEPTED_IMAGE_TYPES, compressImageToBlob } from "@/components/compress-image";
 import { FormActions, FormSection, ReadOnlyField, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
+import { SELLER_FORM, SELLER_FORM_BAR } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, uploadPhoto, type StoreDetails } from "@/lib/api";
 import { useMerchant } from "../merchant-context";
 import { TelegramAlerts } from "./telegram-alerts";
@@ -147,11 +148,11 @@ export default function ShopSettingsPage() {
   const status = dirty ? t("unsavedChanges") : justSaved ? t("saved") : undefined;
 
   return (
-    <div ref={formRef} className="flex flex-col gap-5 p-4">
+    <div ref={formRef} className={`${SELLER_FORM} gap-5`}>
       <PageHeader title={tApp("shopDetailsTitle")} />
 
       {/* Delivery and store settings: their own pages, reached from here on a phone. */}
-      <nav aria-label={t("moreSettings")} className="overflow-hidden rounded-DEFAULT border border-border bg-bg shadow-card">
+      <nav aria-label={t("moreSettings")} className="overflow-hidden md:hidden rounded-DEFAULT border border-border bg-bg shadow-card">
         {[
           { href: "delivery", icon: Truck, title: t("delivery"), detail: t("deliveryDetail") },
           { href: "store-settings", icon: SlidersHorizontal, title: t("storeSettings"), detail: t("storeSettingsDetail") },
@@ -302,7 +303,7 @@ export default function ShopSettingsPage() {
           saveLabel={saving ? tApp("saving") : t("saveChanges")}
           cancelLabel={t("cancel")}
           status={status}
-          className="bottom-above-nav -mb-4 rounded-b-DEFAULT"
+          className={SELLER_FORM_BAR}
         />
       </Card>
 

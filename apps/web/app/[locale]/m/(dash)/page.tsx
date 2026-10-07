@@ -6,6 +6,7 @@ import { ChevronRight, Clock, ExternalLink, Link2, ShoppingBag } from "lucide-re
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SELLER_PAGE } from "@/components/seller-frame/seller-frame";
 import { api, type SellerOrder } from "@/lib/api";
 import { useMerchant } from "./merchant-context";
 import { SetupChecklist } from "./setup-checklist";
@@ -25,7 +26,7 @@ export default function MerchantHomePage() {
   const shopHref = `/${locale}/s/${store.slug}`;
 
   return (
-    <div className="flex flex-col gap-5 p-4">
+    <div className={`${SELLER_PAGE} gap-5`}>
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted">{t("homeGreeting", { name: me.merchant.firstName })}</p>
         <h1 className="text-2xl font-bold leading-normal">{store.name}</h1>

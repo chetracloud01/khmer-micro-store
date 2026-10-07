@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormActions, FormSection, focusFirstInvalidField, useFormErrorText } from "@/components/form-ui";
+import { SELLER_FORM, SELLER_FORM_BAR } from "@/components/seller-frame/seller-frame";
 import { api, ApiError, type StoreSettingsResponse } from "@/lib/api";
 import { useMerchant } from "../merchant-context";
 import { PageLoading, PageOffline } from "../page-states";
@@ -110,7 +111,7 @@ function SettingsForm({ initial }: { initial: StoreSettingsResponse }) {
   const status = dirty ? t("unsavedChanges") : justSaved ? t("saved") : undefined;
 
   return (
-    <div ref={formRef} className="flex flex-col gap-5 p-4">
+    <div ref={formRef} className={`${SELLER_FORM} gap-5`}>
       <PageHeader title={t("title")} description={t("description")} />
 
       <Card className="flex flex-col p-4">
@@ -189,7 +190,7 @@ function SettingsForm({ initial }: { initial: StoreSettingsResponse }) {
           saveLabel={saving ? tApp("saving") : t("save")}
           cancelLabel={t("cancel")}
           status={status}
-          className="bottom-above-nav -mb-4 rounded-b-DEFAULT"
+          className={SELLER_FORM_BAR}
         />
       </Card>
     </div>
