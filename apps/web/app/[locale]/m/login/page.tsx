@@ -1,7 +1,7 @@
 "use client";
 
 import type { TelegramLoginPayload } from "@khmio/shared";
-import { Button, Card } from "@khmio/ui";
+import { Button, Card, Mio } from "@khmio/ui";
 import { FlaskConical, Send } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import { AppFrame, AppLoading, AppOffline } from "../app-frame";
 // the first login creates the account, then onboarding asks two questions.
 export default function LoginPage() {
   const t = useTranslations("App");
+  const tMascot = useTranslations("Mascot");
   const locale = useLocale();
   const router = useRouter();
   const [state, setState] = useState<"checking" | "ready" | "offline">("checking");
@@ -47,7 +48,8 @@ export default function LoginPage() {
 
   return (
     <AppFrame>
-      <div className="flex flex-col gap-2 pt-6 text-center">
+      <div className="flex flex-col items-center gap-2 pt-6 text-center">
+        <Mio size={88} label={tMascot("label")} />
         <h1 className="text-2xl font-bold">{t("loginTitle")}</h1>
         <p className="text-sm text-muted">{t("loginSubtitle")}</p>
       </div>

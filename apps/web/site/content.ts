@@ -474,8 +474,8 @@ const pricingPage: SitePage = {
   seo: {
     title: { km: "តម្លៃ Khmio — គម្រោងសាមញ្ញ ជាដុល្លារ ឬរៀល", en: "Khmio pricing — simple plans in dollars or riel" },
     description: {
-      km: "ចាប់ផ្តើមដោយការសាកល្បងឥតគិតថ្លៃ។ បង់វិក្កយបត្រ KHQR មួយក្នុងមួយខែ គ្មានកាត គ្មានការកាត់លុយដោយស្វ័យប្រវត្តិ។",
-      en: "Start with a free trial. Pay one KHQR bill a month — no card, nothing charged automatically.",
+      km: "ឥតគិតថ្លៃក្នុងអំឡុងពេលបេតា។ ក្រោយមក បង់វិក្កយបត្រ KHQR មួយក្នុងមួយខែ គ្មានកាត គ្មានការកាត់លុយដោយស្វ័យប្រវត្តិ។",
+      en: "Free during the beta. Later, pay one KHQR bill a month — no card, nothing charged automatically.",
     },
   },
   sections: [
@@ -486,8 +486,8 @@ const pricingPage: SitePage = {
       eyebrow: { km: "តម្លៃ", en: "Pricing" },
       headline: { km: "តម្លៃសាមញ្ញ គ្មានការភ្ញាក់ផ្អើល", en: "Simple prices, no surprises" },
       sentence: {
-        km: "ចាប់ផ្តើមដោយការសាកល្បងឥតគិតថ្លៃ។ នៅពេលអ្នករួចរាល់ បង់វិក្កយបត្រ KHQR មួយក្នុងមួយខែ — ជាដុល្លារ ឬរៀល។",
-        en: "Start with a free trial. When you're ready, pay one KHQR bill a month — in dollars or riel.",
+        km: "ឥតគិតថ្លៃក្នុងអំឡុងពេលបេតា។ ក្រោយមក បង់វិក្កយបត្រ KHQR មួយក្នុងមួយខែ — ជាដុល្លារ ឬរៀល។",
+        en: "Free during the beta. Later, pay one KHQR bill a month — in dollars or riel.",
       },
       art: { kind: "mio", pose: "coin" },
       primary: startFree,

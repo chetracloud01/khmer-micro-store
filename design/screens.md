@@ -16,8 +16,8 @@ something: then it gets a label from the translation files.
 
 | Screen | Mio | Status |
 | --- | --- | --- |
-| S1 Login | Mio's face above the sign-in buttons | Mockup |
-| S4 Orders list, empty | Mio above "No orders yet" | Mockup |
+| S1 Login | Mio's face above the sign-in buttons | Built |
+| S4 Orders list, empty | Mio above "No orders yet" | Built |
 | B5 KHQR payment, paid | Mio with a riel coin, a small hop, "Paid!", then B6 | Mockup |
 | Telegram bot photo, stickers | From the designer's final artwork | Later |
 

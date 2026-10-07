@@ -1,8 +1,8 @@
 "use client";
 
 import { formatKhmerPhoneLocal, getOrderTab, getSellerActions, ORDER_TABS, type OrderTab, type SellerOrderAction } from "@khmio/shared";
-import { Button, Card, cn } from "@khmio/ui";
-import { ChevronRight, Phone, ShoppingBag } from "lucide-react";
+import { Button, Card, cn, Mio } from "@khmio/ui";
+import { ChevronRight, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -94,9 +94,7 @@ export default function OrdersPage() {
 
       {shown.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-border/30">
-            <ShoppingBag className="h-7 w-7 text-muted" aria-hidden="true" />
-          </span>
+          <Mio size={80} />
           <p className="text-sm text-muted">{t("noOrders")}</p>
         </div>
       ) : (
