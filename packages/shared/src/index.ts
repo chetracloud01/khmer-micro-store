@@ -11,6 +11,7 @@ export * from "./locations";
 export * from "./form-errors";
 export * from "./health";
 export * from "./kyc";
+export * from "./local-network";
 export * from "./money";
 export * from "./notifications";
 export * from "./order-total";

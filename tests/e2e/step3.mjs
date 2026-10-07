@@ -42,7 +42,8 @@ const slugA = meA.store.slug;
 // ---------------------------------------------------------------- photos
 const up = await upload(a, JPG);
 check("a real JPEG uploads", up.status === 201 && /^stores\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg$/.test(up.json?.key ?? ""), up.raw);
-const served = await fetch(up.json.url);
+// In development photo links are same-site (/files/…, served through the web app); resolve them against the API here.
+const served = await fetch(new URL(up.json.url, B));
 check("the photo is served back as an image", served.status === 200 && served.headers.get("content-type") === "image/jpeg");
 check("without a small copy, there's no thumbnail address", up.json?.thumbUrl === null, up.raw);
 const withThumb = new FormData();
@@ -50,7 +51,7 @@ withThumb.append("file", new Blob([JPG], { type: "image/jpeg" }), "photo.jpg");
 withThumb.append("thumb", new Blob([JPG], { type: "image/jpeg" }), "thumb.jpg");
 const upThumb = await call("/uploads/photo", { method: "POST", cookie: a, form: withThumb });
 check("a photo with its small copy gives a thumbnail next to it (-t.jpg)", upThumb.status === 201 && upThumb.json?.thumbUrl === upThumb.json?.url.replace(/\.jpg$/, "-t.jpg"), upThumb.raw);
-check("the thumbnail is served back as an image", (await fetch(upThumb.json.thumbUrl)).headers.get("content-type") === "image/jpeg");
+check("the thumbnail is served back as an image", (await fetch(new URL(upThumb.json.thumbUrl, B))).headers.get("content-type") === "image/jpeg");
 const fakeThumb = new FormData();
 fakeThumb.append("file", new Blob([JPG], { type: "image/jpeg" }), "photo.jpg");
 fakeThumb.append("thumb", new Blob([Buffer.from("<svg onload=alert(1)>")], { type: "image/jpeg" }), "thumb.jpg");

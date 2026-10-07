@@ -1,5 +1,5 @@
 import { GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import type { ApiEnv } from "@khmio/shared";
+import { isLocalNetworkOrigin, type ApiEnv } from "@khmio/shared";
 import type { Provider } from "@nestjs/common";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
@@ -125,7 +125,20 @@ export function createFileStorage(env: ApiEnv): FileStorage {
     const settings = s3SettingsOf(env);
     return new S3FileStorage(s3Client(settings), settings.bucket, env.FILES_PUBLIC_URL!.replace(/\/$/, ""));
   }
-  return new LocalFileStorage(env.FILES_DIR, env.FILES_PUBLIC_URL ?? `http://localhost:${env.PORT}/files`);
+  return new LocalFileStorage(env.FILES_DIR, localFilesBaseUrl(env));
+}
+
+/**
+ * Where photos on this machine's disk are served from. Development, unless
+ * FILES_PUBLIC_URL names a real domain (a tunnel): same-site links (/files/…)
+ * that the web app passes through to this API (apps/web next.config.mjs), so
+ * photos show at whatever address the site was opened with. Otherwise the
+ * full address.
+ */
+export function localFilesBaseUrl(env: Pick<ApiEnv, "NODE_ENV" | "FILES_PUBLIC_URL" | "PORT">): string {
+  const saved = env.FILES_PUBLIC_URL?.replace(/\/$/, "");
+  if (env.NODE_ENV === "development" && (!saved || isLocalNetworkOrigin(saved))) return "/files";
+  return saved ?? `http://localhost:${env.PORT}/files`;
 }
 
 export const fileStorageProvider: Provider = {

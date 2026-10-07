@@ -55,6 +55,20 @@ const nextConfig = {
     if (process.env.NODE_ENV !== "production") return [];
     return [{ source: "/:path*", headers: securityHeaders() }];
   },
+  /**
+   * Development: photos on this PC's disk get same-site links (/files/…, see
+   * apps/api files/storage.ts), passed through to the API on this machine — so
+   * they show whatever address the site was opened with. Production photos come
+   * from Cloudflare R2 at their own address and never use this.
+   */
+  async rewrites() {
+    if (process.env.NODE_ENV === "production") return [];
+    let port = "4000";
+    try {
+      port = new URL(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").port || "80";
+    } catch {}
+    return [{ source: "/files/:path*", destination: `http://localhost:${port}/files/:path*` }];
+  },
 };
 
 export default withNextIntl(nextConfig);
