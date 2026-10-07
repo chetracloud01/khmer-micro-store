@@ -204,12 +204,12 @@ never type an old code. Your real (production) authenticator isn't touched.
 | A service won't start | Its log names the setting that's missing or wrong. Fix it in Variables; Railway redeploys |
 | The database is lost or corrupted | Make a new Postgres (Singapore), run `infra/setup-production-db.sql` on it, then from the worker's SSH: `RESTORE_DATABASE_URL=<new owner URL> pnpm db:restore -- --from latest`. Compare the counts it prints, then point both services' database variables at it |
 | Telegram alerts stopped | Worker log; the admin chat gets "worker failing" alerts. Check the token wasn't revoked |
-| A backup failed | The admin chat gets "backup failed" with the reason; the earlier backups are kept |
+| A backup failed | The admin chat gets "backup failed" with the reason; the earlier backups are kept. Admin → **Backups** shows it in red; fix the cause, then press **Backup now** |
 | Under attack | Cloudflare → Security → **Under Attack mode** for `api.<domain>`; rate limits and Turnstile already slow checkout abuse |
 
 ## Every month
 
-- Restore last night's backup into a new database (the "database is lost" steps, without switching) and open a shop from it.
+- Restore last night's backup into a new database (the "database is lost" steps, without switching) and open a shop from it. Then, in Admin → **Backups**, press **I tested a full restore today** (the page turns it amber after 35 days).
 - Railway → Usage: compare with docs/blueprint.md "How Railway usage adds up".
 - Merge Dependabot's pull requests once CI is green.
 

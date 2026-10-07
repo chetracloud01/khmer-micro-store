@@ -18,6 +18,8 @@ const KNOWN = new Set([
   "store.details_saved",
   "store.settings_saved",
   "store.delivery_saved",
+  "backup.started",
+  "backup.restore_test_passed",
 ]);
 
 export function useAuditText() {

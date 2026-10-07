@@ -775,6 +775,8 @@ model PlatformSettings {
   alertChatId     String   @default("") @map("alert_chat_id")
   /// Release 1 beta: every shop gets Basic's features and limits. Off at Release 2, when billing starts.
   betaAllBasic    Boolean  @default(true) @map("beta_all_basic")
+  /// When the monthly full-restore test (blueprint "The routine") last passed, as an owner recorded it.
+  restoreTestPassedAt DateTime? @map("restore_test_passed_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("platform_settings")
@@ -829,4 +831,30 @@ model WaitlistSignup {
   @@unique([product, phone])
   @@index([createdAt])
   @@map("waitlist_signups")
+}
+
+/// The database backups (admin A13): one row per nightly or manual run. Platform data, no store_id.
+/// At most one is waiting or running at a time (a partial unique index in the migration).
+model BackupRun {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// nightly | manual (packages/shared BACKUP_KINDS).
+  kind          String
+  /// queued | running | done | failed (packages/shared BACKUP_STATUSES).
+  status        String
+  /// The admin who pressed "Backup now"; null for nightly runs.
+  startedById   String?   @map("started_by_id") @db.Uuid
+  /// The backup file in S3_BACKUP_BUCKET, once done.
+  objectKey     String?   @map("object_key")
+  sizeBytes     BigInt?   @map("size_bytes")
+  /// packages/shared BACKUP_FAILURES — a fixed reason, never the raw error.
+  failure       String?
+  startedAt     DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime? @map("finished_at") @db.Timestamptz(6)
+  /// Set when the file is removed after BACKUP_KEEP_DAYS; the row stays as history.
+  fileDeletedAt DateTime? @map("file_deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@map("backup_runs")
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, SegmentedControl } from "@khmio/ui";
-import { Layers, LayoutDashboard, ListChecks, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
+import { DatabaseBackup, Layers, LayoutDashboard, ListChecks, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -74,6 +74,7 @@ function AdminShell({ me, children }: { me: ActiveAdmin; children: ReactNode }) 
     { href: `${base}/plans`, label: t("plans"), icon: Layers },
     { href: `${base}/waitlist`, label: t("waitlist"), icon: ListChecks },
     { href: `${base}/audit-log`, label: t("auditLog"), icon: ScrollText },
+    { href: `${base}/backups`, label: t("backups"), icon: DatabaseBackup },
     { href: `${base}/settings`, label: t("settings"), icon: Settings },
   ];
   const isActive = (href: string) => (href === base ? pathname === href : pathname.startsWith(href));

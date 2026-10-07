@@ -15,6 +15,7 @@ const FILTERS = [
   { value: "platform", key: "filterSettings" },
   { value: "order", key: "filterOrders" },
   { value: "store", key: "filterShops" },
+  { value: "backup", key: "filterBackups" },
 ] as const;
 
 const ACTOR_TONE = { admin: "bg-brand/10 text-brand", merchant: "bg-border/30 text-muted", system: "bg-warning/10 text-warning" } as const;

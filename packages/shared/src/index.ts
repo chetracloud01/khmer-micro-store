@@ -1,6 +1,7 @@
 export * from "./admin-roles";
 export * from "./admin-settings";
 export * from "./auth";
+export * from "./backups";
 export * from "./billing";
 export * from "./business";
 export * from "./checkout";

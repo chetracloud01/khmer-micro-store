@@ -1,4 +1,4 @@
-import type { AdminRole, BusinessType, PlanId, PlatformProductId, PlatformSettingsSave, SubscriptionStatus, WaitlistBusinessType } from "@khmio/shared";
+import type { AdminRole, BackupRunView, BusinessType, PlanId, PlatformProductId, PlatformSettingsSave, SubscriptionStatus, WaitlistBusinessType } from "@khmio/shared";
 
 // What the admin API (apps/api admin/*) answers. Calls go through lib/api.ts
 // api(); the admin cookie is set by the API for its /admin routes only.
@@ -61,6 +61,14 @@ export interface AdminMerchantDetail {
 }
 
 export type AdminSettings = PlatformSettingsSave;
+
+/** GET /admin/backups (A13): one page of runs, newest first, the newest good one, and the last restore test. */
+export interface AdminBackups {
+  runs: BackupRunView[];
+  latestDone: BackupRunView | null;
+  restoreTestPassedAt: string | null;
+  more: boolean;
+}
 
 /** GET /admin/waitlist: sign-ups per product, and one page of sign-ups, newest first. */
 export interface AdminWaitlist {

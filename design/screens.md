@@ -256,7 +256,7 @@ Phone first; sidebar from tablet width; tables on desktop.
   restored — can't be deleted. Replacing its file updates every page that
   uses it right away, after a confirmation that names those pages.
 
-### A13. Backups — Mockup · Go-live
+### A13. Backups — Built (list, Backup now, restore test) · Go-live; restore one shop's catalog: Mockup, after go-live
 Decided 2026-10-06. The nightly backup already exists (go-live step B3):
 the worker backs up the whole database at 03:00 Phnom Penh time into the
 private R2 bucket `khmio-backups`, keeps every backup 14 days and the newest
@@ -484,5 +484,5 @@ Buyer first, then the seller screens the buyer flow depends on.
 7. Platform website: the site kit sections, then P1–P4 from sample
    content; then the admin website screens A10–A12; then the account hub
    H1–H4. Mockups only — the content backend is its own roadmap step.
-8. ~~Admin A13 Backups mockup~~ — done (`/mockup/admin/backups`); its backend next.
+8. ~~Admin A13 Backups mockup, then the list, Backup now and the restore-test date~~ — done (`/admin/backups`, table `backup_runs`). Restoring one shop's catalog after go-live.
 9. Phase 2 and 3 screens.

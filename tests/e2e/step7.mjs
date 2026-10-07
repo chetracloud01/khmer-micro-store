@@ -1,6 +1,6 @@
 // Step 7 part A end-to-end through the real API: the admin login with
 // two-step codes (enrol, backup codes, replay, lockout), roles, and the
-// admin actions (merchants, extend/unblock, plan, audit log, settings).
+// admin actions (merchants, extend/unblock, plan, audit log, settings, backups).
 // Usage: node tests/e2e/step7.mjs <api url>    (after add-owner on that database)
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { psql } from "./lib.mjs";
@@ -132,6 +132,36 @@ check("a rate band upside down is refused", badBand.json?.fields?.usdToKhrMax ==
 const saved = await call("/admin/settings", { method: "PUT", cookie: admin, body: { ...settings, usdToKhrMin: 3950 } });
 check("settings save, and the change is in the audit log", saved.json?.usdToKhrMin === 3950 && Number(sql("select count(*) from audit_logs where action = 'platform.settings_saved'")) === 1);
 await call("/admin/settings", { method: "PUT", cookie: admin, body: settings });
+
+// ---------------------------------------------------------------- backups (A13)
+const emptyBackups = (await call("/admin/backups", { cookie: admin })).json;
+check("the backups page answers, with no runs yet", Array.isArray(emptyBackups?.runs) && emptyBackups.latestDone === null && emptyBackups.restoreTestPassedAt === null, JSON.stringify(emptyBackups));
+const started = await call("/admin/backups", { method: "POST", cookie: admin });
+check("Backup now queues a manual backup", started.status === 200 && sql(`select kind || ':' || status from backup_runs where id = '${started.json?.id}'`) === "manual:queued", started.raw);
+check("Backup now is in the audit log", Number(sql(`select count(*) from audit_logs where action = 'backup.started' and entity_id = '${started.json?.id}'`)) === 1);
+const again = await call("/admin/backups", { method: "POST", cookie: admin });
+check("a second Backup now while one waits is refused (409)", again.status === 409 && again.json?.error === "backup_running", again.raw);
+const listed = (await call("/admin/backups", { cookie: admin })).json;
+check("the list shows the waiting backup and who started it", listed?.runs?.[0]?.status === "queued" && listed.runs[0].startedByName === "Owner (verify)", JSON.stringify(listed?.runs?.[0]));
+const financeId = sql(`insert into admin_users (name, telegram_id, role) values ('Finance test', '${String(Date.now() + 1).slice(-12)}', 'finance') returning id`).split(/\r?\n/)[0].trim();
+const financeToken = randomBytes(32).toString("base64url");
+sql(`insert into admin_sessions (admin_user_id, token_hash, stage, expires_at) values ('${financeId}', '${createHash("sha256").update(financeToken).digest("hex")}', 'active', now() + interval '1 hour')`);
+const finance = `khmio_admin=${financeToken}`;
+check("Finance can see the backups", (await call("/admin/backups", { cookie: finance })).status === 200);
+check("Finance can't start one (403)", (await call("/admin/backups", { method: "POST", cookie: finance })).status === 403);
+check("Finance can't record the restore test (403)", (await call("/admin/backups/restore-test", { method: "POST", cookie: finance })).status === 403);
+sql(`update admin_users set disabled_at = now() where id = '${financeId}'`);
+const tested = await call("/admin/backups/restore-test", { method: "POST", cookie: admin });
+const afterTest = (await call("/admin/backups", { cookie: admin })).json;
+check("the owner records the restore test, in the audit log too", tested.status === 200 && afterTest?.restoreTestPassedAt === tested.json?.restoreTestPassedAt && Number(sql("select count(*) from audit_logs where action = 'backup.restore_test_passed'")) === 1, tested.raw);
+let appDenied = false;
+try {
+  psql("select count(*) from backup_runs", { asApp: true });
+} catch (error) {
+  appDenied = /permission denied/i.test(String(error.stderr ?? error));
+}
+check("the app user can't read the backup runs", appDenied);
+sql("delete from backup_runs");
 
 // ---------------------------------------------------------------- sign out
 await call("/admin/auth/logout", { method: "POST", cookie: admin });

@@ -3,7 +3,7 @@ import { adminAlertText, EnvError, loadEnv, workerEnvSchema, type WorkerEnv } fr
 import * as Sentry from "@sentry/node";
 import PgBoss from "pg-boss";
 import pino from "pino";
-import { registerBackup } from "./jobs/backup";
+import { manualBackupOnce, MANUAL_BACKUP_EVERY_MS, registerBackup } from "./jobs/backup";
 import { registerCleanup } from "./jobs/cleanup";
 import { registerHeartbeat } from "./jobs/heartbeat";
 import { alertChats, deliverOutboxOnce } from "./jobs/outbox";
@@ -52,7 +52,7 @@ async function main() {
   // Telegram alerts: the outbox is read with the owner user (the worker serves every shop).
   const db = createSystemDb(env.DATABASE_OWNER_URL);
   await registerCleanup(boss, db, logger);
-  if (env.BACKUPS === "on") await registerBackup(boss, env, db, logger);
+  const backupSteps = env.BACKUPS === "on" ? await registerBackup(boss, env, db, logger) : null;
   const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger, env.TELEGRAM_API_URL);
   let stopping = false;
   // The alert chat, remembered while the database answers: the "failing" alert may be needed when it doesn't.
@@ -80,6 +80,19 @@ async function main() {
       await new Promise((resolve) => setTimeout(resolve, OUTBOX_EVERY_MS));
     }
   })();
+  // "Backup now" from the admin (A13): picked up within a few seconds, one at a time.
+  const manualBackupLoop = backupSteps
+    ? (async () => {
+        while (!stopping) {
+          try {
+            await manualBackupOnce(db, logger, backupSteps);
+          } catch (error) {
+            report(error, "manual backup round failed");
+          }
+          await new Promise((resolve) => setTimeout(resolve, MANUAL_BACKUP_EVERY_MS));
+        }
+      })()
+    : Promise.resolve();
   // Button presses need a real bot; in dry run there is nothing to listen to.
   const buttonLoop = telegram.dryRun ? Promise.resolve() : pollTelegram({ db, telegram, logger, stopped: () => stopping });
   logger.info({ environment: env.NODE_ENV, telegram: telegram.dryRun ? "dry run (no TELEGRAM_BOT_TOKEN)" : "on", backups: env.BACKUPS }, "worker started");
@@ -90,8 +103,8 @@ async function main() {
     stopping = true;
     logger.info({ signal }, "worker stopping");
     await boss.stop({ graceful: true, wait: true });
-    // The outbox round in hand finishes; a long poll for buttons may wait up to its timeout.
-    await Promise.race([Promise.all([outboxLoop, buttonLoop]), new Promise((resolve) => setTimeout(resolve, 30_000))]);
+    // The outbox round and a backup in hand finish; a long poll for buttons may wait up to its timeout.
+    await Promise.race([Promise.all([outboxLoop, buttonLoop, manualBackupLoop]), new Promise((resolve) => setTimeout(resolve, 30_000))]);
     await db.$disconnect();
     process.exit(0);
   };

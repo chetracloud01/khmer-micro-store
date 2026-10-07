@@ -873,6 +873,9 @@
     "perm_audit_view": "See the audit log",
     "perm_settings_manage": "Change platform settings",
     "perm_admins_manage": "Invite, change or disable admins",
+    "perm_backups_view": "See the backups",
+    "perm_backups_run": "Start a backup now",
+    "perm_shop_restore": "Restore a shop's catalog from a backup",
     "admColName": "Name",
     "admColRole": "Role",
     "admColLastActive": "Last active",
@@ -987,7 +990,19 @@
     "bakRestore": "Restore catalog",
     "bakDoneTitle": "Catalog restored",
     "bakDoneBody": "{store} is back to the backup from {when}. The seller was told on Telegram, and the audit log has the counts.",
-    "bakFailedWith": "Failed: {reason}"
+    "bakFailedWith": "Failed: {reason}",
+    "bakFail_interrupted": "the worker stopped part way",
+    "bakAlreadyRunning": "A backup is already waiting or running.",
+    "bakWaitingLong": "Still waiting after 2 minutes: the worker may be stopped, or backups aren't switched on (BACKUPS=on).",
+    "bakFileKept": "File kept",
+    "bakFileRemoved": "File removed",
+    "bakTestPassedOn": "Restore test last passed on {date}.",
+    "bakTestNever": "No restore test recorded yet.",
+    "bakTestRecord": "I tested a full restore today",
+    "bakTestConfirmTitle": "Record a passed restore test?",
+    "bakTestConfirmBody": "Only after you restored a backup into a new database and its counts matched the live site. It goes in the audit log.",
+    "bakTestConfirm": "Record it",
+    "bakShopLater": "Coming after go-live"
   },
   "AdminNav": {
     "menuLabel": "Admin menu",
@@ -1555,7 +1570,10 @@
     "betaLabel": "Every shop counts as Basic",
     "betaOn": "On — beta: no charges, Basic features for all",
     "betaOff": "Off — each shop's own plan applies",
-    "tooManyTries": "Too many tries in a short time. Please wait a few minutes, then try again."
+    "tooManyTries": "Too many tries in a short time. Please wait a few minutes, then try again.",
+    "audit_backup_started": "Started a backup",
+    "audit_backup_restore_test_passed": "Recorded a passed restore test",
+    "filterBackups": "Backups"
   },
   "Share": {
     "title": "Share your shop",

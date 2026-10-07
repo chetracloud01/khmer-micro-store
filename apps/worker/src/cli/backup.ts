@@ -8,6 +8,8 @@ import { backupTarget } from "../jobs/backup";
 //
 // The same settings as the worker (.env locally, the host's variables in
 // production), with BACKUPS=on. Prints names, sizes and times — never a secret.
+// A backup made here isn't listed on the admin's Backups page (only the
+// worker's runs are); use "Backup now" there to have it recorded.
 
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 
@@ -31,7 +33,7 @@ async function main() {
   }
   const { key, bytes } = await runBackup(client, bucket, pgDumpCommand(env.PG_DUMP_PATH, env.DATABASE_OWNER_URL));
   const removed = await pruneBackups(client, bucket, env.BACKUP_KEEP_DAYS);
-  console.log(`Backed up to ${key} (${mb(bytes)}). Removed ${removed} backup(s) older than ${env.BACKUP_KEEP_DAYS} days.`);
+  console.log(`Backed up to ${key} (${mb(bytes)}). Removed ${removed.length} backup(s) older than ${env.BACKUP_KEEP_DAYS} days.`);
 }
 
 main().catch((error: unknown) => {

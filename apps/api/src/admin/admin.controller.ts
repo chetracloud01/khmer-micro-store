@@ -1,5 +1,14 @@
-import type { Prisma, SystemDb } from "@khmio/db";
-import { adminExtendSchema, adminPlanChangeSchema, platformProductIdSchema, platformSettingsSaveSchema } from "@khmio/shared";
+import { Prisma, type SystemDb } from "@khmio/db";
+import {
+  adminExtendSchema,
+  adminPlanChangeSchema,
+  platformProductIdSchema,
+  platformSettingsSaveSchema,
+  type BackupFailure,
+  type BackupKind,
+  type BackupRunView,
+  type BackupStatus,
+} from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { SYSTEM_DB } from "../db";
@@ -17,6 +26,7 @@ const auditQuerySchema = z.object({
 });
 const waitlistQuerySchema = z.object({ product: platformProductIdSchema.optional(), before: z.string().datetime().optional() });
 const merchantsQuerySchema = z.object({ q: z.string().trim().max(60).optional() });
+const backupsQuerySchema = z.object({ before: z.string().datetime().optional() });
 const PAGE = 100;
 
 /**
@@ -211,6 +221,71 @@ export class AdminController {
       // For "older": pass the last sign-up's time as `before`.
       more: rows.length === PAGE,
     };
+  }
+
+  /** Admin A13: the backup runs, newest first, the newest good one, and when the full-restore test last passed. */
+  @Get("backups")
+  @AdminPermissionNeeded("backups_view")
+  async backups(@Query() query: unknown) {
+    const { before } = backupsQuerySchema.parse(query);
+    const [rows, latestDone, settings] = await Promise.all([
+      this.db.backupRun.findMany({ where: before ? { createdAt: { lt: new Date(before) } } : {}, orderBy: { createdAt: "desc" }, take: PAGE }),
+      this.db.backupRun.findFirst({ where: { status: "done" }, orderBy: { finishedAt: "desc" } }),
+      this.db.platformSettings.findUniqueOrThrow({ where: { id: 1 }, select: { restoreTestPassedAt: true } }),
+    ]);
+    const adminIds = [...rows, ...(latestDone ? [latestDone] : [])].flatMap((row) => (row.startedById ? [row.startedById] : []));
+    const admins = await this.db.adminUser.findMany({ where: { id: { in: adminIds } }, select: { id: true, name: true } });
+    const names = new Map(admins.map((a) => [a.id, a.name]));
+    const view = (row: (typeof rows)[number]): BackupRunView => ({
+      id: row.id,
+      kind: row.kind as BackupKind,
+      status: row.status as BackupStatus,
+      startedByName: row.startedById ? (names.get(row.startedById) ?? null) : null,
+      sizeBytes: row.sizeBytes === null ? null : Number(row.sizeBytes),
+      failure: row.failure as BackupFailure | null,
+      createdAt: row.createdAt.toISOString(),
+      startedAt: row.startedAt?.toISOString() ?? null,
+      finishedAt: row.finishedAt?.toISOString() ?? null,
+      fileDeletedAt: row.fileDeletedAt?.toISOString() ?? null,
+    });
+    return {
+      runs: rows.map(view),
+      latestDone: latestDone ? view(latestDone) : null,
+      restoreTestPassedAt: settings.restoreTestPassedAt?.toISOString() ?? null,
+      // For "older": pass the last run's createdAt as `before`.
+      more: rows.length === PAGE,
+    };
+  }
+
+  /** "Backup now": the worker picks it up within seconds. One at a time — the database refuses a second. */
+  @Post("backups")
+  @HttpCode(200)
+  @AdminPermissionNeeded("backups_run")
+  async backupNow(@CurrentAdmin() admin: AdminIdentity) {
+    try {
+      const run = await this.db.$transaction(async (tx) => {
+        const created = await tx.backupRun.create({ data: { kind: "manual", status: "queued", startedById: admin.adminId }, select: { id: true } });
+        await tx.auditLog.create({ data: { actorType: "admin", actorId: admin.adminId, action: "backup.started", entity: "backup_run", entityId: created.id } });
+        return created;
+      });
+      return { id: run.id };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") throw new AppException(409, "backup_running");
+      throw error;
+    }
+  }
+
+  /** The monthly full-restore test passed (blueprint "The routine"): the owner records it here. */
+  @Post("backups/restore-test")
+  @HttpCode(200)
+  @AdminPermissionNeeded("settings_manage")
+  async restoreTestPassed(@CurrentAdmin() admin: AdminIdentity) {
+    const at = new Date();
+    await this.db.$transaction([
+      this.db.platformSettings.update({ where: { id: 1 }, data: { restoreTestPassedAt: at } }),
+      this.db.auditLog.create({ data: { actorType: "admin", actorId: admin.adminId, action: "backup.restore_test_passed", entity: "platform_settings", entityId: "1", after: { at: at.toISOString() } } }),
+    ]);
+    return { restoreTestPassedAt: at.toISOString() };
   }
 
   @Get("settings")

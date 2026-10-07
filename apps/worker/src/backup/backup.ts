@@ -131,11 +131,11 @@ export async function listBackups(client: S3Client, bucket: string): Promise<_Ob
   return all.sort((a, b) => (a.Key ?? "").localeCompare(b.Key ?? ""));
 }
 
-/** Removes old backups (after a good one has just been made). Returns how many went. */
-export async function pruneBackups(client: S3Client, bucket: string, keepDays: number, now = new Date()): Promise<number> {
+/** Removes old backups (after a good one has just been made). Returns the keys removed. */
+export async function pruneBackups(client: S3Client, bucket: string, keepDays: number, now = new Date()): Promise<string[]> {
   const old = backupsToDelete(await listBackups(client, bucket), now, keepDays);
   for (let i = 0; i < old.length; i += 1000) {
     await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: old.slice(i, i + 1000).map((Key) => ({ Key })) } }));
   }
-  return old.length;
+  return old;
 }
