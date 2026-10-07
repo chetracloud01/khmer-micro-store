@@ -162,8 +162,9 @@ The website's text, pictures, promotions and product cards are **content in the 
 
 1. Write the page specs in `design/screens.md` — done 2026-10-06 (site kit, P1–P4, A10–A12, account hub H1–H4).
 2. Mockups with sample data, each approved before the next: the site kit sections, then P1–P4 fed by sample content shaped like the future database, then the admin screens A10–A12.
-3. Build the real thing as its own roadmap step, after go-live: platform content tables (pages, sections, versions, promotions, pictures — no `store_id`, admin routes only, with the Website editor permission), publishing with cache refresh, the waitlist (one table, one endpoint, bot check and rate limit), then the real pages.
-4. Lint, typecheck, tests; check every page on a phone in Khmer and English.
+3. **Before go-live (done 2026-10-07):** the live pages from content kept in code (`apps/web/site/content.ts`), with link previews, sitemap and robots; the waitlist (one table, one endpoint, bot check and rate limit) and its admin list (A14).
+4. Build the rest as its own roadmap step, after go-live: platform content tables (pages, sections, versions, promotions, pictures — no `store_id`, admin routes only, with the Website editor permission), publishing with cache refresh; the live pages then read the database instead of the file.
+5. Lint, typecheck, tests; check every page on a phone in Khmer and English.
 
 **Done when:** you change the home page's promotion from the admin panel, without code, and it shows on your phone within a minute; someone finds the platform on TikTok, opens the website on their phone, understands the product and starts a free shop without help; the waitlist form works and the admin can see the list.
 

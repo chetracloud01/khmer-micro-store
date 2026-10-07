@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, SegmentedControl } from "@khmio/ui";
-import { Layers, LayoutDashboard, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
+import { Layers, LayoutDashboard, ListChecks, LogOut, Menu, ScrollText, Settings, ShieldHalf, Store, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -72,6 +72,7 @@ function AdminShell({ me, children }: { me: ActiveAdmin; children: ReactNode }) 
     { href: base, label: t("overview"), icon: LayoutDashboard },
     { href: `${base}/merchants`, label: t("merchants"), icon: Store },
     { href: `${base}/plans`, label: t("plans"), icon: Layers },
+    { href: `${base}/waitlist`, label: t("waitlist"), icon: ListChecks },
     { href: `${base}/audit-log`, label: t("auditLog"), icon: ScrollText },
     { href: `${base}/settings`, label: t("settings"), icon: Settings },
   ];

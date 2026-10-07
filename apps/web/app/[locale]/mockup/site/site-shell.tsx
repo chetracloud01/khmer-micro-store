@@ -1,17 +1,14 @@
 "use client";
 
-import { visibleSections, type WaitlistSignup } from "@khmio/shared";
-import { AnnouncementBar, SegmentedControl, SiteFooter, SiteHeader, SiteSections, type SiteKitContext } from "@khmio/ui";
+import type { WaitlistSignup } from "@khmio/shared";
 import { useLocale, useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
-import { mockPlatformProducts } from "@/mock/mock-site";
+import { SiteView } from "@/site/site-view";
 import { SITE_PAGE_INFO, useWebsite, type SitePageKey } from "../website-context";
-import { useFormErrorText } from "@/components/form-ui";
 
 /**
  * Site paths in the content ("/pricing", "/products/class", "/start") become
- * mockup links here. The live site will map them to khmio.com instead —
- * that is the only difference between the two.
+ * mockup links here. The live site (site/live-site-page.tsx) maps them to
+ * khmio.com instead — that is the only difference between the two.
  */
 function useSiteHref() {
   const locale = useLocale();
@@ -35,132 +32,21 @@ async function keepSignupOnDevice(signup: WaitlistSignup) {
   }
 }
 
-/**
- * One platform website page: the announcement bar, header, the page's sections
- * and the footer. Shows what is published; the admin's Preview shows the draft.
- */
+/** A website page in the mockup: what the admin published (A10), or the draft in the admin's Preview. */
 export function SitePageView({ pageKey, mode = "published" }: { pageKey: SitePageKey; mode?: "published" | "draft" }) {
   const website = useWebsite();
-  const page = website.pages[pageKey][mode];
-  const product = SITE_PAGE_INFO[pageKey].product;
   const t = useTranslations("Site");
-  const errorText = useFormErrorText();
-  const tMascot = useTranslations("Mascot");
-  const tPlans = useTranslations("Plans");
-  const tBilling = useTranslations("Billing");
-  const locale = useLocale() === "en" ? "en" : "km";
-  const router = useRouter();
-  const pathname = usePathname();
   const href = useSiteHref();
-
-  const sections = visibleSections(page, new Date());
-  const announcement = sections.find((section) => section.type === "announcement");
-
-  const ctx: SiteKitContext = {
-    locale,
-    href,
-    products: mockPlatformProducts,
-    image: website.resolveImage,
-    labels: {
-      comingSoon: t("comingSoon"),
-      learnMore: t("learnMore"),
-      joinWaitlist: t("joinWaitlist"),
-      startFree: t("startFree"),
-      sample: t("sample"),
-      mio: tMascot("label"),
-    },
-    // The app's own plan wording, so the site and the billing screen always match.
-    plans: {
-      names: { free: tPlans("free"), basic: tPlans("basic"), pro: tPlans("pro"), advance: tPlans("advance") },
-      perMonth: tBilling("perMonth"),
-      usd: t("currencyUsd"),
-      khr: t("currencyKhr"),
-      productLimit: (count) => tBilling("featureProductLimit", { count }),
-      unlimitedProducts: tBilling("featureUnlimitedProducts"),
-      trial: (count) => tBilling("trialLength", { count }),
-      features: { stock: tBilling("featureStock"), wholesalePrice: tBilling("featureWholesale"), warehouses: tBilling("featureWarehouses") },
-      highlight: t("mostShops"),
-      included: t("included"),
-      notIncluded: t("notIncluded"),
-      compareTitle: t("compareTitle"),
-      compareFeature: t("compareFeature"),
-      comparePrice: t("comparePrice"),
-      compareProducts: t("compareProducts"),
-      compareTrial: t("compareTrial"),
-      unlimited: t("compareUnlimited"),
-      none: t("compareNone"),
-      days: (count) => t("compareDays", { count }),
-    },
-    waitlist: product && {
-      product,
-      submit: keepSignupOnDevice,
-      note: t("waitlistMockNote"),
-      labels: {
-        name: t("waitlistName"),
-        phone: t("waitlistPhone"),
-        businessType: t("waitlistBusiness"),
-        choose: t("waitlistChoose"),
-        businessTypes: { teacher: t("waitlistTeacher"), school: t("waitlistSchool"), landlord: t("waitlistLandlord"), other: t("waitlistOther") },
-        submit: t("waitlistSubmit"),
-        privacy: t("waitlistPrivacy"),
-        errorText: (code) => errorText(code) ?? "",
-      },
-    },
-  };
-
-  const languageSwitch = (
-    <SegmentedControl
-      value={locale}
-      onChange={(next) => router.push(pathname.replace(/^\/(km|en)/, `/${next}`))}
-      options={[
-        { value: "km", label: "ខ្មែរ" },
-        { value: "en", label: "EN" },
-      ]}
-    />
-  );
-
   return (
-    <div className="flex min-h-dvh flex-col bg-bg text-fg">
-      {announcement?.type === "announcement" && <AnnouncementBar section={announcement} ctx={ctx} />}
-      <SiteHeader
-        homeHref={href("/")}
-        links={[
-          { label: t("products"), href: href("/products/shop") },
-          { label: t("pricing"), href: href("/pricing") },
-          { label: t("help"), href: href("/help") },
-        ]}
-        login={{ label: t("logIn"), href: href("/start") }}
-        start={{ label: t("startFree"), href: href("/start") }}
-        languageSwitch={languageSwitch}
-        labels={{ openMenu: t("openMenu"), closeMenu: t("closeMenu"), home: t("home"), nav: t("nav") }}
-      />
-      <main className="flex-1">
-        <SiteSections sections={sections} ctx={ctx} />
-      </main>
-      <SiteFooter
-        homeHref={href("/")}
-        tagline={t("tagline")}
-        copyright={t("copyright")}
-        groups={[
-          { title: t("footerProducts"), links: mockPlatformProducts.map((product) => ({ label: product.name, href: href(`/products/${product.id}`) })) },
-          {
-            title: t("footerKhmio"),
-            links: [
-              { label: t("pricing"), href: href("/pricing") },
-              { label: t("help"), href: href("/help") },
-              { label: t("contact"), href: "https://t.me/khmio_support" },
-            ],
-          },
-          {
-            title: t("footerLegal"),
-            links: [
-              { label: t("terms"), href: href("/terms") },
-              { label: t("privacy"), href: href("/privacy") },
-            ],
-          },
-        ]}
-      />
-      <p className="bg-canvas px-4 pb-4 text-center text-xs text-muted">{t("mockNote")}</p>
-    </div>
+    <SiteView
+      page={website.pages[pageKey][mode]}
+      product={SITE_PAGE_INFO[pageKey].product}
+      href={href}
+      image={website.resolveImage}
+      waitlist={{ submit: keepSignupOnDevice, note: t("waitlistMockNote") }}
+      submitError={() => t("waitlistFailed")}
+      live={false}
+      note={t("mockNote")}
+    />
   );
 }

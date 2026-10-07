@@ -322,11 +322,28 @@ now creates one that appears in the list and the audit log; a shop whose
 products were deleted gets them back (with photos) from the morning's
 backup, its orders untouched, and the seller is told on Telegram.
 
+### A14. Waitlist — Built · Website
+Built 2026-10-07 with the live website (no separate mockup: a read-only
+list in the A5 audit log's style). Admin → **Waitlist**: the people who
+asked on a coming-soon product page (P3) to hear when it opens.
+- Filter chips: All products, then one per coming-soon product with its
+  count ("Khmio Class · 12"). The counts are the evidence for choosing the
+  second product (docs/platform-launch-plan.md Stage 5).
+- Each row: when, name, phone (tap to call), business type, product.
+  Newest first, 100 at a time, "Show older".
+- Read-only. Owner and support only (`merchants_manage`): it holds phone
+  numbers; finance sees "only an owner or support can see the waitlist".
+- Signing up again with the same phone for the same product updates the
+  row; the visitor sees the same thank-you either way.
+
 ## Platform website (Khmio)
 
 The public site on `khmio.com` that presents every product, from
 docs/platform-launch-plan.md Stage 3. Mockups live under `/mockup/site`;
-the real pages replace the placeholder home page later. Brand rules:
+the live pages (`/`, `/pricing`, `/products/<id>`) are built (2026-10-07)
+from the same content in `apps/web/site/content.ts`, until the admin can
+edit it. The live site hides links to pages not built yet (Help, Terms,
+Privacy) and seller stories marked as samples. Brand rules:
 design/brand-guide.md. Visitors arrive from social media on a phone, often
 inside the TikTok or Facebook browser: phone first, fast, one clear action.
 

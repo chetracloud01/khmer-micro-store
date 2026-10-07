@@ -25,6 +25,10 @@ export const RATE_LIMITS = {
   buyerAction: { limit: 30, windowSeconds: 3600 },
   /** A staff-group link, per shop. */
   groupLink: { limit: 10, windowSeconds: 3600 },
+  /** Website waitlist sign-ups, per address. */
+  waitlistAddress: { limit: 30, windowSeconds: 3600 },
+  /** Website waitlist sign-ups, per phone. */
+  waitlistPhone: { limit: 5, windowSeconds: 3600 },
   /** Photo uploads, per shop. */
   photoUpload: { limit: 120, windowSeconds: 3600 },
 } as const satisfies Record<string, { limit: number; windowSeconds: number }>;

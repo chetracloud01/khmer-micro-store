@@ -1,8 +1,4 @@
 {
-  "Home": {
-    "title": "Khmio",
-    "subtitle": "Foundation is ready"
-  },
   "Styleguide": {
     "title": "Styleguide",
     "colors": "Colors",
@@ -218,6 +214,11 @@
     "waitlistSubmit": "Join the waitlist",
     "waitlistPrivacy": "We use your number only to tell you when it opens.",
     "waitlistMockNote": "Mockup — sign-ups stay on this device only.",
+    "waitlistFailed": "We couldn't save your sign-up. Please try again.",
+    "waitlistOffline": "No connection. Check your internet, then try again.",
+    "waitlistTooMany": "Too many tries in a short time. Please wait a few minutes, then try again.",
+    "waitlistBotCheckWait": "One moment — checking the connection. Tap the button again in a few seconds.",
+    "waitlistBotCheckFailed": "We couldn't confirm this came from a person. Please tap the button again.",
     "compareTitle": "Compare the plans",
     "compareFeature": "Plan",
     "comparePrice": "Price per month",
@@ -937,6 +938,7 @@
     "website": "Website pages",
     "promotions": "Promotions",
     "pictures": "Pictures",
+    "waitlist": "Waitlist",
     "websiteDescription": "The pages of khmio.com: edit their sections, preview, publish, and go back to an earlier version.",
     "promotionsDescription": "Banners that show on the website between a start and an end date.",
     "picturesDescription": "Pictures used on the website, with their descriptions.",
@@ -1462,6 +1464,11 @@
     "actor_merchant": "Seller",
     "actor_system": "System",
     "older": "Show older",
+    "waitlistTitle": "Waitlist",
+    "waitlistDescription": "People who asked on the website to hear when a coming-soon product opens. Newest first.",
+    "waitlistAllProducts": "All products",
+    "waitlistEmpty": "No sign-ups yet.",
+    "waitlistNotAllowed": "Only an owner or support can see the waitlist: it holds phone numbers.",
     "settingsTitle": "Settings",
     "settingsReadOnly": "Only an owner can change these settings.",
     "alertsHelp": "The Telegram chat that gets platform alerts: messages that couldn't be sent, a failing worker, a locked admin login. Empty = alerts off.",

@@ -1,5 +1,5 @@
 import type { Prisma, SystemDb } from "@khmio/db";
-import { adminExtendSchema, adminPlanChangeSchema, platformSettingsSaveSchema } from "@khmio/shared";
+import { adminExtendSchema, adminPlanChangeSchema, platformProductIdSchema, platformSettingsSaveSchema } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { SYSTEM_DB } from "../db";
@@ -15,6 +15,7 @@ const auditQuerySchema = z.object({
   action: z.string().max(60).optional(),
   before: z.string().datetime().optional(),
 });
+const waitlistQuerySchema = z.object({ product: platformProductIdSchema.optional(), before: z.string().datetime().optional() });
 const merchantsQuerySchema = z.object({ q: z.string().trim().max(60).optional() });
 const PAGE = 100;
 
@@ -186,6 +187,28 @@ export class AdminController {
         after: row.after,
       })),
       // For "older": pass the last entry's time as `before`.
+      more: rows.length === PAGE,
+    };
+  }
+
+  /** The website waitlist (docs/platform-launch-plan.md Stage 3): how many per product, and the sign-ups, newest first. */
+  @Get("waitlist")
+  @AdminPermissionNeeded("merchants_manage")
+  async waitlist(@Query() query: unknown) {
+    const { product, before } = waitlistQuerySchema.parse(query);
+    const [counts, rows] = await Promise.all([
+      this.db.waitlistSignup.groupBy({ by: ["product"], _count: { _all: true } }),
+      this.db.waitlistSignup.findMany({
+        where: { ...(product ? { product } : {}), ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
+        orderBy: { createdAt: "desc" },
+        take: PAGE,
+        select: { id: true, product: true, name: true, phone: true, businessType: true, createdAt: true },
+      }),
+    ]);
+    return {
+      counts: Object.fromEntries(counts.map((row) => [row.product, row._count._all])),
+      signups: rows,
+      // For "older": pass the last sign-up's time as `before`.
       more: rows.length === PAGE,
     };
   }

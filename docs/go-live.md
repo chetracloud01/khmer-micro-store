@@ -127,6 +127,7 @@ Keep the test bot for your PC; production gets its own.
    | `NEXT_PUBLIC_FILES_ORIGIN` | `https://files.<domain>` |
    | `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | the production bot's username |
    | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | from step 4 |
+   | `NEXT_PUBLIC_SITE_URL` | `https://<domain>` (link previews, sitemap, search) |
 3. Deploy. Then Settings → Domains → add `<domain>` (and `www.<domain>` redirecting to it).
    In Cloudflare DNS add the records Vercel shows, **DNS only** (grey cloud) — Vercel
    serves its own certificates and edge.

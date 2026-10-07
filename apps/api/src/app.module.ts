@@ -17,6 +17,7 @@ import { PublicController } from "./public/public.controller";
 import { rateLimiterProvider } from "./security/rate-limit";
 import { StoreController } from "./store/store.controller";
 import { StoresController } from "./stores/stores.controller";
+import { WaitlistController } from "./website/waitlist.controller";
 
 @Module({
   controllers: [
@@ -32,6 +33,7 @@ import { StoresController } from "./stores/stores.controller";
     AdminController,
     FilesController,
     PublicController,
+    WaitlistController,
   ],
   providers: [...dbProviders, DbShutdown, fileStorageProvider, rateLimiterProvider, SessionGuard, MerchantStoreGuard, AdminGuard],
 })

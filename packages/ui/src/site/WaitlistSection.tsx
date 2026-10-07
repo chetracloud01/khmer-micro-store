@@ -9,7 +9,7 @@ import {
   type SiteSectionOf,
   type WaitlistSignup,
 } from "@khmio/shared";
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { Mio } from "../Mio";
@@ -29,14 +29,18 @@ export interface SiteWaitlistLabels {
   submit: string;
   privacy: string;
   errorText: (code: FormErrorCode) => string;
+  /** What went wrong when the sign-up couldn't be saved (no connection, too many tries, the bot check). */
+  submitError: (error: unknown) => string;
 }
 
 export interface SiteWaitlistContext {
   /** The product this page is about; the sign-up is for it. */
   product: PlatformProductId;
   labels: SiteWaitlistLabels;
-  /** Saves a checked sign-up. The mockup keeps it on the device; the live site sends it to the API. */
+  /** Saves a checked sign-up; throws when it can't. The mockup keeps it on the device; the live site sends it to the API. */
   submit: (signup: WaitlistSignup) => Promise<void>;
+  /** The live site's bot check, shown above the button (nothing in the mockup). */
+  botCheck?: ReactNode;
   /** A line under the form, e.g. the mockup's note. */
   note?: string;
 }
@@ -52,6 +56,7 @@ export function WaitlistSection({ section, ctx }: { section: SiteSectionOf<"wait
   const [errors, setErrors] = useState<Partial<Record<Field, FormErrorCode>>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const refs = { name: useRef<HTMLInputElement>(null), phone: useRef<HTMLInputElement>(null), businessType: useRef<HTMLSelectElement>(null) };
   if (!waitlist) return null;
   const { labels } = waitlist;
@@ -82,9 +87,12 @@ export function WaitlistSection({ section, ctx }: { section: SiteSectionOf<"wait
       return;
     }
     setBusy(true);
+    setProblem(null);
     try {
       await waitlist?.submit(data);
       setDone(true);
+    } catch (error) {
+      setProblem(waitlist?.labels.submitError(error) ?? null);
     } finally {
       setBusy(false);
     }
@@ -132,6 +140,12 @@ export function WaitlistSection({ section, ctx }: { section: SiteSectionOf<"wait
                 options={WAITLIST_BUSINESS_TYPES.map((type) => ({ value: type, label: labels.businessTypes[type] }))}
                 error={errors.businessType && labels.errorText(errors.businessType)}
               />
+              {waitlist.botCheck}
+              {problem && (
+                <p role="alert" className="rounded-DEFAULT bg-danger/10 p-3 text-sm text-danger">
+                  {problem}
+                </p>
+              )}
               <Button type="submit" loading={busy} fullWidth>
                 {labels.submit}
               </Button>

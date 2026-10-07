@@ -238,6 +238,7 @@ export function visibleSections(page: Pick<SitePage, "sections">, now: Date): Si
 // ----------------------------------------------------------------- waitlist
 
 export const WAITLIST_BUSINESS_TYPES = ["teacher", "school", "landlord", "other"] as const;
+export type WaitlistBusinessType = (typeof WAITLIST_BUSINESS_TYPES)[number];
 
 /** The "Tell me when it's ready" form on a coming-soon product page. */
 export const waitlistSignupSchema = z.object({
@@ -247,6 +248,10 @@ export const waitlistSignupSchema = z.object({
   businessType: z.enum(WAITLIST_BUSINESS_TYPES, { errorMap: () => ({ message: "required" }) }),
 });
 export type WaitlistSignup = z.infer<typeof waitlistSignupSchema>;
+
+/** What the website sends: the sign-up and the bot check token (Turnstile; absent when the check is off). */
+export const waitlistRequestSchema = waitlistSignupSchema.extend({ botCheck: z.string().max(4096).optional() });
+export type WaitlistRequest = z.infer<typeof waitlistRequestSchema>;
 
 /** The schema type, for code that reads a schema to build a form (the admin's site editor). */
 export type { ZodTypeAny as SiteSchema } from "zod";

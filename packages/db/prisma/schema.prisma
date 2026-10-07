@@ -809,3 +809,24 @@ model RateLimitHit {
   @@index([windowStart])
   @@map("rate_limit_hits")
 }
+
+/// "Tell me when it's ready" on a coming-soon product page of the platform
+/// website. Platform data, no store_id: written and read only through
+/// SystemDb (the public waitlist endpoint and the admin). One row per phone
+/// per product; signing up again updates it.
+model WaitlistSignup {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// A platform product id (packages/shared PLATFORM_PRODUCT_IDS).
+  product      String
+  name         String
+  /// Saved as 855XXXXXXXX(X), like every phone.
+  phone        String
+  /// packages/shared WAITLIST_BUSINESS_TYPES.
+  businessType String   @map("business_type")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([product, phone])
+  @@index([createdAt])
+  @@map("waitlist_signups")
+}

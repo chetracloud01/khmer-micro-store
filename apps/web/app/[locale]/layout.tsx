@@ -5,6 +5,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { THEME_BOOT_SCRIPT } from "@khmio/ui";
 import { isValidLocale, routing } from "@/i18n/routing";
+import { SITE_URL } from "@/site/url";
 import "@khmio/ui/globals.css";
 
 // Kantumruy Pro, downloaded at build time and served from this site: phones
@@ -13,6 +14,8 @@ const kantumruy = Kantumruy_Pro({ subsets: ["khmer", "latin"], display: "swap", 
 
 export const metadata: Metadata = {
   title: "Khmio",
+  // Link previews and the website's addresses use the public address (NEXT_PUBLIC_SITE_URL).
+  metadataBase: new URL(SITE_URL),
 };
 
 // viewport-fit=cover lets pages use the full screen on notched phones; fixed
