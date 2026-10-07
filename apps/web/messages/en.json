@@ -1969,5 +1969,21 @@
     "body": "The page couldn't load right now. Your order and your data are safe — try again in a moment.",
     "retry": "Try again",
     "home": "Go to Khmio"
+  },
+  "DevPhone": {
+    "title": "Open on your phone",
+    "description": "Scan the code with your phone's camera — the phone must be on the same Wi-Fi as this PC. The address is read fresh each time, so it works on any Wi-Fi.",
+    "network": "Network: {name}",
+    "qrAlt": "QR code that opens {address} on a phone",
+    "linkWebsite": "Website",
+    "linkSeller": "Seller login",
+    "linkShop": "Test shop (buyer)",
+    "linkAdmin": "Admin",
+    "linkMockups": "Mockups",
+    "noNetwork": "This PC isn't on a Wi-Fi or network right now. Connect it, then reload this page.",
+    "helpTitle": "If the phone can't open it",
+    "help1": "Check the phone is on the same Wi-Fi as the PC, with mobile data off.",
+    "help2": "The first time on a new Wi-Fi, Windows may ask to allow Node.js: tick Private and Public.",
+    "help3": "Café or hotel Wi-Fi may block devices from each other: connect the PC to your phone's hotspot, then reload this page."
   }
 }

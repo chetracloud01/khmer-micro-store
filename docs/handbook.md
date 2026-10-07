@@ -158,7 +158,7 @@ More in blueprint "Build guide" Part 8.
 | Typecheck or lint errors after a change | Code doesn't match the rules | Ask Claude: "run typecheck and lint and fix the errors" |
 | Khmer text cut off at the top or bottom | Line height too small | Use 1.5 or more (design standard §3) |
 | Works on the PC, not on the phone | Phone not on the same Wi-Fi, or a width problem | Open `http://<PC-IP>:3000`; check at 360 px |
-| The app stopped working after joining another Wi-Fi | Nothing to fix: in development the site follows the address you open it with | On the PC open `http://localhost:3000/km`; on a phone use the PC's new address from `ipconfig` (section 11) |
+| The app stopped working after joining another Wi-Fi | Nothing to fix: in development the site follows the address you open it with | On the PC open `http://localhost:3000/km`; on a phone open `http://localhost:3000/km/dev/phone` on the PC and scan the QR code (section 11) |
 | Everything breaks after moving or renaming the project folder | Installed packages point to the old folder | Run `pnpm install`, then `pnpm --filter @khmio/db exec prisma generate` |
 | `pnpm dev` stops by itself | The PC ran out of memory | Close browser tabs and other apps, then run `pnpm dev` again |
 | Claude went the wrong way | Prompt too broad | Press Esc; `git checkout .` drops unsaved changes; `/clear`; ask again with a smaller task |
@@ -267,6 +267,12 @@ Address" (e.g. `http://192.168.1.16:3000/km`). The address changes with the
 Wi-Fi, and **nothing needs editing when it does**: in development the site
 follows whatever address you open it with (`packages/shared/local-network.ts`).
 Change `/km` to `/en` in any link for English.
+
+**Open on your phone (any Wi-Fi):** on the PC open
+`http://localhost:3000/km/dev/phone` — it shows this PC's current address as a
+QR code; scan it with the phone's camera (phone on the same Wi-Fi, mobile data
+off). The page also lists the seller, buyer and admin links for that address.
+It exists only in development.
 
 ### The real app
 
