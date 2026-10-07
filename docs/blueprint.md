@@ -961,7 +961,7 @@ Docker Desktop (`pnpm db:up`) works too on a PC that supports it; it isn't neede
 
 ### Part 2: Create the project (Day 1)
 
-The project lives on GitHub at `github.com/chetracloud01/khmio` (renamed from `khmer-micro-store` on 2026-10-06; GitHub forwards the old address) and on the PC in `D:\PROJECT\khmio` (rename the old `khmer-micro-store` folder once, with VS Code closed). To set it up on a new PC:
+The project lives on GitHub at `github.com/chetracloud01/khmio` (renamed from `khmer-micro-store` on 2026-10-06; GitHub forwards the old address) and on the PC in `D:\PROJECT\khmio` (renamed from `khmer-micro-store` on 2026-10-07; after moving the folder, run `pnpm install` and `pnpm --filter @khmio/db exec prisma generate` once). To set it up on a new PC:
 
 ```bash
 git clone https://github.com/chetracloud01/khmio.git
