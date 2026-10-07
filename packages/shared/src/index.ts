@@ -9,6 +9,7 @@ export * from "./delivery";
 export * from "./env";
 export * from "./locations";
 export * from "./form-errors";
+export * from "./health";
 export * from "./kyc";
 export * from "./money";
 export * from "./notifications";

@@ -9,9 +9,11 @@ import {
   type BackupKind,
   type BackupRunView,
   type BackupStatus,
+  type PlatformHealth,
 } from "@khmio/shared";
 import { Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
+import { getEnv } from "../config";
 import { SYSTEM_DB } from "../db";
 import { AppException } from "../errors";
 import type { AdminIdentity } from "./admin-auth";
@@ -59,7 +61,19 @@ export class AdminController {
       this.db.order.count({ where: { status: { in: ["cod_pending", "paid"] } } }),
       this.db.outboxEvent.count({ where: { sentAt: null, attempts: { gte: MAX_ATTEMPTS_FOR_ADMIN }, kind: { not: "admin_alert" } } }),
     ]);
-    return { shops, newThisWeek, paused, trialsEndingSoon, ordersToday, waitingOrders, messagesGaveUp };
+    const [settings, latestBackup] = await Promise.all([
+      this.db.platformSettings.findUniqueOrThrow({ where: { id: 1 }, select: { workerSeenAt: true, betaAllBasic: true } }),
+      this.db.backupRun.findFirst({ where: { status: "done" }, orderBy: { finishedAt: "desc" }, select: { finishedAt: true } }),
+    ]);
+    const health: PlatformHealth = {
+      workerSeenAt: settings.workerSeenAt?.toISOString() ?? null,
+      latestBackupAt: latestBackup?.finishedAt?.toISOString() ?? null,
+      backupsStale: backupIsStale(latestBackup?.finishedAt ?? null, now),
+      telegram: getEnv().TELEGRAM_BOT_TOKEN ? "on" : "dry_run",
+      khqr: "not_connected",
+      betaAllBasic: settings.betaAllBasic,
+    };
+    return { shops, newThisWeek, paused, trialsEndingSoon, ordersToday, waitingOrders, messagesGaveUp, health };
   }
 
   /** The menu's red counts (admin frame): what needs a look, cheap enough to ask on every page change. */

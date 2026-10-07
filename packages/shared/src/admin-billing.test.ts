@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { adminCan, adminInviteSchema, canChangeAdmin, type AdminAccount, type AdminRole } from "./admin-roles";
 import { backupIsStale } from "./backups";
+import { workerState } from "./health";
 import { applyInvoicePaid, getInvoiceView, invoiceManualPaymentSchema, invoiceVoidSchema } from "./billing";
 import { toFieldErrors } from "./form-errors";
 import { evaluatePaymentCheck, failedCheckCloseSchema, isExactPaymentMatch } from "./payment-attempts";
@@ -92,6 +93,13 @@ describe("admin roles", () => {
     expect(adminCan("finance", "backups_run")).toBe(false);
     expect(adminCan("owner", "shop_restore")).toBe(true);
     expect(adminCan("support", "shop_restore")).toBe(false);
+  });
+
+  it("calls the worker down after 15 minutes without a heartbeat", () => {
+    const now = new Date("2026-10-07T12:00:00Z");
+    expect(workerState(new Date("2026-10-07T11:50:00Z"), now)).toBe("ok");
+    expect(workerState(new Date("2026-10-07T11:44:00Z"), now)).toBe("warning");
+    expect(workerState(null, now)).toBe("warning");
   });
 
   it("calls the backups stale after 26 hours without a good one", () => {

@@ -777,6 +777,8 @@ model PlatformSettings {
   betaAllBasic    Boolean  @default(true) @map("beta_all_basic")
   /// When the monthly full-restore test (blueprint "The routine") last passed, as an owner recorded it.
   restoreTestPassedAt DateTime? @map("restore_test_passed_at") @db.Timestamptz(6)
+  /// The worker's last heartbeat (every 5 minutes): the admin overview shows it down when this gets old.
+  workerSeenAt        DateTime? @map("worker_seen_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("platform_settings")

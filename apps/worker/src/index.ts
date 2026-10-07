@@ -47,10 +47,10 @@ async function main() {
   const boss = new PgBoss({ connectionString: env.DATABASE_OWNER_URL, schema: "pgboss" });
   boss.on("error", (error) => report(error, "job queue error"));
   await boss.start();
-  await registerHeartbeat(boss, logger);
 
   // Telegram alerts: the outbox is read with the owner user (the worker serves every shop).
   const db = createSystemDb(env.DATABASE_OWNER_URL);
+  await registerHeartbeat(boss, db, logger);
   await registerCleanup(boss, db, logger);
   const backupSteps = env.BACKUPS === "on" ? await registerBackup(boss, env, db, logger) : null;
   const telegram = createTelegramClient(env.TELEGRAM_BOT_TOKEN, logger, env.TELEGRAM_API_URL);

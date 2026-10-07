@@ -63,7 +63,17 @@ const verified = await call("/admin/auth/verify", { method: "POST", cookie: admi
 const backupCodes = verified.json?.backupCodes ?? [];
 check("the right code finishes the login and gives 8 backup codes, once", verified.status === 200 && backupCodes.length === 8, verified.raw);
 check("backup codes are stored hashed", Number(sql("select count(*) from admin_backup_codes")) === 8 && !sql("select string_agg(code_hash, ',') from admin_backup_codes").includes(backupCodes[0]));
-check("now the admin data opens", (await call("/admin/overview", { cookie: admin })).status === 200);
+const overview = await call("/admin/overview", { cookie: admin });
+check("now the admin data opens", overview.status === 200);
+const health = overview.json?.health;
+check(
+  "the overview reports platform health (no worker here, no backup yet, Telegram stand-in on, KHQR not connected, free beta)",
+  health?.workerSeenAt === null && health.backupsStale === true && health.telegram === "on" && health.khqr === "not_connected" && health.betaAllBasic === true,
+  JSON.stringify(health),
+);
+sql("update platform_settings set worker_seen_at = now()");
+check("a worker heartbeat shows on the overview", typeof (await call("/admin/overview", { cookie: admin })).json?.health?.workerSeenAt === "string");
+check("the menu badges answer", JSON.stringify((await call("/admin/badges", { cookie: admin })).json) === JSON.stringify({ trialsEnding: 0, backupsStale: 1 }));
 check("enrolling again is refused", (await call("/admin/auth/enrol", { method: "POST", cookie: admin })).status === 401);
 
 // ---------------------------------------------------------------- the next logins
