@@ -1,6 +1,6 @@
 # Khmio Handbook — start here
 
-As of 2026-10-06 · for the owner, written for someone starting from zero: which document answers what, the whole journey from step 0 to a running business, how to work with Claude every day, what to do when something breaks, and how the system stays easy to maintain and grow
+As of 2026-10-07 · for the owner, written for someone starting from zero: which document answers what, the whole journey from step 0 to a running business, how to work with Claude every day, what to do when something breaks, and how the system stays easy to maintain and grow
 
 This handbook does not repeat the plans; it points to them. When this page and another document disagree, the other document wins (`docs/blueprint.md` above all), and this page gets fixed.
 
@@ -18,6 +18,7 @@ This handbook does not repeat the plans; it points to them. When this page and a
 | How must every app screen look and behave? | `design/design-standard.md` |
 | What does each screen contain? | `design/screens.md` |
 | How do I test the screens with real sellers? | `design/seller-test.md` |
+| Which links open the app, the admin, the designs and GitHub? | This page, section 11 |
 
 **Golden rule:** when a decision changes, change the document first, then the code. A decision that lives only in a chat is lost.
 
@@ -157,6 +158,9 @@ More in blueprint "Build guide" Part 8.
 | Typecheck or lint errors after a change | Code doesn't match the rules | Ask Claude: "run typecheck and lint and fix the errors" |
 | Khmer text cut off at the top or bottom | Line height too small | Use 1.5 or more (design standard §3) |
 | Works on the PC, not on the phone | Phone not on the same Wi-Fi, or a width problem | Open `http://<PC-IP>:3000`; check at 360 px |
+| Admin login goes back to the start ("not logged in") | The site was opened as `localhost` while it reaches the API at the PC's address: the admin cookie is only sent to the same address | Open the admin by the PC's address (section 11), or set `NEXT_PUBLIC_API_URL=http://localhost:4000` in `apps/web/.env.local` and restart `pnpm dev` |
+| Everything breaks after moving or renaming the project folder | Installed packages point to the old folder | Run `pnpm install`, then `pnpm --filter @khmio/db exec prisma generate` |
+| `pnpm dev` stops by itself | The PC ran out of memory | Close browser tabs and other apps, then run `pnpm dev` again |
 | Claude went the wrong way | Prompt too broad | Press Esc; `git checkout .` drops unsaved changes; `/clear`; ask again with a smaller task |
 
 ### Problems online, after go-live
@@ -253,3 +257,77 @@ The full routine is in blueprint "Running the platform after launch". In one lin
 | Brand, logo, Mio, colours, fonts, social media | `design/brand-guide.md` |
 | A go-live step changes | `docs/go-live.md` |
 | The order of growth changes | `docs/platform-launch-plan.md` |
+
+## 11. Links: the app, the designs, the code
+
+The app links work while `pnpm dev` is running on your PC. They use the
+PC's network address (`192.168.40.39`) rather than `localhost`, because the
+website reaches the API at that address — open the site the same way or the
+admin login is blocked (see section 6). The address can change after a Wi-Fi
+change: in a terminal, `ipconfig` shows the new "IPv4 Address". Change `/km`
+to `/en` in any link for English. On your phone (same Wi-Fi) the same links
+work.
+
+### The real app
+
+**Website** (becomes `khmio.com`)
+
+| Link | What it is |
+| --- | --- |
+| http://192.168.40.39:3000/km | Home page: what Khmio is, "Start free" |
+| http://192.168.40.39:3000/km/products/shop | Khmio Shop: what the shop product does |
+| http://192.168.40.39:3000/km/products/class | Khmio Class: coming soon, with the waitlist form |
+| http://192.168.40.39:3000/km/products/rent | Khmio Rent: coming soon, with the waitlist form |
+| http://192.168.40.39:3000/km/pricing | Pricing: plans read from `packages/shared/plans.ts`, in USD and riel |
+
+**Seller** — on your PC, "Development login" signs in as Test merchant A or B (the real Telegram button needs a public web address)
+
+| Link | What it is |
+| --- | --- |
+| http://192.168.40.39:3000/km/m/login | Seller login |
+| http://192.168.40.39:3000/km/m | Seller dashboard: products, orders, delivery, settings |
+
+**Buyer** — buyers never log in: they open a shop link, add to the cart and order with name and phone
+
+| Link | What it is |
+| --- | --- |
+| http://192.168.40.39:3000/km/s/dev-merchant-a | Test merchant A's shop, as a customer sees it |
+
+To test both sides at once, use a normal window for the seller and a private
+window for the buyer.
+
+**Admin** — on your PC, "Development login (owner)", then the code from your authenticator app
+
+| Link | What it is |
+| --- | --- |
+| http://192.168.40.39:3000/km/admin | Overview |
+| http://192.168.40.39:3000/km/admin/merchants | All shops: extend a trial, change a plan |
+| http://192.168.40.39:3000/km/admin/waitlist | Waitlist sign-ups for coming-soon products |
+| http://192.168.40.39:3000/km/admin/audit-log | Every change: who, what, when |
+| http://192.168.40.39:3000/km/admin/settings | Exchange rate band, alerts chat, free beta |
+
+### Mockups (designs with sample data, not real)
+
+| Link | What it is |
+| --- | --- |
+| http://192.168.40.39:3000/km/mockup/site | The website |
+| http://192.168.40.39:3000/km/mockup/storefront | The buyer's shop |
+| http://192.168.40.39:3000/km/mockup/dashboard | The seller's dashboard |
+| http://192.168.40.39:3000/km/mockup/admin | The admin, including screens not built yet (website editor, promotions, pictures, payments) |
+| http://192.168.40.39:3000/km/mockup/account | "My Khmio" account hub |
+| http://192.168.40.39:3000/km/styleguide | Colours, fonts, buttons: the design standard |
+
+### Online
+
+| Link | What it is |
+| --- | --- |
+| https://github.com/chetracloud01/khmio | The code on GitHub: backup and history of every change |
+| https://github.com/chetracloud01/khmio/actions | The automatic checks after each push (green = OK) |
+
+### Commands (VS Code terminal)
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Starts the website, API and worker on your PC |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` | Check the code (Claude runs these after every change) |
+| `pnpm db:up` | Starts the database with Docker (only if you use Docker, not the installed PostgreSQL) |
