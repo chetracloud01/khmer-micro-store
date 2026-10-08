@@ -1,9 +1,10 @@
 "use client";
 
-import { planHasFeature } from "@khmio/shared";
+import { needsSellerAction, planHasFeature } from "@khmio/shared";
 import { Badge } from "@khmio/ui";
 import {
   CreditCard,
+  ExternalLink,
   LayoutDashboard,
   Package,
   Settings,
@@ -23,10 +24,14 @@ import { useAdmin } from "../admin-context";
 import { AppSwitcher } from "../app-switcher";
 import { useMerchantProfile } from "../merchant-profile-context";
 import { useMerchantSubscription } from "../merchant-subscription-context";
+import { useOrders } from "../orders-context";
 import { useStorePayments, useStoreSettings } from "../store-settings-context";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Dashboard");
+  const tPlans = useTranslations("Plans");
+  const { orders } = useOrders();
+  const waiting = orders.filter((order) => needsSellerAction(order.status)).length;
   const locale = useLocale();
   const pathname = usePathname();
   const profile = useMerchantProfile();
@@ -83,8 +88,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       : null;
   const banner = planBanner?.urgent ? planBanner : (paymentBanner ?? planBanner);
 
+  const storefrontHref = `/${locale}/mockup/storefront`;
+  const verification =
+    demoKycStatus === "approved" ? t("verified") : demoKycStatus === "pending" ? t("verificationPending") : t("verifyShop");
+  const planBox = subscriptionReady && (
+    <Link href={billingHref} className="flex flex-col gap-0.5 rounded-DEFAULT border border-nav-border p-3 hover:bg-nav-fg/5">
+      <span className="text-sm font-semibold text-nav-fg">{t("planLine", { plan: tPlans(subscription.plan) })}</span>
+      <span className="text-xs text-nav-muted">
+        {subscription.status === "trialing" ? t("statusTrial", { count: subscription.daysLeft }) : subscription.status === "paused" ? t("statusPaused") : subscription.status === "grace" ? t("statusDue") : t("statusOpen")}
+      </span>
+    </Link>
+  );
+
   return (
     <SellerFrame
+      look="teal"
       shop={{
         name: shopName,
         logoUrl: logoDataUrl,
@@ -96,6 +114,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {demoKycStatus === "pending" ? t("verificationPending") : t("verifyShop")}
             </Link>
           ),
+        belowOnTeal: (
+          <Link href={verificationHref} className="-my-2 flex min-h-touch items-center truncate text-xs font-medium text-nav-muted underline-offset-2 hover:text-nav-fg hover:underline">
+            {verification}
+          </Link>
+        ),
       }}
       homeHref={homeHref}
       nav={navItems.map((item) => ({
@@ -104,8 +127,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         alsoActiveOn: item.href === profileHref ? reachedFromProfile : undefined,
         locked: item.href === stockHref && stockLocked,
         lockedLabel: t("lockedOnPlan"),
+        badge: item.href === `/${locale}/mockup/dashboard/orders` ? waiting : undefined,
       }))}
-      sidebarExtra={<AppSwitcher current="shop" />}
+      sidebarFooter={planBox}
+      topBarExtra={
+        <>
+          <Link
+            href={storefrontHref}
+            target="_blank"
+            className="flex min-h-touch items-center gap-2 rounded-DEFAULT px-3 text-sm font-medium text-brand hover:bg-brand/5"
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            {t("actionViewShop")}
+          </Link>
+          <AppSwitcher current="shop" align="right" />
+        </>
+      }
       headerExtra={<AppSwitcher current="shop" align="right" />}
       banner={
         banner && (

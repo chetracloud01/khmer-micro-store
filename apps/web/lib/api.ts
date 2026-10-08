@@ -259,6 +259,18 @@ export interface PublicOrder {
 }
 
 /** GET /orders: one row of the seller's order list. */
+/** GET /orders/summary: the seller's home page numbers. Money per currency (cents, riel), never added together; days in Phnom Penh time. */
+export interface SellerSummary {
+  waiting: number;
+  salesToday: Record<Currency, number>;
+  cashToCollect: Record<Currency, number>;
+  ordersLast7Days: number;
+  ordersPrevious7Days: number;
+  /** 30 days, oldest first. */
+  days: { date: string; orders: number; USD: number; KHR: number }[];
+  bestSellers: { nameKm: string; nameEn: string; quantity: number }[];
+}
+
 export interface SellerOrder {
   id: string;
   orderNumber: number;

@@ -5,6 +5,7 @@ import { APP_DB } from "../db";
 import { assertStoreWritable } from "../merchant/plan";
 import { CurrentStore, MerchantStoreGuard, type MerchantStore } from "../merchant/store.guard";
 import { readOrderDetail, runSellerAction } from "./order-actions";
+import { sellerSummary } from "./summary";
 
 /** Most orders the list returns; older ones stay in the database. */
 const ORDER_LIST_LIMIT = 200;
@@ -40,6 +41,12 @@ export class OrdersController {
       });
       return orders.map(({ items, ...order }) => ({ ...order, itemCount: items.reduce((sum, item) => sum + item.quantity, 0) }));
     });
+  }
+
+  /** The home page's numbers: waiting orders, today's sales, cash to collect, 30 days of totals, best sellers. Before ":id", so "summary" isn't read as an order id. */
+  @Get("summary")
+  async summary(@CurrentStore() context: MerchantStore) {
+    return withContext(this.app, context, (tx) => sellerSummary(tx, context.storeId));
   }
 
   @Get(":id")

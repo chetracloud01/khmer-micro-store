@@ -1,26 +1,17 @@
 "use client";
 
-import { formatKhmerPhoneLocal, getOrderTab, getSellerActions, ORDER_TABS, type SellerOrderAction } from "@khmio/shared";
-import { Button, Mio, PageHeader } from "@khmio/ui";
-import { ChevronRight, Phone } from "lucide-react";
+import { formatKhmerPhoneLocal, getOrderTab, ORDER_TABS } from "@khmio/shared";
+import { Mio, PageHeader } from "@khmio/ui";
+import { Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DataGrid, type DataGridColumn } from "@/components/data-grid";
 import { formatMoney, OrderStatusPill, useOrderText } from "@/components/order-ui";
 import { SELLER_PAGE } from "@/components/seller-frame/seller-frame";
-import { api, ApiError, type SellerOrder } from "@/lib/api";
+import { api, type SellerOrder } from "@/lib/api";
+import { OrderNextStep } from "../order-next-step";
 import { PageLoading, PageOffline } from "../page-states";
-
-/** Steps that need nothing more than one tap. Sending and cancelling ask for details, so they open the order. */
-const ONE_TAP: readonly SellerOrderAction[] = ["confirm", "start_packing", "driver_picked_up", "mark_delivered", "settle_cash", "rebook"];
-
-/** The order's next step, or null when there's nothing to do but look. */
-function nextAction(order: SellerOrder): SellerOrderAction | null {
-  const action = getSellerActions(order)[0];
-  return action && action !== "cancel" ? (action as SellerOrderAction) : null;
-}
 
 // The seller's orders (design/screens.md S4), in the shared data grid: a table
 // on a laptop, cards on a phone. Status chips follow the order rules in
@@ -28,13 +19,11 @@ function nextAction(order: SellerOrder): SellerOrderAction | null {
 // one-tap button, or a link into the order when the step needs details.
 export default function OrdersPage() {
   const t = useTranslations("Orders");
-  const tApp = useTranslations("App");
   const locale = useLocale();
   const router = useRouter();
-  const { paymentLabel, placeLabel, timeAgo, actionLabel, statusLabel } = useOrderText();
+  const { paymentLabel, placeLabel, timeAgo, statusLabel } = useOrderText();
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -43,49 +32,12 @@ export default function OrdersPage() {
   }, []);
   useEffect(load, [load]);
 
-  async function doStep(order: SellerOrder, action: SellerOrderAction) {
-    setBusyId(order.id);
-    setProblem(null);
-    try {
-      await api(`/orders/${order.id}/actions`, { method: "POST", body: { action } });
-    } catch (failure) {
-      setProblem(failure instanceof ApiError && failure.code === "store_paused" ? tApp("storePaused") : failure instanceof ApiError && failure.code === "action_not_allowed" ? tApp("orderMovedOn") : tApp("saveFailed"));
-    } finally {
-      setBusyId(null);
-      load();
-    }
-  }
-
   if (failed) return <PageOffline onRetry={load} />;
   if (!orders) return <PageLoading />;
 
   const href = (order: SellerOrder) => `/${locale}/m/orders/${order.id}`;
-  /** The one next step: a button when it's one tap, otherwise a link into the order. */
-  const nextStep = (order: SellerOrder, fullWidth = false) => {
-    const action = nextAction(order);
-    if (action && ONE_TAP.includes(action)) {
-      return (
-        <Button
-          variant="primary"
-          fullWidth={fullWidth}
-          className="whitespace-nowrap px-3 text-sm"
-          loading={busyId === order.id}
-          onClick={(event) => {
-            event.stopPropagation();
-            void doStep(order, action);
-          }}
-        >
-          {actionLabel(order, action)}
-        </Button>
-      );
-    }
-    return (
-      <Link href={href(order)} onClick={(event) => event.stopPropagation()} className="inline-flex min-h-touch items-center gap-1 text-sm font-medium text-brand">
-        {action ? actionLabel(order, action) : t("view")}
-        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-      </Link>
-    );
-  };
+  /** The one next step: a button when it's one tap, otherwise a link into the order (shared with the home page). */
+  const nextStep = (order: SellerOrder, fullWidth = false) => <OrderNextStep order={order} fullWidth={fullWidth} onDone={load} onProblem={setProblem} />;
   const phoneLink = (order: SellerOrder) => (
     <a href={`tel:+${order.buyerPhone}`} onClick={(event) => event.stopPropagation()} className="inline-flex min-h-touch items-center gap-1 text-sm text-brand tabular-nums">
       <Phone className="h-3.5 w-3.5" aria-hidden="true" />

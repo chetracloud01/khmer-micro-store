@@ -96,7 +96,7 @@ export default function StyleguidePage() {
             <PageHeader title={t("pageTitle")} description={t("pageDescription")} actions={<Button variant="primary">{t("pageAction")}</Button>} />
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <StatCard icon={Store} label={t("statShops")} value="128" />
-              <StatCard icon={ShoppingBag} label={t("statOrders")} value="42" tone="success" />
+              <StatCard icon={ShoppingBag} label={t("statOrders")} value="42" detail={t("statOrdersDetail")} tone="success" />
               <StatCard icon={TriangleAlert} label={t("statLate")} value="3" tone="warning" />
               <StatCard icon={TriangleAlert} label={t("statFailed")} value="1" tone="danger" />
             </div>

@@ -58,13 +58,21 @@ export function SectionTitle({ children, aside }: { children: ReactNode; aside?:
 }
 
 /** One key number: icon, value, label. */
-export function StatCard({ icon: Icon, label, value, tone = "brand" }: { icon: LucideIcon; label: string; value: string; tone?: Tone }) {
+/**
+ * One number with its label. `detail` is an optional second line under the
+ * number — the other currency ("+ 80,000៛"; dollars and riel are never added
+ * together) or a comparison ("12 last week").
+ */
+export function StatCard({ icon: Icon, label, value, detail, tone = "brand" }: { icon: LucideIcon; label: string; value: string; detail?: ReactNode; tone?: Tone }) {
   return (
     <Card className="flex flex-col gap-2 p-4">
       <span className={cn("flex h-9 w-9 items-center justify-center rounded-DEFAULT", TONE_STYLES[tone])}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
-      <span className="text-2xl font-bold tabular-nums">{value}</span>
+      <span className="flex flex-col">
+        <span className="text-2xl font-bold tabular-nums">{value}</span>
+        {detail && <span className="text-sm font-medium tabular-nums text-muted">{detail}</span>}
+      </span>
       <span className="text-xs leading-normal text-muted">{label}</span>
     </Card>
   );

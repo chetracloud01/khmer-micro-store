@@ -19,7 +19,16 @@ export interface SellerNavItem {
   /** Shown with a lock: not in the shop's plan. */
   locked?: boolean;
   lockedLabel?: string;
+  /** A count beside the item (orders waiting); hidden at 0. */
+  badge?: number;
 }
+
+/**
+ * "light": a white sidebar (today's live dashboard). "teal": the Deep Khmio
+ * Teal sidebar the admin uses (nav-* tokens), with language and theme in a
+ * slim top bar beside it — one professional look across Khmio.
+ */
+export type SellerFrameLook = "light" | "teal";
 
 /**
  * The seller dashboard's frame (design/design-standard.md §2), the same for the
@@ -36,9 +45,13 @@ export function SellerFrame({
   banner,
   sidebarExtra,
   headerExtra,
+  topBarExtra,
+  sidebarFooter,
+  look = "light",
   children,
 }: {
-  shop: { name: string; logoUrl: string | null; below?: ReactNode };
+  /** `belowOnTeal`: the line under the name in the dark sidebar ("teal" look), in nav colours; the phone header keeps `below`. */
+  shop: { name: string; logoUrl: string | null; below?: ReactNode; belowOnTeal?: ReactNode };
   nav: SellerNavItem[];
   homeHref: string;
   /** A notice across the top of the content (shop paused, plan ending …). */
@@ -47,6 +60,11 @@ export function SellerFrame({
   sidebarExtra?: ReactNode;
   /** At the right of the phone header. */
   headerExtra?: ReactNode;
+  /** "teal" look: at the right of the laptop's top bar, before language and theme (e.g. "View my shop"). */
+  topBarExtra?: ReactNode;
+  /** At the bottom of the sidebar, under the menu. */
+  sidebarFooter?: ReactNode;
+  look?: SellerFrameLook;
   children: ReactNode;
 }) {
   const locale = useLocale();
@@ -71,19 +89,21 @@ export function SellerFrame({
     </div>
   );
 
-  const identity = (
+  const teal = look === "teal";
+
+  const identity = (onTeal: boolean) => (
     <div className="flex min-w-0 items-center gap-3">
       {shop.logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- the shop's own logo (uploaded, or a local preview in the mockup)
         <img src={shop.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
       ) : (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-base font-bold text-on-brand">
+        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold", onTeal ? "bg-nav-accent text-nav-bg" : "bg-brand text-on-brand")}>
           {shop.name.charAt(0).toUpperCase()}
         </span>
       )}
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-fg">{shop.name}</p>
-        {shop.below}
+        <p className={cn("truncate text-sm font-semibold", onTeal ? "text-nav-fg" : "text-fg")}>{shop.name}</p>
+        {onTeal ? (shop.belowOnTeal ?? shop.below) : shop.below}
       </div>
     </div>
   );
@@ -91,34 +111,54 @@ export function SellerFrame({
   return (
     <div className="flex min-h-dvh flex-col bg-canvas text-fg md:flex-row">
       {/* Tablet and up: every section in a sidebar. */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-6 border-r border-border bg-bg p-4 md:flex print:hidden">
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-6 border-r p-4 md:flex print:hidden",
+          teal ? "border-nav-border bg-nav-bg" : "border-border bg-bg",
+        )}
+      >
         <div className="flex items-center justify-between gap-2">
-          {identity}
+          {identity(teal)}
           {sidebarExtra}
         </div>
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
-              className={cn(
-                "flex min-h-touch shrink-0 items-center gap-3 rounded-DEFAULT px-3 text-sm font-medium transition-colors",
-                isActive(item.href) ? "bg-brand/10 text-brand" : "text-muted hover:bg-border/10 hover:text-fg",
-              )}
-            >
-              <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span className="flex-1 truncate">{item.label}</span>
-              {item.locked && <Lock className="h-4 w-4 text-muted" aria-label={item.lockedLabel} />}
-            </Link>
-          ))}
+        <nav className={cn("flex flex-1 flex-col gap-1 overflow-y-auto", teal && "nav-scroll")}>
+          {nav.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex min-h-touch shrink-0 items-center gap-3 rounded-DEFAULT px-3 text-sm font-medium transition-colors",
+                  teal
+                    ? active
+                      ? "bg-nav-fg/10 text-nav-fg before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-nav-accent"
+                      : "text-nav-muted hover:bg-nav-fg/5 hover:text-nav-fg"
+                    : active
+                      ? "bg-brand/10 text-brand"
+                      : "text-muted hover:bg-border/10 hover:text-fg",
+                )}
+              >
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className="flex-1 truncate">{item.label}</span>
+                {!!item.badge && (
+                  <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums", teal ? "bg-nav-badge/15 text-nav-badge" : "bg-brand/10 text-brand")}>
+                    {item.badge}
+                  </span>
+                )}
+                {item.locked && <Lock className={cn("h-4 w-4", teal ? "text-nav-muted" : "text-muted")} aria-label={item.lockedLabel} />}
+              </Link>
+            );
+          })}
         </nav>
-        {settings("up")}
+        {sidebarFooter}
+        {!teal && settings("up")}
       </aside>
 
       {/* Phone: the shop, language and theme across the top. */}
       <header className="flex items-center justify-between gap-3 border-b border-border bg-bg p-4 md:hidden print:hidden">
-        {identity}
+        {identity(false)}
         <div className="flex shrink-0 items-center gap-1">
           {settings("down")}
           {headerExtra}
@@ -127,6 +167,13 @@ export function SellerFrame({
 
       {/* A plain block, not a flex column: a wide table inside a page must scroll in its own box, never push the page wider. */}
       <main className="min-w-0 flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+        {/* Teal look, tablet and up: language, theme and extras in a slim bar, as in the admin. */}
+        {teal && (
+          <div className="sticky top-0 z-30 hidden items-center justify-end gap-2 border-b border-border bg-bg/85 px-4 py-2 backdrop-blur md:flex print:hidden">
+            {topBarExtra}
+            {settings("down")}
+          </div>
+        )}
         {banner}
         {children}
       </main>
@@ -146,7 +193,14 @@ export function SellerFrame({
                   isActiveOnPhone(item) ? "text-brand" : "text-muted",
                 )}
               >
-                <item.icon className="h-5 w-5" aria-hidden="true" />
+                <span className="relative">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                  {!!item.badge && (
+                    <span className="absolute -right-2.5 -top-1.5 min-w-[18px] rounded-full bg-brand px-1 text-center text-[10px] font-bold leading-[18px] text-on-brand">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             ))}
